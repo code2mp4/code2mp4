@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import type { VideoProject, VideoProjectConfig } from '@open-video/contracts';
+import type { VideoProjectConfig } from '@open-video/contracts';
 import { NewVideoProjectPanel } from './NewVideoProjectPanel';
 
+interface ProjectItem {
+  id: string;
+  name: string;
+  config: Record<string, unknown>;
+}
+
 interface Props {
-  projects: VideoProject[];
+  projects: ProjectItem[];
   onCreateProject: (name: string, config: VideoProjectConfig) => void;
   onOpenProject: (id: string) => void;
   onDeleteProject: (id: string) => void;
@@ -70,8 +76,8 @@ export function EntryView({
                 <div style={styles.cardBody}>
                   <div style={styles.cardTitle}>{p.name}</div>
                   <div style={styles.cardMeta}>
-                    {p.config.videoType ?? 'Video'} ·{' '}
-                    {p.config.orientation ?? '16:9'}
+                    {String(p.config.videoType ?? 'Video')} ·{' '}
+                    {String(p.config.orientation ?? '16:9')}
                   </div>
                 </div>
                 <button
