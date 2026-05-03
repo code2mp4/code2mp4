@@ -1,0 +1,31 @@
+{
+  "name": "open-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-driven video production — Open Design meets HyperFrames",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @open-video/tools-dev build && node tools/dev/dist/cli.js start",
+    "start": "pnpm --filter @open-video/server build && node apps/server/dist/server.js",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "status": "node tools/dev/dist/cli.js status",
+    "stop": "node tools/dev/dist/cli.js stop"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "tools/*"
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp"]
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.9.0"
+  }
+}

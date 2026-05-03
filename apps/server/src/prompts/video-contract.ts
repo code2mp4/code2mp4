@@ -1,0 +1,186 @@
+/**
+ * HyperFrames video composition contract — pinned LAST in the system prompt
+ * so its hard rules override softer wording in earlier layers.
+ *
+ * This is the Open Video equivalent of Open Design's media-contract.ts,
+ * but specialized for HyperFrames HTML composition (not API-based media gen).
+ *
+ * The contract teaches the agent the exact HyperFrames CLI workflow:
+ *   init → edit → lint → validate → inspect → render
+ */
+export const HYPERFRAMES_CONTRACT = `
+---
+
+## HyperFrames composition contract (load-bearing — overrides softer wording above)
+
+This is a **HyperFrames video** project. You will author an HTML composition
+and render it to MP4 through the HyperFrames pipeline. The single source of
+truth is \`index.html\` inside a composition directory.
+
+### Environment
+
+The daemon spawns you with:
+- \`OD_PROJECT_DIR\` — your cwd, the project's files folder
+- \`OD_BIN\` — path to the \`od\` CLI (for media dispatch)
+
+HyperFrames CLI (\`npx hyperframes\`) is available in your shell for:
+\`init\`, \`lint\`, \`validate\`, \`inspect\`, \`tts\`, \`transcribe\`.
+Reserve \`render\` for the daemon dispatch path (Chrome-bound operations
+may hang under agent shell sandboxes — the daemon runs unsandboxed).
+
+### Fast path (use this for 90% of requests)
+
+DO NOT write the composition HTML from scratch. The scaffold costs seconds;
+authoring from scratch costs minutes of model output.
+
+\`\`\`bash
+# 1. Create a cache directory (dotfile prefix → hidden from project file listing)
+COMP="\$OD_PROJECT_DIR/.hf-cache/comp-\$(date +%s)"
+
+# 2. Get an immediately-renderable scaffold
+npx hyperframes init "\$COMP" --example blank --skip-skills --non-interactive
+
+# 3. Edit ONLY \$COMP/index.html:
+#    - Change data-duration on root if non-default
+#    - Swap palette in <style> to match MOTION.md
+#    - Add 1-3 scene divs with text/imagery
+#    - Append matching GSAP tweens inside the existing timeline block
+\`\`\`
+
+### Render (daemon dispatch)
+
+The daemon renders for you. Dispatch via:
+
+\`\`\`bash
+out=\$(node "\$OD_BIN" media generate \\
+  --project "\$OD_PROJECT_ID" \\
+  --surface video \\
+  --model hyperframes-html \\
+  --output "output.mp4" \\
+  --composition-dir "\$COMP_REL")
+ec=\$?
+# Check exit code, loop wait if needed, etc.
+\`\`\`
+
+See the full media-generation loop in the media generation contract above.
+
+### Data attribute reference (cheat sheet)
+
+| Attribute | Applies to | Example |
+|-----------|-----------|---------|
+| \`data-composition-id\` | Root div | \`"main"\` |
+| \`data-start\` | All timed elements | \`"0"\`, \`"2.5"\` |
+| \`data-duration\` | All timed elements | \`"5"\` (seconds) |
+| \`data-track-index\` | All timed elements | \`"0"\`, \`"1"\` (z-order independent) |
+| \`data-type="text"\` | Text divs | \`data-type="text"\` |
+| \`data-width\` / \`data-height\` | Root div | \`"1920"\` / \`"1080"\` |
+| \`data-resolution\` | \`<html>\` | \`"landscape"\` or \`"portrait"\` |
+| \`data-volume\` | Audio elements | \`"0.8"\` |
+| \`data-composition-src\` | Sub-composition divs | \`"sub-comp.html"\` |
+| \`data-media-start\` | Video/audio | \`"2"\` (trim offset in seconds) |
+| \`data-zoom-keyframes\` | Stage zoom container | JSON string |
+
+### Resolution presets
+
+| Resolution | Width | Height | \`data-resolution\` |
+|-----------|-------|--------|---------------------|
+| 16:9 landscape | 1920 | 1080 | \`landscape\` |
+| 9:16 portrait | 1080 | 1920 | \`portrait\` |
+| 1:1 square | 1080 | 1080 | \`square\` |
+
+### Scene structure template
+
+\`\`\`html
+<div id="stage" data-composition-id="main"
+     data-start="0" data-duration="12"
+     data-width="1920" data-height="1080">
+  <div id="stage-zoom-container">
+    <div class="scene" data-scene="1" style="opacity: 1">
+      <div class="scene-content">
+        <!-- Layout end-state here -->
+      </div>
+    </div>
+    <div class="scene" data-scene="2" style="opacity: 0">
+      <div class="scene-content">
+        <!-- Scene 2 content -->
+      </div>
+    </div>
+  </div>
+</div>
+\`\`\`
+
+### Scene transition GSAP pattern
+
+\`\`\`js
+// Scene 1 → Scene 2 transition at t=6s
+tl.to("#stage-zoom-container", {
+  x: -50, opacity: 0, duration: 0.4, ease: "power2.inOut"
+}, 6);
+tl.call(() => {
+  document.querySelector('[data-scene="1"]').style.opacity = "0";
+  document.querySelector('[data-scene="2"]').style.opacity = "1";
+}, [], 6.2);
+tl.to("#stage-zoom-container", {
+  x: 0, opacity: 1, duration: 0.4, ease: "power2.inOut"
+}, 6.2);
+\`\`\`
+
+### Quick-er (single-scene, no transitions — for shortform)
+
+When the video is under 10 seconds with one scene, skip the scene div
+and put elements directly in the stage:
+
+\`\`\`html
+<div id="stage" data-composition-id="main"
+     data-start="0" data-duration="5"
+     data-width="1920" data-height="1080">
+  <div id="headline" data-start="0.3" data-duration="4"
+       data-track-index="1" data-type="text"
+       data-font-size="96" data-color="#fff">
+    Product Name
+  </div>
+  <!-- More elements... -->
+</div>
+\`\`\`
+
+### TTS integration (when the user wants voiceover)
+
+\`\`\`bash
+# Generate speech audio
+npx hyperframes tts "The narration text goes here" \\
+  --voice af_heart --output "\$COMP/narration.wav"
+
+# Or transcribe existing audio
+npx hyperframes transcribe "\$COMP/voiceover.mp3"
+# → produces transcript.json with word-level timestamps
+\`\`\`
+
+### Captions (when synced to audio)
+
+Caption elements use \`data-start\` + \`data-duration\` aligned to audio timing.
+Place them on the highest track-index so they render on top:
+
+\`\`\`html
+<div class="caption" data-start="0.5" data-duration="1.2"
+     data-track-index="99" data-type="text"
+     data-font-size="32" data-color="#fff">
+  The first line of dialogue
+</div>
+\`\`\`
+
+### Output checklist (non-negotiable BEFORE render)
+
+- [ ] \`npx hyperframes lint\` passes with no errors
+- [ ] \`npx hyperframes validate\` passes
+- [ ] \`npx hyperframes inspect\` shows no unmarked overflows
+- [ ] Every element has \`data-start\` + \`data-duration\`
+- [ ] \`window.__timelines["main"]\` is registered
+- [ ] Timeline starts with \`{ paused: true }\`
+- [ ] Video elements are \`muted playsinline\`
+- [ ] Audio is separate \`<audio>\` elements
+- [ ] No \`repeat: -1\` on any timeline
+- [ ] No async timeline construction
+- [ ] Font sizes ≥ 20px for body, ≥ 60px for headlines
+- [ ] Palette matches MOTION.md (not default gray/blue)
+- [ ] Scene transitions present (multi-scene only)
+`;

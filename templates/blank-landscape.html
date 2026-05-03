@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html data-composition-id="ov-scaffold" data-composition-duration="8" data-resolution="landscape">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --fg: #E6EDF3;
+      --accent: #58A6FF;
+      --accent2: #3FB950;
+      --muted: #8B949E;
+      --border: #30363D;
+      --radius: 8px;
+      --font-display: 'JetBrains Mono', 'Fira Code', monospace;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      overflow: hidden;
+      width: 1920px; height: 1080px;
+    }
+    #stage {
+      position: relative;
+      width: 1920px; height: 1080px;
+      overflow: hidden;
+    }
+    #stage-zoom-container {
+      width: 100%; height: 100%;
+    }
+    .scene {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px; opacity: 0;
+    }
+    .scene:first-child { opacity: 1; }
+    .scene-content {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 100%; height: 100%;
+      padding: 160px;
+      gap: 24px;
+      box-sizing: border-box;
+    }
+    .headline {
+      font-family: var(--font-display);
+      font-size: 96px;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 40px var(--accent);
+      text-align: center;
+    }
+    .subhead {
+      font-size: 32px;
+      color: var(--fg);
+      opacity: 0.85;
+      text-align: center;
+    }
+    .body-text {
+      font-size: 24px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</head>
+<body>
+<div id="stage" data-composition-id="ov-scaffold" data-start="0" data-duration="8" data-width="1920" data-height="1080">
+  <div id="stage-zoom-container">
+
+    <!-- Scene 1: Title -->
+    <div class="scene" data-scene="1" style="opacity: 1">
+      <div class="scene-content">
+        <div class="headline" id="s1-title">Your Title Here</div>
+        <div class="subhead" id="s1-sub">Your subtitle or tagline</div>
+      </div>
+    </div>
+
+    <!-- Scene 2: Content -->
+    <div class="scene" data-scene="2">
+      <div class="scene-content">
+        <div class="headline" id="s2-title" style="font-size: 72px;">Scene Two</div>
+        <div class="body-text" id="s2-body">Add your content here. Replace this text with your message.</div>
+      </div>
+    </div>
+
+    <!-- Scene 3: CTA -->
+    <div class="scene" data-scene="3">
+      <div class="scene-content">
+        <div class="headline" id="s3-cta" style="font-size: 80px; color: var(--accent2);">Call to Action</div>
+        <div class="subhead" id="s3-url">your-website.com</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+
+  // ── Scene 1: Entrances ──────────────────────────────────────────
+  tl.from("#s1-title", { y: 60, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.3);
+  tl.from("#s1-sub",  { y: 30, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.7);
+
+  // ── Scene 1 → 2: Push transition ────────────────────────────────
+  const zoom = document.getElementById("stage-zoom-container");
+  tl.to(zoom, { x: -60, opacity: 0, duration: 0.4, ease: "power2.inOut" }, 3.0);
+  tl.call(() => {
+    document.querySelector('[data-scene="1"]').style.opacity = "0";
+    document.querySelector('[data-scene="2"]').style.opacity = "1";
+  }, [], 3.2);
+  tl.to(zoom, { x: 0, opacity: 1, duration: 0.4, ease: "power2.inOut" }, 3.2);
+
+  // ── Scene 2: Entrances ──────────────────────────────────────────
+  tl.from("#s2-title", { y: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 3.5);
+  tl.from("#s2-body",  { opacity: 0, duration: 0.5, ease: "power1.out" }, 3.8);
+
+  // ── Scene 2 → 3: Push transition ────────────────────────────────
+  tl.to(zoom, { x: -60, opacity: 0, duration: 0.4, ease: "power2.inOut" }, 6.0);
+  tl.call(() => {
+    document.querySelector('[data-scene="2"]').style.opacity = "0";
+    document.querySelector('[data-scene="3"]').style.opacity = "1";
+  }, [], 6.2);
+  tl.to(zoom, { x: 0, opacity: 1, duration: 0.4, ease: "power2.inOut" }, 6.2);
+
+  // ── Scene 3: Entrances ──────────────────────────────────────────
+  tl.from("#s3-cta", { scale: 1.1, opacity: 0, duration: 0.5, ease: "back.out(1.4)" }, 6.5);
+  tl.from("#s3-url", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, 6.8);
+
+  window.__timelines["ov-scaffold"] = tl;
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+out/
+.ov/
+projects/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store
+*.tsbuildinfo
+pnpm-lock.yaml
