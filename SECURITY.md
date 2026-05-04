@@ -6,7 +6,7 @@ If you discover a security vulnerability in Code2MP4, please report it privately
 
 **Do not open a public issue.**
 
-Email the maintainers with details. We will respond within 48 hours with:
+Email security@code2mp4.com with details. We will respond within 48 hours with:
 - Confirmation of receipt
 - An estimated timeline for a fix
 - Whether you'll be credited in the release notes

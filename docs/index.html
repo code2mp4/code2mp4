@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code2MP4 — Prompt-to-MP4 for coding agents</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0D1117; color: #E6EDF3; font-family: 'JetBrains Mono', 'Fira Code', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+  .container { max-width: 720px; padding: 40px 24px; }
+  h1 { font-size: 64px; font-weight: 700; color: #58A6FF; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .tagline { font-size: 22px; color: #8B949E; margin-bottom: 32px; line-height: 1.6; }
+  .highlight { color: #3FB950; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+  .btn { padding: 12px 28px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.15s; cursor: pointer; border: none; }
+  .btn-primary { background: #58A6FF; color: #0D1117; }
+  .btn-primary:hover { background: #79B8FF; }
+  .btn-outline { background: transparent; border: 1px solid #30363D; color: #E6EDF3; }
+  .btn-outline:hover { border-color: #58A6FF; color: #58A6FF; }
+  .footer { margin-top: 48px; font-size: 12px; color: #484F58; }
+  .footer a { color: #58A6FF; text-decoration: none; }
+  .glow { text-shadow: 0 0 40px rgba(88,166,255,0.3); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 class="glow">Code2MP4</h1>
+  <p class="tagline">
+    <strong>Prompt-to-MP4 for coding agents.</strong><br>
+    Describe a video. Let Claude Code, OpenCode, Codex or Gemini CLI<br>
+    generate editable motion source, then render it into a deterministic MP4.
+  </p>
+  <p style="color: #8B949E; font-size: 14px; margin-bottom: 8px;">
+    <span class="highlight">Prompt in.</span>
+    Editable source out.
+    MP4 rendered.
+  </p>
+
+  <div class="cta">
+    <a href="https://github.com/code2mp4/code2mp4" class="btn btn-primary">View on GitHub</a>
+    <a href="https://github.com/code2mp4/code2mp4#readme" class="btn btn-outline">Read the Docs</a>
+    <a href="https://github.com/code2mp4/code2mp4#demos" class="btn btn-outline">Watch Demo</a>
+  </div>
+
+  <p class="footer">
+    <a href="https://github.com/code2mp4/code2mp4">GitHub</a> ·
+    Apache 2.0 ·
+    <a href="mailto:hello@code2mp4.com">hello@code2mp4.com</a>
+  </p>
+</div>
+</body>
+</html>
