@@ -28,7 +28,7 @@ import {
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
 import { listMusic, readMusicFile } from './music-library.js';
 import { listScriptSystems, readScriptSystem } from './script-systems.js';
-import { buildDirectorPrompt, buildScenePrompt, assembleComposition, extractSceneHtml, type PipelineJob } from './pipeline.js';
+import { buildDirectorPrompt, buildScenePrompt, assembleComposition, extractSceneHtml, type PipelineJob, loadPipelineJob, savePipelineJob, saveStoryboard, saveSceneFragment, loadSceneFragment, type Storyboard } from './pipeline.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -512,37 +512,27 @@ export async function createServer(): Promise<express.Express> {
   }, 5 * 60 * 1000).unref(); // every 5 minutes
 
   // ── Multi-stage pipeline ───────────────────────────────────────────
-  const pipelineJobs = new Map<string, PipelineJob>();
 
   // Stage 1: Director — generate storyboard
   app.post('/api/pipeline/storyboard', async (req, res) => {
     const { brief, projectId, motionSystemId, scriptSystemId, agentId: reqAgentId } = req.body;
-    if (!brief || !projectId) {
-      res.status(400).json({ error: 'brief and projectId required' });
-      return;
-    }
+    if (!brief || !projectId) { res.status(400).json({ error: 'brief and projectId required' }); return; }
 
     let motionTokens = 'Canvas: #0D1117, Accent: #58A6FF, Display: JetBrains Mono, mono';
-    let scriptSummary = 'Hook→Context→Features→Proof→CTA';
     if (motionSystemId) {
       const body = await readMotionSystem(MOTION_SYSTEMS_DIR, motionSystemId);
       if (body) motionTokens = body.slice(0, 500);
     }
-    if (scriptSystemId) {
-      const body = await readScriptSystem(SCRIPT_SYSTEMS_DIR, scriptSystemId);
-      if (body) scriptSummary = body.match(/^> Summary: (.+)$/m)?.[1] || body.slice(0, 300);
-    }
 
-    const directorPrompt = buildDirectorPrompt(brief, motionTokens, scriptSummary);
+    const directorPrompt = buildDirectorPrompt(brief, motionTokens, '');
     const agId = reqAgentId || defaultAgentId || 'claude';
     const agent = getAgentDef(agents, agId);
     if (!agent) { res.status(400).json({ error: 'No agent' }); return; }
 
     const jobId = randomUUID();
-    const job: PipelineJob = { id: jobId, projectId, brief, status: 'scripting', scenes: [] };
-    pipelineJobs.set(jobId, job);
+    const job: PipelineJob = { id: jobId, projectId, brief, status: 'scripting', scenes: [], sceneRunIds: [] };
+    await savePipelineJob(PROJECTS_DIR, job);
 
-    // Create conversation + user message
     const conv = DB.insertConversation(db, { projectId, title: brief.slice(0, 80) });
     DB.insertMessage(db, { conversationId: conv.id, role: 'user', content: directorPrompt });
 
@@ -553,41 +543,48 @@ export async function createServer(): Promise<express.Express> {
     startAgentRun({
       run, agent, userMessage: directorPrompt, systemPrompt: '', cwd, manager: runManager,
       projectId, extraAllowedDirs,
-      onComplete: (text) => {
+      onComplete: async (text) => {
         DB.updateMessageContent(db, asstMsg.id, text);
-        // Try to parse storyboard JSON from output
         try {
           const jsonMatch = text.match(/\{[\s\S]*"scenes"[\s\S]*\}/);
           if (jsonMatch) {
-            job.script = JSON.parse(jsonMatch[0]);
+            const script: Storyboard = JSON.parse(jsonMatch[0]);
+            await saveStoryboard(PROJECTS_DIR, projectId, script);
+            job.script = script;
             job.status = 'rendering_scenes';
-          } else {
-            job.status = 'failed';
-            job.error = 'Could not parse storyboard JSON from agent output';
-          }
-        } catch { job.status = 'failed'; job.error = 'JSON parse error'; }
+          } else { job.status = 'failed'; job.error = 'No storyboard JSON in output'; }
+        } catch (e) { job.status = 'failed'; job.error = String(e); }
+        await savePipelineJob(PROJECTS_DIR, job);
       },
-    }).catch(() => { job.status = 'failed'; });
+    }).catch(async () => { job.status = 'failed'; await savePipelineJob(PROJECTS_DIR, job); });
 
     res.json({ jobId, runId: run.id, status: 'scripting', conversationId: conv.id });
   });
 
   // Stage 2: Run all scene agents
   app.post('/api/pipeline/:jobId/scenes', async (req, res) => {
-    const job = pipelineJobs.get(req.params.jobId);
-    if (!job || !job.script) { res.status(404).json({ error: 'Job not found or no script' }); return; }
+    // Load job from disk
+    const job = await loadPipelineJob(PROJECTS_DIR, req.params.jobId);
+    if (!job || !job.script) { res.status(404).json({ error: 'Job not found or no script. Start with POST /api/pipeline/storyboard' }); return; }
 
     const { agentId: reqAgentId } = req.body;
     const agId = reqAgentId || defaultAgentId || 'claude';
     const agent = getAgentDef(agents, agId);
     if (!agent) { res.status(400).json({ error: 'No agent' }); return; }
-    const cwd = await FILES.ensureProjectDir(PROJECTS_DIR, job.projectId);
 
+    const cwd = await FILES.ensureProjectDir(PROJECTS_DIR, job.projectId);
     let motionTokens = 'Canvas: #0D1117, Accent: #58A6FF, Display: JetBrains Mono';
-    const sceneRunIds: string[] = [];
+
+    const runIds: string[] = [];
 
     for (const sc of job.script.scenes) {
-      if (job.scenes.find(s => s.number === sc.number)) continue;
+      // Skip already-completed scenes
+      const existing = await loadSceneFragment(PROJECTS_DIR, job.projectId, sc.number);
+      if (existing) {
+        const already = job.scenes.find(s => s.number === sc.number);
+        if (!already) job.scenes.push({ number: sc.number, html: existing, duration: sc.duration });
+        continue;
+      }
 
       const scenePrompt = buildScenePrompt(sc, job.script, motionTokens, job.scenes);
       const conv = DB.insertConversation(db, { projectId: job.projectId, title: `Scene ${sc.number}` });
@@ -598,40 +595,46 @@ export async function createServer(): Promise<express.Express> {
       startAgentRun({
         run, agent, userMessage: scenePrompt, systemPrompt: '', cwd, manager: runManager,
         projectId: job.projectId,
-        onComplete: (text) => {
+        onComplete: async (text) => {
           DB.updateMessageContent(db, asstMsg.id, text);
           const html = extractSceneHtml(text);
           if (html) {
-            job.scenes.push({ number: sc.number, html, duration: sc.duration });
-          }
-          // Auto-assemble if all scenes done
-          if (job.scenes.length === job.script!.scenes.length) {
-            assembleAndRender(job, motionTokens);
+            await saveSceneFragment(PROJECTS_DIR, job.projectId, { number: sc.number, html, duration: sc.duration });
+            const reloaded = await loadPipelineJob(PROJECTS_DIR, job.projectId);
+            if (reloaded) {
+              reloaded.scenes.push({ number: sc.number, html, duration: sc.duration });
+              if (reloaded.scenes.length === reloaded.script!.scenes.length) {
+                await assembleAndRender(reloaded, motionTokens);
+              }
+              await savePipelineJob(PROJECTS_DIR, reloaded);
+            }
           }
         },
       }).catch(() => {});
 
-      sceneRunIds.push(run.id);
+      runIds.push(run.id);
     }
 
-    res.json({ jobId: job.id, sceneRunIds, totalScenes: job.script.scenes.length });
+    job.sceneRunIds = runIds;
+    await savePipelineJob(PROJECTS_DIR, job);
+    res.json({ jobId: job.id, sceneRunIds: runIds, totalScenes: job.script.scenes.length });
   });
 
-  // Stage 3: Assemble manually if auto-assemble didn't fire
+  // Stage 3: Manual assembly
   app.post('/api/pipeline/:jobId/assemble', async (_req, res) => {
-    const job = pipelineJobs.get(_req.params.jobId);
+    const job = await loadPipelineJob(PROJECTS_DIR, _req.params.jobId);
     if (!job || !job.script || job.scenes.length === 0) {
-      res.status(400).json({ error: 'Job not ready for assembly' });
-      return;
+      res.status(400).json({ error: 'Job not ready. Run scenes first.' }); return;
     }
     let motionTokens = 'Canvas: #0D1117, Accent: #58A6FF, Display: JetBrains Mono';
-    assembleAndRender(job, motionTokens);
+    await assembleAndRender(job, motionTokens);
+    await savePipelineJob(PROJECTS_DIR, job);
     res.json({ jobId: job.id, status: job.status, outputMp4: job.outputMp4 });
   });
 
   // Get pipeline job status
-  app.get('/api/pipeline/:jobId', (req, res) => {
-    const job = pipelineJobs.get(req.params.jobId);
+  app.get('/api/pipeline/:jobId', async (req, res) => {
+    const job = await loadPipelineJob(PROJECTS_DIR, req.params.jobId);
     if (!job) { res.status(404).json({ error: 'Job not found' }); return; }
     res.json({
       id: job.id, status: job.status,
@@ -643,10 +646,12 @@ export async function createServer(): Promise<express.Express> {
     });
   });
 
-  // Helper: assemble composition and render
+  // Helper: assemble and render
   async function assembleAndRender(job: PipelineJob, motionTokens: string) {
     try {
       job.status = 'assembling';
+      await savePipelineJob(PROJECTS_DIR, job);
+
       const html = assembleComposition(job, motionTokens, '../../../music/corporate-upbeat.wav');
       const compDir = path.join(PROJECTS_DIR, job.projectId, '.hf-cache', 'pipeline');
       await fs.promises.mkdir(compDir, { recursive: true });
@@ -654,25 +659,26 @@ export async function createServer(): Promise<express.Express> {
 
       const outputPath = path.join(PROJECTS_DIR, job.projectId, 'output.mp4');
       const { spawn } = await import('node:child_process');
-      const child = spawn('npx', ['hyperframes', 'render', '--format', 'mp4', '--quality', 'standard', '--fps', '30', '--output', outputPath, '--composition-dir', compDir], { stdio: 'ignore' });
-      child.on('close', (code) => {
-        if (code === 0) {
-          job.status = 'done';
-          job.outputMp4 = outputPath;
-        } else {
-          job.status = 'failed';
-          job.error = `Render exit code: ${code}`;
-        }
+      return new Promise<void>((resolve) => {
+        const child = spawn('npx', ['hyperframes', 'render', '--format', 'mp4', '--quality', 'standard', '--fps', '30', '--output', outputPath, '--composition-dir', compDir], { stdio: 'ignore' });
+        child.on('close', async (code) => {
+          if (code === 0) {
+            job.status = 'done';
+            job.outputMp4 = outputPath;
+          } else {
+            job.status = 'failed';
+            job.error = `Render exit code: ${code}`;
+          }
+          await savePipelineJob(PROJECTS_DIR, job);
+          resolve();
+        });
       });
     } catch (err) {
       job.status = 'failed';
       job.error = String(err);
+      await savePipelineJob(PROJECTS_DIR, job);
     }
   }
-
-  // Re-export for use in pipeline
-  // eslint-disable-next-line
-  void assembleAndRender;
 
   // ══════════════════════════════════════════════════════════════════
   // IMPORTANT: Pipeline routes must be registered BEFORE the catch-all

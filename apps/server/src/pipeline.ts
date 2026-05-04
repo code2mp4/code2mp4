@@ -5,15 +5,75 @@
  * Stage 2: Scene Agent — generates one scene at a time
  * Stage 3: Assembly — combines fragments, renders MP4
  *
- * Each stage uses a SMALL, focused prompt (3-5K chars) instead of
- * the full 20K system prompt. This keeps agent response time low.
+ * Pipeline state is persisted to the project directory on disk:
+ *   projects/<id>/pipeline.json   — job state
+ *   projects/<id>/storyboard.json — director output
+ *   projects/<id>/scenes/         — scene fragments
+ *
+ * This survives server restarts — read pipeline.json to resume.
  */
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import type { AgentDef } from './agents.js';
-import type { ChatRun, RunManager } from './runs.js';
-import { startAgentRun } from './agent-runner.js';
+
+export interface PipelineJob {
+  id: string;
+  projectId: string;
+  brief: string;
+  status: 'scripting' | 'rendering_scenes' | 'assembling' | 'done' | 'failed';
+  script?: Storyboard;
+  scenes: SceneFragment[];
+  outputMp4?: string;
+  error?: string;
+  sceneRunIds: string[];
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Filesystem persistence — survives server restarts
+// ══════════════════════════════════════════════════════════════════
+
+function pipelinePath(projectsRoot: string, projectId: string): string {
+  return path.join(projectsRoot, projectId, 'pipeline.json');
+}
+
+function storyboardPath(projectsRoot: string, projectId: string): string {
+  return path.join(projectsRoot, projectId, 'storyboard.json');
+}
+
+function scenePath(projectsRoot: string, projectId: string, sceneNum: number): string {
+  return path.join(projectsRoot, projectId, 'scenes', `scene-${sceneNum}.html`);
+}
+
+export async function loadPipelineJob(projectsRoot: string, projectId: string): Promise<PipelineJob | null> {
+  try {
+    const raw = await fs.readFile(pipelinePath(projectsRoot, projectId), 'utf8');
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+export async function savePipelineJob(projectsRoot: string, job: PipelineJob): Promise<void> {
+  const dir = path.join(projectsRoot, job.projectId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(pipelinePath(projectsRoot, job.projectId), JSON.stringify(job, null, 2));
+}
+
+export async function saveStoryboard(projectsRoot: string, projectId: string, script: Storyboard): Promise<void> {
+  const dir = path.join(projectsRoot, projectId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(storyboardPath(projectsRoot, projectId), JSON.stringify(script, null, 2));
+}
+
+export async function saveSceneFragment(projectsRoot: string, projectId: string, fragment: SceneFragment): Promise<void> {
+  const dir = path.join(projectsRoot, projectId, 'scenes');
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(scenePath(projectsRoot, projectId, fragment.number), fragment.html);
+}
+
+export async function loadSceneFragment(projectsRoot: string, projectId: string, sceneNum: number): Promise<string | null> {
+  try {
+    return await fs.readFile(scenePath(projectsRoot, projectId, sceneNum), 'utf8');
+  } catch { return null; }
+}
 
 export interface PipelineJob {
   id: string;
