@@ -4,6 +4,7 @@
 import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import { composeVideoSystemPrompt } from './prompts/system.js';
@@ -27,6 +28,7 @@ import {
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
 import { listMusic, readMusicFile } from './music-library.js';
 import { listScriptSystems, readScriptSystem } from './script-systems.js';
+import { buildDirectorPrompt, buildScenePrompt, assembleComposition, type PipelineJob } from './pipeline.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -502,6 +504,72 @@ export async function createServer(): Promise<express.Express> {
     runManager.cleanup();
     cleanupMediaTasks();
   }, 5 * 60 * 1000).unref(); // every 5 minutes
+
+  // ── Multi-stage pipeline ───────────────────────────────────────────
+  const pipelineJobs = new Map<string, PipelineJob>();
+
+  // Stage 1: Director — generate storyboard
+  app.post('/api/pipeline/storyboard', async (req, res) => {
+    const { brief, projectId, motionSystemId, scriptSystemId } = req.body;
+    if (!brief || !projectId) {
+      res.status(400).json({ error: 'brief and projectId required' });
+      return;
+    }
+
+    // Load tokens
+    let motionTokens = 'Canvas: #0D1117, Accent: #58A6FF, Display: JetBrains Mono, mono';
+    let scriptSummary = 'Hook→Context→Features→Proof→CTA';
+    if (motionSystemId) {
+      const body = await readMotionSystem(MOTION_SYSTEMS_DIR, motionSystemId);
+      if (body) motionTokens = body.slice(0, 500);
+    }
+    if (scriptSystemId) {
+      const body = await readScriptSystem(SCRIPT_SYSTEMS_DIR, scriptSystemId);
+      if (body) scriptSummary = body.match(/^> Summary: (.+)$/m)?.[1] || body.slice(0, 300);
+    }
+
+    const directorPrompt = buildDirectorPrompt(brief, motionTokens, scriptSummary);
+
+    // Use OpenCode for speed, or Claude Code as fallback
+    const agentId = defaultAgentId || 'claude';
+    const agent = getAgentDef(agents, agentId);
+    if (!agent) {
+      res.status(400).json({ error: 'No agent available' });
+      return;
+    }
+
+    const jobId = randomUUID();
+    const job: PipelineJob = { id: jobId, projectId, brief, status: 'scripting', scenes: [] };
+    pipelineJobs.set(jobId, job);
+
+    // Create a run for the director agent
+    const run = runManager.create({ projectId, agentId });
+    const cwd = await FILES.ensureProjectDir(PROJECTS_DIR, projectId);
+
+    startAgentRun({
+      run, agent, userMessage: directorPrompt, systemPrompt: '',
+      cwd, manager: runManager, projectId, extraAllowedDirs,
+    }).catch(err => console.error('Director failed:', err));
+
+    res.json({ jobId, runId: run.id, status: 'scripting' });
+  });
+
+  // Get pipeline job status
+  app.get('/api/pipeline/:jobId', (req, res) => {
+    const job = pipelineJobs.get(req.params.jobId);
+    if (!job) { res.status(404).json({ error: 'Job not found' }); return; }
+    res.json({
+      id: job.id, status: job.status,
+      scenesCompleted: job.scenes.length,
+      script: job.script,
+      outputMp4: job.outputMp4,
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // IMPORTANT: Pipeline routes must be registered BEFORE the catch-all
+  // SPA fallback route. Do not add routes after app.get('/{*splat}')
+  // ══════════════════════════════════════════════════════════════════
 
   // ── Serve static web app ──────────────────────────────────────────
   if (fs.existsSync(WEB_DIST)) {
