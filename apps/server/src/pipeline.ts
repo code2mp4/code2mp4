@@ -185,7 +185,8 @@ CRITICAL RULES:
 - Use the exact palette, fonts, and easing from VISUAL STYLE
 
 Return ONLY the HTML for this scene (the <div class="scene"> and its contents + <style> + <script>).
-Do NOT include <!DOCTYPE>, <html>, or <body> tags. Just the scene div and its assets.`;
+Do NOT include <!DOCTYPE>, <html>, or <body> tags. Just the scene div and its assets.
+Do NOT write to a file — output the HTML directly in your response text.`;
 }
 
 /**
