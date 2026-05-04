@@ -6,6 +6,10 @@ Describe a video. Code2MP4 lets Claude Code, OpenCode, Codex, Gemini CLI and oth
 
 **Website: https://code2mp4.com**
 
+```bash
+npm install -g code2mp4   # CLI (coming in v0.5)
+```
+
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" /></a>
   <a href="#agents"><img alt="Agents" src="https://img.shields.io/badge/agents-6%20CLIs%20auto--detected-black?style=flat-square" /></a>
