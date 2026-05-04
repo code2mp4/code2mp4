@@ -475,7 +475,7 @@ export async function createServer(): Promise<express.Express> {
   // ── Serve static web app ──────────────────────────────────────────
   if (fs.existsSync(WEB_DIST)) {
     app.use(express.static(WEB_DIST));
-    app.get('*', (_req, res) => res.sendFile(path.join(WEB_DIST, 'index.html')));
+    app.get('/{*splat}', (_req, res) => res.sendFile(path.join(WEB_DIST, 'index.html')));
   }
 
   return app;
