@@ -547,11 +547,10 @@ export async function createServer(): Promise<express.Express> {
         DB.updateMessageContent(db, asstMsg.id, text);
         const script = parseStoryboard(text);
         if (script) {
-            await saveStoryboard(PROJECTS_DIR, jobId, script);
-            job.script = script;
-            job.status = 'rendering_scenes';
-          } else { job.status = 'failed'; job.error = 'No storyboard JSON in output'; }
-        } catch (e) { job.status = 'failed'; job.error = String(e); }
+          await saveStoryboard(PROJECTS_DIR, jobId, script);
+          job.script = script;
+          job.status = 'rendering_scenes';
+        } else { job.status = 'failed'; job.error = 'No storyboard JSON in output'; }
         await savePipelineJob(PROJECTS_DIR, job);
       },
     }).catch(async () => { job.status = 'failed'; await savePipelineJob(PROJECTS_DIR, job); });
