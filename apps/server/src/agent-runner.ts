@@ -76,20 +76,28 @@ export async function startAgentRun({
 
   if (child.stdin) { child.stdin.write(fullPrompt); child.stdin.end(); }
 
-  // stdout — accumulate for persistence
+  // stdout — accumulate text content for persistence (stripped stdout)
   let accumulatedText = '';
   child.stdout?.on('data', (chunk: Buffer) => {
     const text = chunk.toString();
-    accumulatedText += text;
     if (agent.streamFormat === 'claude-stream-json') {
-      parseClaudeStream(text, (event, data) => emitToRun(r, event, data));
+      parseClaudeStream(text, (event, data) => {
+        emitToRun(r, event, data);
+        // Only accumulate text/thinking content for persistence
+        if (event === 'text' || event === 'text_delta') {
+          accumulatedText += (data as { content: string }).content || '';
+        }
+      });
     } else if (agent.streamFormat === 'copilot-stream-json') {
       parseCopilotStream(text, (event, data) => emitToRun(r, event, data));
     } else {
-      // Plain text — strip ANSI, emit cleaned content
+      // Plain text — strip ANSI, emit + accumulate cleaned content
       const clean = stripAnsi(text);
       for (const line of clean.split('\n')) {
-        if (line.trim()) emitToRun(r, 'text', { content: line });
+        if (line.trim()) {
+          emitToRun(r, 'text', { content: line });
+          accumulatedText += line + '\n';
+        }
       }
     }
   });
