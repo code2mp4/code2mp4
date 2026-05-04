@@ -104,6 +104,8 @@ export interface SceneFragment {
   number: number;
   html: string;
   duration: number;
+  status: 'pending' | 'running' | 'done' | 'failed';
+  error?: string;
 }
 
 /**
@@ -157,7 +159,7 @@ export function buildScenePrompt(
   previousScenes: SceneFragment[],
 ): string {
   const prevInfo = previousScenes.length > 0
-    ? `Previous scenes (use same palette, fonts, transition style):\nScene ${previousScenes.map(s => s.number).join(', ')} already done.`
+    ? `Previous scenes (match their visual style):\n${previousScenes.filter(s => s.status === 'done').map(s => `Scene ${s.number} — ${s.html.slice(0, 200)}...`).join('\n\n')}`
     : 'This is the first scene.';
 
   return `You are a motion designer. Create ONE scene for a HyperFrames composition.
@@ -176,10 +178,10 @@ ${prevInfo}
 VISUAL STYLE: ${motionTokens}
 
 CRITICAL RULES:
-- class="clip" on ALL timed elements
-- data-start + data-duration on every element
+- class="clip" on ALL elements with data-start
+- data-start + data-duration on every timed element  
 - NO transitions needed (assembly handles scene switching)
-- Window.__timelines["scene${scene.number}"] = gsap.timeline({paused:true})
+- window.__timelines["scene${scene.number}"] = gsap.timeline({paused:true})
 - Body: width:1920px; height:1080px; overflow:hidden
 - Meta viewport: width=1920,height=1080
 - Use the exact palette, fonts, and easing from VISUAL STYLE
@@ -198,7 +200,12 @@ export function assembleComposition(
   motionTokens: string,
   musicTrack?: string,
 ): string {
-  const scenes = job.scenes.sort((a, b) => a.number - b.number);
+  const scenes = job.scenes
+    .filter(s => s.status === 'done' && s.html)
+    .sort((a, b) => a.number - b.number);
+  
+  if (scenes.length === 0) throw new Error('No completed scenes to assemble');
+  
   const totalDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
 
   const palette = extractPalette(motionTokens);
