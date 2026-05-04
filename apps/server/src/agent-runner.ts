@@ -27,10 +27,12 @@ export interface AgentRunOptions {
   manager: RunManager;
   projectId?: string;
   extraAllowedDirs?: string[];
+  /** Called when run completes with accumulated text */
+  onComplete?: (accumulatedText: string, status: 'succeeded' | 'failed') => void;
 }
 
 export async function startAgentRun({
-  run, agent, userMessage, systemPrompt, cwd, manager, projectId, extraAllowedDirs,
+  run, agent, userMessage, systemPrompt, cwd, manager, projectId, extraAllowedDirs, onComplete,
 }: AgentRunOptions): Promise<void> {
   const r = run;
   r.status = 'starting';
@@ -74,15 +76,19 @@ export async function startAgentRun({
 
   if (child.stdin) { child.stdin.write(fullPrompt); child.stdin.end(); }
 
-  // stdout
+  // stdout — accumulate for persistence
+  let accumulatedText = '';
   child.stdout?.on('data', (chunk: Buffer) => {
     const text = chunk.toString();
+    accumulatedText += text;
     if (agent.streamFormat === 'claude-stream-json') {
       parseClaudeStream(text, (event, data) => emitToRun(r, event, data));
     } else if (agent.streamFormat === 'copilot-stream-json') {
       parseCopilotStream(text, (event, data) => emitToRun(r, event, data));
     } else {
-      for (const line of text.split('\n')) {
+      // Plain text — strip ANSI, emit cleaned content
+      const clean = stripAnsi(text);
+      for (const line of clean.split('\n')) {
         if (line.trim()) emitToRun(r, 'text', { content: line });
       }
     }
@@ -100,11 +106,13 @@ export async function startAgentRun({
     emitToRun(r, 'status', { status: ok ? 'succeeded' : 'failed', exitCode: code });
     if (!ok && stderr) emitToRun(r, 'log', { stream: 'stderr', content: stderr.slice(-2000) });
     finishRun(r, ok ? 'succeeded' : 'failed', code);
+    if (onComplete) onComplete(accumulatedText, ok ? 'succeeded' : 'failed');
   });
 
   child.on('error', (err) => {
     emitToRun(r, 'log', { stream: 'stderr', content: `Agent spawn error: ${err.message}` });
     finishRun(r, 'failed', 1);
+    if (onComplete) onComplete(accumulatedText, 'failed');
   });
 }
 
@@ -152,9 +160,17 @@ function emitToRun(run: ChatRun, event: string, data: unknown) {
   for (const client of run.clients) client.send(event, data, id);
 }
 
-function finishRun(run: ChatRun, status: 'succeeded' | 'failed', code: number | null) {
+function finishRun(run: ChatRun, status: 'succeeded' | 'failed', code: number | null, onComplete?: (text: string, s: 'succeeded' | 'failed') => void) {
   for (const client of run.clients) { client.send('end', { status, exitCode: code }); client.end(); }
   run.status = status;
   run.exitCode = code;
   run.clients.clear();
+}
+
+function stripAnsi(text: string): string {
+  return text
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\[\?[0-9;]*[hl]/g, '')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+    .replace(/⬝+/g, '');
 }

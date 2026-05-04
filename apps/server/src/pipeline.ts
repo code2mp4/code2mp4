@@ -224,3 +224,21 @@ function extractFonts(tokens: string): string {
   const display = tokens.match(/Display font:\s*(.+?)(?:\n|$)/);
   return display?.[1]?.trim() || "'Inter', system-ui, sans-serif";
 }
+
+export function extractSceneHtml(text: string): string | null {
+  // Try finding the scene-content div
+  const contentMatch = text.match(/<div class="scene-content"[\s\S]*?<\/div>\s*<\/div>/i);
+  if (contentMatch) return contentMatch[0];
+
+  // Try finding any div block with style and script
+  const divMatch = text.match(/(<div[\s\S]*?<\/div>\s*<script[\s\S]*?<\/script>)/i);
+  if (divMatch) return divMatch[1];
+
+  // Try markdown code fence extraction
+  const fenceMatch = text.match(/```html\n([\s\S]*?)```/i);
+  if (fenceMatch) return fenceMatch[1];
+
+  // Last resort: any substantial HTML block
+  const htmlMatch = text.match(/(<div[\s\S]{200,}?<\/div>)/i);
+  return htmlMatch?.[1] || null;
+}
