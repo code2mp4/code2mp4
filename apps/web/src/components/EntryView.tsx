@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { VideoProjectConfig } from '@open-video/contracts';
 import { NewVideoProjectPanel } from './NewVideoProjectPanel';
+import { QuickChatPanel } from './QuickChatPanel';
 import { AgentPicker } from './AgentPicker';
 
 interface ProjectItem {
@@ -19,17 +20,14 @@ interface Props {
 }
 
 export function EntryView({
-  projects,
-  onCreateProject,
-  onOpenProject,
-  onDeleteProject,
-  selectedAgentId,
-  onSelectAgent,
+  projects, onCreateProject, onOpenProject, onDeleteProject,
+  selectedAgentId, onSelectAgent,
 }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentCount, setAgentCount] = useState(0);
+  const [mode, setMode] = useState<'quick' | 'manual'>('quick');
 
   // Check server status on mount
   useEffect(() => {
@@ -75,7 +73,33 @@ export function EntryView({
             <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border)' }}>
               <AgentPicker selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
             </div>
-            <NewVideoProjectPanel onCreate={onCreateProject} />
+
+            {/* Mode toggle */}
+            <div style={{ padding: '12px 20px 0' }}>
+              <div style={S.modeToggle}>
+                <button
+                  onClick={() => setMode('quick')}
+                  style={{ ...S.modeBtn, ...(mode === 'quick' ? S.modeBtnActive : {}) }}
+                >💬 Quick Chat</button>
+                <button
+                  onClick={() => setMode('manual')}
+                  style={{ ...S.modeBtn, ...(mode === 'manual' ? S.modeBtnActive : {}) }}
+                >⚙ Manual Setup</button>
+              </div>
+            </div>
+
+            {mode === 'quick' ? (
+              <QuickChatPanel
+                onCreate={(name, prompt) => {
+                  onCreateProject(name, {
+                    videoType: 'custom', orientation: '16:9', duration: 10, energy: 'medium',
+                    motionSystemId: 'tech', copy: prompt,
+                  });
+                }}
+              />
+            ) : (
+              <NewVideoProjectPanel onCreate={onCreateProject} />
+            )}
           </>
         )}
       </aside>
@@ -157,6 +181,9 @@ const S: Record<string, React.CSSProperties> = {
   brandMark: { fontSize: 22, color: 'var(--accent)', lineHeight: 1 },
   brandTitle: { fontSize: 15, fontWeight: 700, color: 'var(--fg)' },
   brandSub: { fontSize: 11, color: 'var(--muted)', marginTop: 1 },
+  modeToggle: { display: 'flex', background: 'var(--surface-hover)', borderRadius: 'var(--radius)', padding: 3, gap: 2 },
+  modeBtn: { flex: 1, padding: '6px 10px', fontSize: 11, fontWeight: 500, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer', background: 'transparent', color: 'var(--muted)', textAlign: 'center', transition: 'all 0.15s' },
+  modeBtnActive: { background: 'var(--bg)', color: 'var(--fg)', boxShadow: 'var(--shadow-sm)' },
   collapseBtn: { color: 'var(--muted)', fontSize: 14, cursor: 'pointer', border: 'none', background: 'transparent', padding: '4px 8px', borderRadius: 'var(--radius-sm)' },
   main: { flex: 1, padding: '32px 40px', overflow: 'auto' },
   heading: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: 'var(--fg)' },
