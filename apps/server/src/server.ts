@@ -228,7 +228,7 @@ export async function createServer(): Promise<express.Express> {
     }
   });
 
-  app.get('/api/projects/:id/files/{*fileName}', async (req, res) => {
+  app.get('/api/projects/:id/files/:fileName', async (req, res) => {
     const params = req.params as Record<string, string>;
     const fileName = params['fileName'] || '';
     try {
@@ -243,7 +243,7 @@ export async function createServer(): Promise<express.Express> {
     }
   });
 
-  app.post('/api/projects/:id/files/{*fileName}', async (req, res) => {
+  app.post('/api/projects/:id/files/:fileName', async (req, res) => {
     const params = req.params as Record<string, string>;
     const fileName = params['fileName'] || '';
     try {
@@ -255,7 +255,7 @@ export async function createServer(): Promise<express.Express> {
     }
   });
 
-  app.delete('/api/projects/:id/files/{*fileName}', async (req, res) => {
+  app.delete('/api/projects/:id/files/:fileName', async (req, res) => {
     const params = req.params as Record<string, string>;
     const fileName = params['fileName'] || '';
     const deleted = await FILES.deleteProjectFile(PROJECTS_DIR, req.params.id, fileName);
