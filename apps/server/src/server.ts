@@ -549,7 +549,7 @@ export async function createServer(): Promise<express.Express> {
           const jsonMatch = text.match(/\{[\s\S]*"scenes"[\s\S]*\}/);
           if (jsonMatch) {
             const script: Storyboard = JSON.parse(jsonMatch[0]);
-            await saveStoryboard(PROJECTS_DIR, projectId, script);
+            await saveStoryboard(PROJECTS_DIR, jobId, script);
             job.script = script;
             job.status = 'rendering_scenes';
           } else { job.status = 'failed'; job.error = 'No storyboard JSON in output'; }
@@ -591,6 +591,7 @@ export async function createServer(): Promise<express.Express> {
       DB.insertMessage(db, { conversationId: conv.id, role: 'user', content: scenePrompt });
       const run = runManager.create({ projectId: job.projectId, agentId: agId });
       const asstMsg = DB.insertMessage(db, { conversationId: conv.id, role: 'assistant', content: '', agentId: agent.id, agentName: agent.name });
+      const jid = job.id;
 
       startAgentRun({
         run, agent, userMessage: scenePrompt, systemPrompt: '', cwd, manager: runManager,
@@ -599,8 +600,8 @@ export async function createServer(): Promise<express.Express> {
           DB.updateMessageContent(db, asstMsg.id, text);
           const html = extractSceneHtml(text);
           if (html) {
-            await saveSceneFragment(PROJECTS_DIR, job.projectId, { number: sc.number, html, duration: sc.duration });
-            const reloaded = await loadPipelineJob(PROJECTS_DIR, job.projectId);
+            await saveSceneFragment(PROJECTS_DIR, jid, { number: sc.number, html, duration: sc.duration });
+            const reloaded = await loadPipelineJob(PROJECTS_DIR, jid);
             if (reloaded) {
               reloaded.scenes.push({ number: sc.number, html, duration: sc.duration });
               if (reloaded.scenes.length === reloaded.script!.scenes.length) {

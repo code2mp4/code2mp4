@@ -32,41 +32,41 @@ export interface PipelineJob {
 // Filesystem persistence — survives server restarts
 // ══════════════════════════════════════════════════════════════════
 
-function pipelinePath(projectsRoot: string, projectId: string): string {
-  return path.join(projectsRoot, projectId, 'pipeline.json');
+function pipelinePath(projectsRoot: string, jobId: string): string {
+  return path.join(projectsRoot, '.pipelines', `${jobId}.json`);
 }
 
-function storyboardPath(projectsRoot: string, projectId: string): string {
-  return path.join(projectsRoot, projectId, 'storyboard.json');
+function storyboardPath(projectsRoot: string, jobId: string): string {
+  return path.join(projectsRoot, '.pipelines', `${jobId}-storyboard.json`);
 }
 
-function scenePath(projectsRoot: string, projectId: string, sceneNum: number): string {
-  return path.join(projectsRoot, projectId, 'scenes', `scene-${sceneNum}.html`);
+function scenePath(projectsRoot: string, jobId: string, sceneNum: number): string {
+  return path.join(projectsRoot, '.pipelines', `${jobId}-scene-${sceneNum}.html`);
 }
 
-export async function loadPipelineJob(projectsRoot: string, projectId: string): Promise<PipelineJob | null> {
+export async function loadPipelineJob(projectsRoot: string, jobId: string): Promise<PipelineJob | null> {
   try {
-    const raw = await fs.readFile(pipelinePath(projectsRoot, projectId), 'utf8');
+    const raw = await fs.readFile(pipelinePath(projectsRoot, jobId), 'utf8');
     return JSON.parse(raw);
   } catch { return null; }
 }
 
 export async function savePipelineJob(projectsRoot: string, job: PipelineJob): Promise<void> {
-  const dir = path.join(projectsRoot, job.projectId);
+  const dir = path.join(projectsRoot, '.pipelines');
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(pipelinePath(projectsRoot, job.projectId), JSON.stringify(job, null, 2));
+  await fs.writeFile(pipelinePath(projectsRoot, job.id), JSON.stringify(job, null, 2));
 }
 
-export async function saveStoryboard(projectsRoot: string, projectId: string, script: Storyboard): Promise<void> {
-  const dir = path.join(projectsRoot, projectId);
+export async function saveStoryboard(projectsRoot: string, jobId: string, script: Storyboard): Promise<void> {
+  const dir = path.join(projectsRoot, '.pipelines');
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(storyboardPath(projectsRoot, projectId), JSON.stringify(script, null, 2));
+  await fs.writeFile(storyboardPath(projectsRoot, jobId), JSON.stringify(script, null, 2));
 }
 
-export async function saveSceneFragment(projectsRoot: string, projectId: string, fragment: SceneFragment): Promise<void> {
-  const dir = path.join(projectsRoot, projectId, 'scenes');
+export async function saveSceneFragment(projectsRoot: string, jobId: string, fragment: SceneFragment): Promise<void> {
+  const dir = path.join(projectsRoot, '.pipelines');
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(scenePath(projectsRoot, projectId, fragment.number), fragment.html);
+  await fs.writeFile(scenePath(projectsRoot, jobId, fragment.number), fragment.html);
 }
 
 export async function loadSceneFragment(projectsRoot: string, projectId: string, sceneNum: number): Promise<string | null> {
