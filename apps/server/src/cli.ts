@@ -66,6 +66,11 @@ async function handleMediaGenerate(args: string[]): Promise<void> {
     prompt: 'string',
     voice: 'string',
     speed: 'number',
+    'audio-kind': 'string',
+    'sfx-kind': 'string',
+    'sfx-duration': 'number',
+    'sfx-frequency': 'number',
+    'sfx-volume': 'number',
   });
 
   const project = params.project;
@@ -91,6 +96,11 @@ async function handleMediaGenerate(args: string[]): Promise<void> {
     prompt: params.prompt,
     voice: params.voice,
     speed: params.speed,
+    audioKind: params['audio-kind'],
+    sfxKind: params['sfx-kind'],
+    sfxDuration: params['sfx-duration'],
+    sfxFrequency: params['sfx-frequency'],
+    sfxVolume: params['sfx-volume'],
   };
 
   try {

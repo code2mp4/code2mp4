@@ -153,6 +153,72 @@ and put elements directly in the stage:
 </div>
 \`\`\`
 
+### Audio design (SFX + music + voice)
+
+**SFX generation (daemon dispatch):**
+Use \`node "$OD_BIN" media generate --surface audio --audio-kind sfx\` to create sound effects.
+Available SFX kinds: \`tone\` (pure note), \`sweep\` (rising pitch), \`hit\` (percussive impact),
+\`drone\` (sustained pad), \`noise\` (white noise burst), \`whoosh\` (filtered sweep for transitions).
+
+\`\`\`bash
+# Generate a scene transition whoosh
+node "$OD_BIN" media generate \\
+  --project "$OD_PROJECT_ID" \\
+  --surface audio \\
+  --audio-kind sfx \\
+  --sfx-kind whoosh \\
+  --sfx-duration 0.4 \\
+  --output "whoosh-1.wav"
+
+# Generate a text-reveal ping
+node "$OD_BIN" media generate \\
+  --project "$OD_PROJECT_ID" \\
+  --surface audio \\
+  --audio-kind sfx \\
+  --sfx-kind tone \\
+  --sfx-duration 0.15 \\
+  --sfx-frequency 880 \\
+  --sfx-volume 0.4 \\
+  --output "ping-1.wav"
+
+# Generate a background drone
+node "$OD_BIN" media generate \\
+  --project "$OD_PROJECT_ID" \\
+  --surface audio \\
+  --audio-kind sfx \\
+  --sfx-kind drone \\
+  --sfx-duration 60 \\
+  --sfx-frequency 55 \\
+  --sfx-volume 0.3 \\
+  --output "drone.wav"
+\`\`\`
+
+**Add audio to composition:**
+\`\`\`html
+<!-- Background drone spanning full duration -->
+<audio id="bg-drone" data-start="0" data-duration="60"
+       data-track-index="0" data-volume="0.3"
+       src="drone.wav"></audio>
+
+<!-- Whoosh at each scene transition -->
+<audio id="whoosh-1" data-start="11.5" data-duration="0.4"
+       data-track-index="10" data-volume="0.5"
+       src="whoosh-1.wav"></audio>
+
+<!-- Ping when headline appears -->
+<audio id="ping-1" data-start="0.3" data-duration="0.15"
+       data-track-index="11" data-volume="0.4"
+       src="ping-1.wav"></audio>
+\`\`\`
+
+**Audio timing rules:**
+- SFX elements need \`data-start\`, \`data-duration\`, \`data-volume\`
+- Audio track indices should be higher than visual track indices (10-99)
+- Whoosh duration should match scene transition duration (0.3-0.5s)
+- Ping/hit should be short (0.1-0.2s), timed to text reveal moments
+- Drone should span the full composition, low volume (0.2-0.3)
+- HyperFrames will extract, trim, and mix all audio tracks into the final MP4 automatically
+
 ### TTS integration (when the user wants voiceover)
 
 **Fast path (agent-side shell):**

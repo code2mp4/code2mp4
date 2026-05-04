@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import type { Response } from 'express';
+import { generateSfx, type SfxKind } from './audio.js';
 
 interface RenderTask {
   id: string;
@@ -45,18 +46,27 @@ export async function handleMediaGenerate(req: {
     prompt?: string;
     voice?: string;
     speed?: number;
+    audioKind?: string;
+    sfxKind?: string;
+    sfxDuration?: number;
+    sfxFrequency?: number;
+    sfxVolume?: number;
   };
 }, res: Response): Promise<void> {
-  const { projectId, model, output, compositionDir, quality, fps, surface, prompt, voice, speed } = req.body;
+  const { projectId, model, output, compositionDir, quality, fps, surface, prompt, voice, speed, audioKind, sfxKind, sfxDuration, sfxFrequency, sfxVolume } = req.body;
 
   if (!projectId) {
     res.status(400).json({ error: 'projectId is required' });
     return;
   }
 
-  // ── Audio surface (TTS) ──────────────────────────────────────
+  // ── Audio surface (TTS or SFX) ───────────────────────────────
   if (surface === 'audio') {
-    handleTtsGenerate(res, projectId, output, prompt, voice, speed);
+    if (audioKind === 'sfx') {
+      handleSfxGenerate(res, projectId, output, sfxKind, sfxDuration, sfxFrequency, sfxVolume);
+    } else {
+      handleTtsGenerate(res, projectId, output, prompt, voice, speed);
+    }
     return;
   }
 
@@ -160,6 +170,38 @@ export async function handleMediaWait(
     req.on('close', () => clearInterval(interval));
   } else {
     res.end();
+  }
+}
+
+// ── SFX handler ─────────────────────────────────────────────────────
+
+async function handleSfxGenerate(
+  res: Response,
+  projectId: string,
+  output: string,
+  sfxKind?: string,
+  sfxDuration?: number,
+  sfxFrequency?: number,
+  sfxVolume?: number,
+): Promise<void> {
+  const projectsRoot = path.resolve(process.cwd(), 'projects');
+  const outputPath = path.join(projectsRoot, projectId, output || 'sfx-output.wav');
+
+  try {
+    await generateSfx({
+      kind: (sfxKind as SfxKind) || 'tone',
+      outputPath,
+      duration: sfxDuration || 0.3,
+      frequency: sfxFrequency || 440,
+      volume: sfxVolume || 0.5,
+    });
+
+    const stats = await fs.promises.stat(outputPath);
+    res.json({
+      file: { name: path.basename(outputPath), size: stats.size, kind: 'audio', mime: 'audio/wav' },
+    });
+  } catch (err) {
+    res.status(500).json({ error: `SFX generation failed: ${(err as Error).message}` });
   }
 }
 
