@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { VideoProjectConfig } from '@open-video/contracts';
+import { MotionSystemPicker } from './MotionSystemPicker';
 
 interface Props {
   onCreate: (name: string, config: VideoProjectConfig) => void;
@@ -33,14 +34,6 @@ const DURATIONS = [
   { id: 15, label: '15s' },
   { id: 30, label: '30s' },
   { id: 60, label: '60s' },
-] as const;
-
-const MOTION_SYSTEMS = [
-  { id: 'editorial', label: 'Editorial', desc: 'Serif, warm canvas, refined' },
-  { id: 'tech', label: 'Tech', desc: 'Mono, dark, signal accents' },
-  { id: 'warm-soft', label: 'Warm & Soft', desc: 'Rounded, cream, gentle' },
-  { id: 'cinematic', label: 'Cinematic', desc: 'Dramatic, gold, atmospheric' },
-  { id: 'brutalist', label: 'Brutalist', desc: 'Raw, hazard red, hard cuts' },
 ] as const;
 
 export function NewVideoProjectPanel({ onCreate }: Props) {
@@ -138,16 +131,10 @@ export function NewVideoProjectPanel({ onCreate }: Props) {
 
       {/* Motion system */}
       <Section label="Motion System">
-        <div style={styles.chipRow}>
-          {MOTION_SYSTEMS.map((m) => (
-            <Chip
-              key={m.id}
-              active={motionSystem === m.id}
-              label={m.label}
-              onClick={() => setMotionSystem(m.id)}
-            />
-          ))}
-        </div>
+        <MotionSystemPicker
+          selectedId={motionSystem}
+          onSelect={setMotionSystem}
+        />
       </Section>
 
       {/* Audio */}

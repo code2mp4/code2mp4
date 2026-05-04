@@ -12,7 +12,9 @@
     "start": "pnpm --filter @open-video/server build && node apps/server/dist/server.js",
     "typecheck": "pnpm -r --if-present run typecheck",
     "build": "pnpm -r --if-present run build",
-    "test": "pnpm -r --if-present run test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "status": "node tools/dev/dist/cli.js status",
     "stop": "node tools/dev/dist/cli.js stop"
   },
@@ -22,10 +24,19 @@
     "tools/*"
   ],
   "pnpm": {
-    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp"
+    ]
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.9.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.5",
+    "tsx": "^4.21.0",
+    "vitest": "^4.1.5"
   }
 }
