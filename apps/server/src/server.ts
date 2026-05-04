@@ -28,7 +28,7 @@ import {
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
 import { listMusic, readMusicFile } from './music-library.js';
 import { listScriptSystems, readScriptSystem } from './script-systems.js';
-import { buildDirectorPrompt, buildScenePrompt, assembleComposition, extractSceneHtml, type PipelineJob, loadPipelineJob, savePipelineJob, saveStoryboard, saveSceneFragment, loadSceneFragment, type Storyboard } from './pipeline.js';
+import { buildDirectorPrompt, buildScenePrompt, assembleComposition, extractSceneHtml, parseStoryboard, type PipelineJob, loadPipelineJob, savePipelineJob, saveStoryboard, saveSceneFragment, loadSceneFragment, type Storyboard } from './pipeline.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -545,10 +545,8 @@ export async function createServer(): Promise<express.Express> {
       projectId, extraAllowedDirs,
       onComplete: async (text) => {
         DB.updateMessageContent(db, asstMsg.id, text);
-        try {
-          const jsonMatch = text.match(/\{[\s\S]*"scenes"[\s\S]*\}/);
-          if (jsonMatch) {
-            const script: Storyboard = JSON.parse(jsonMatch[0]);
+        const script = parseStoryboard(text);
+        if (script) {
             await saveStoryboard(PROJECTS_DIR, jobId, script);
             job.script = script;
             job.status = 'rendering_scenes';

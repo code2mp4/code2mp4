@@ -286,6 +286,27 @@ function extractFonts(tokens: string): string {
   return display?.[1]?.trim() || "'Inter', system-ui, sans-serif";
 }
 
+export function parseStoryboard(text: string): Storyboard | null {
+  // Try to find JSON block with scenes array
+  const jsonMatch = text.match(/\{[\s\S]*"scenes"\s*:\s*\[[\s\S]*?\][\s\S]*\}/);
+  if (!jsonMatch) return null;
+
+  try {
+    return JSON.parse(jsonMatch[0]);
+  } catch {
+    // Try cleaning common JSON issues
+    let cleaned = jsonMatch[0]
+      .replace(/,\s*}/g, '}')       // trailing comma before }
+      .replace(/,\s*\]/g, ']')      // trailing comma before ]
+      .replace(/[\u201C\u201D]/g, '"'); // smart quotes → regular quotes
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      return null;
+    }
+  }
+}
+
 export function extractSceneHtml(text: string): string | null {
   // Try finding the scene-content div
   const contentMatch = text.match(/<div class="scene-content"[\s\S]*?<\/div>\s*<\/div>/i);
