@@ -47,7 +47,7 @@ Open Video 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames
 ### 三条命令启动
 
 ```bash
-git clone https://github.com/open-video/open-video.git
+git clone https://github.com/openvideo-ai/openvideo.git
 cd open-video
 pnpm install && pnpm dev
 ```

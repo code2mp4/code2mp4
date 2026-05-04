@@ -4,13 +4,13 @@
   "private": true,
   "description": "AI-driven video production — Open Design meets HyperFrames. Describe a video and an AI coding agent writes, animates, and renders it to MP4.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/open-video/open-video",
+  "homepage": "https://github.com/openvideo-ai/openvideo",
   "repository": {
     "type": "git",
-    "url": "https://github.com/open-video/open-video.git"
+    "url": "https://github.com/openvideo-ai/openvideo.git"
   },
   "bugs": {
-    "url": "https://github.com/open-video/open-video/issues"
+    "url": "https://github.com/openvideo-ai/openvideo/issues"
   },
   "keywords": [
     "video",
