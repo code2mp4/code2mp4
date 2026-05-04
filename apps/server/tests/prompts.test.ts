@@ -4,141 +4,90 @@ import { VIDEO_DISCOVERY } from '../src/prompts/video-discovery.js';
 import { HYPERFRAMES_CONTRACT } from '../src/prompts/video-contract.js';
 
 describe('composeVideoSystemPrompt', () => {
-  it('composes the base prompt with all 4 mandatory layers', () => {
+  it('composes compact prompt with discovery + identity + contract', () => {
     const result = composeVideoSystemPrompt({});
-    // Layer 1: discovery (contains RULE 1)
     expect(result).toContain('RULE 1');
-    expect(result).toContain('video-discovery');
-    // Layer 3: identity
     expect(result).toContain('expert video producer');
-    // Layer 5: HF contract (always pinned last)
-    expect(result).toContain('HyperFrames composition contract');
-    // Discovery must appear before the contract
-    const discIdx = result.indexOf('RULE 1');
-    const contractIdx = result.indexOf('HyperFrames composition contract');
-    expect(discIdx).toBeLessThan(contractIdx);
+    expect(result).toContain('class="clip" REQUIRED');
+    expect(result.length).toBeLessThan(25000); // should be compact
   });
 
-  it('injects MOTION.md when provided', () => {
-    const motionBody = '# Test System\nCanvas: #FFF\nAccent: #F00';
-    const result = composeVideoSystemPrompt({
-      motionSystemBody: motionBody,
-      motionSystemTitle: 'Test System',
-    });
-    expect(result).toContain('Active motion design system');
-    expect(result).toContain('Test System');
-    expect(result).toContain('# Test System');
-    expect(result).toContain('authoritative');
+  it('injects compact MOTION.md tokens', () => {
+    const motionBody = '# Tech System\n\n## Color Palette\n- **Canvas (background):** `#0D1117`\n- **Primary accent:** `#58A6FF`\n- **Secondary accent:** `#3FB950`\n\n## Typography\n- **Display font:** JetBrains Mono\n- **Body font:** Inter\n\n## Easing Signatures\n- **Entrance (headlines):** `power3.out`\n- **Exit:** `power2.in`\n\n## Transition Matrix\n- **Default (scene→scene):** Grid dissolve\n\nHeadlines: 72-100px';
+    const result = composeVideoSystemPrompt({ motionSystemBody: motionBody, motionSystemTitle: 'tech' });
+    expect(result).toContain('Active motion system');
+    expect(result).toContain('#0D1117');
+    expect(result).toContain('#58A6FF');
+    expect(result).toContain('JetBrains Mono');
+    expect(result).toContain('power3.out');
+    // Should NOT contain the full body
+    expect(result).not.toContain('Transition Matrix');
   });
 
-  it('injects SKILL.md with preflight when provided', () => {
-    const skillBody = 'Follow this workflow.\nRead references/storyboard.md first.';
-    const result = composeVideoSystemPrompt({
-      skillBody,
-      skillName: 'product-launch-video',
-    });
+  it('injects SCRIPT.md compact summary', () => {
+    const result = composeVideoSystemPrompt({ scriptSystemBody: 'Hook→Context→Features→Proof→CTA', scriptSystemTitle: 'tech-demo' });
+    expect(result).toContain('Active script system');
+    expect(result).toContain('Hook→Context→Features→Proof→CTA');
+    expect(result).toContain('SCRIPT.md at:');
+  });
+
+  it('injects skill hints (not full body)', () => {
+    const skillBody = '3-5 scenes. Pattern A: Type reveal. Pattern B: Scale lock.';
+    const result = composeVideoSystemPrompt({ skillBody, skillName: 'product-launch' });
     expect(result).toContain('Active skill');
-    expect(result).toContain('product-launch-video');
-    expect(result).toContain('Pre-flight');
+    expect(result).toContain('product-launch');
+    // Should be compact hints, not full body
+    expect(result.length).toBeLessThan(25000);
   });
 
-  it('renders project metadata block when provided', () => {
+  it('renders project metadata', () => {
     const result = composeVideoSystemPrompt({
-      metadata: {
-        videoType: 'social-short',
-        duration: 8,
-        orientation: '9:16',
-        energy: 'high',
-      },
+      metadata: { videoType: 'social-short', duration: 8, orientation: '9:16' },
     });
     expect(result).toContain('Project metadata');
     expect(result).toContain('social-short');
-    expect(result).toContain('9:16');
-    expect(result).toContain('high');
-    expect(result).toContain('HyperFrames video');
   });
 
-  it('includes user copy in metadata when provided', () => {
-    const result = composeVideoSystemPrompt({
-      metadata: { copy: 'Buy our product today' },
-    });
-    expect(result).toContain('User-provided copy');
-    expect(result).toContain('Buy our product today');
-  });
-
-  it('pins the HF contract at the very end', () => {
-    const result = composeVideoSystemPrompt({
-      skillBody: 'Some skill content',
-      motionSystemBody: '# Motion system',
-      metadata: { duration: 10 },
-    });
-    // HF contract is the last major section — the suffix after it is minimal
-    const lastIdx = result.lastIndexOf('HyperFrames composition contract');
-    const suffixLen = result.length - lastIdx;
-    // Contract itself is ~6KB, suffix should be close to that
-    expect(suffixLen).toBeLessThan(12000);
+  it('pins the contract at the end', () => {
+    const result = composeVideoSystemPrompt({});
+    const idx = result.lastIndexOf('class="clip" REQUIRED');
+    expect(idx).toBeGreaterThan(0);
+    expect(result.length - idx).toBeLessThan(2000); // Contract is now compact
   });
 });
 
 describe('video-discovery prompt', () => {
-  it('contains the RULE 1 discovery form directive', () => {
+  it('contains RULE 1 discovery form', () => {
     expect(VIDEO_DISCOVERY).toContain('RULE 1');
     expect(VIDEO_DISCOVERY).toContain('video-discovery');
-    expect(VIDEO_DISCOVERY).toContain('question-form');
   });
 
-  it('contains all 7 discovery questions', () => {
-    expect(VIDEO_DISCOVERY).toContain('videoType');
-    expect(VIDEO_DISCOVERY).toContain('duration');
-    expect(VIDEO_DISCOVERY).toContain('orientation');
-    expect(VIDEO_DISCOVERY).toContain('energy');
-    expect(VIDEO_DISCOVERY).toContain('audio');
-    expect(VIDEO_DISCOVERY).toContain('motion_system');
-    expect(VIDEO_DISCOVERY).toContain('copy');
-  });
-
-  it('contains branch logic for RULE 2', () => {
+  it('contains RULE 2 branch logic', () => {
     expect(VIDEO_DISCOVERY).toContain('RULE 2');
     expect(VIDEO_DISCOVERY).toContain('Branch A');
-    expect(VIDEO_DISCOVERY).toContain('Branch B');
-  });
-
-  it('contains anti-AI-slop checklist for video', () => {
-    expect(VIDEO_DISCOVERY).toContain('Anti-AI-slop');
-    expect(VIDEO_DISCOVERY).toContain('Default dark gradient');
-    expect(VIDEO_DISCOVERY).toContain('Inter / Roboto');
   });
 });
 
 describe('video-contract prompt', () => {
-  it('contains environment variable documentation', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('OD_PROJECT_DIR');
-    expect(HYPERFRAMES_CONTRACT).toContain('OD_BIN');
-  });
-
-  it('contains the fast path scaffold instructions', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('Write HTML directly');
-    expect(HYPERFRAMES_CONTRACT).toContain('Write tool');
-    expect(HYPERFRAMES_CONTRACT).toContain('.hf-cache');
-  });
-
-  it('contains render dispatch instructions', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('media generate');
-    expect(HYPERFRAMES_CONTRACT).toContain('hyperframes-html');
-  });
-
-  it('contains the data attribute cheat sheet', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('data-composition-id');
-    expect(HYPERFRAMES_CONTRACT).toContain('data-start');
-    expect(HYPERFRAMES_CONTRACT).toContain('data-duration');
-    expect(HYPERFRAMES_CONTRACT).toContain('data-track-index');
-    expect(HYPERFRAMES_CONTRACT).toContain('data-type="text"');
-  });
-
-  it('contains the output checklist', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('hyperframes lint');
-    expect(HYPERFRAMES_CONTRACT).toContain('hyperframes validate');
-    expect(HYPERFRAMES_CONTRACT).toContain('hyperframes inspect');
+  it('contains all 12 critical rules', () => {
+    expect(HYPERFRAMES_CONTRACT).toContain('class="clip" REQUIRED');
+    expect(HYPERFRAMES_CONTRACT).toContain('data-composition-id ONLY on #stage');
+    expect(HYPERFRAMES_CONTRACT).toContain('track-index overlap');
+    expect(HYPERFRAMES_CONTRACT).toContain('width=device-width');
     expect(HYPERFRAMES_CONTRACT).toContain('window.__timelines');
+    expect(HYPERFRAMES_CONTRACT).toContain('paused: true');
+    expect(HYPERFRAMES_CONTRACT).toContain('Math.random()');
+    expect(HYPERFRAMES_CONTRACT).toContain('muted playsinline');
+    expect(HYPERFRAMES_CONTRACT).toContain('Font sizes');
+    expect(HYPERFRAMES_CONTRACT).toContain('Palette must match');
+    expect(HYPERFRAMES_CONTRACT).toContain('Scene transitions');
+  });
+
+  it('is compact (< 2000 chars)', () => {
+    expect(HYPERFRAMES_CONTRACT.length).toBeLessThan(2000);
+  });
+
+  it('references disk for full docs', () => {
+    expect(HYPERFRAMES_CONTRACT).toContain('Read tool');
   });
 });

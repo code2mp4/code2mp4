@@ -56,23 +56,25 @@ export function composeVideoSystemPrompt({
 
   // Layer 2: Motion design system (analogous to DESIGN.md)
   if (motionSystemBody && motionSystemBody.trim().length > 0) {
+    // Extract compact tokens: palette + fonts + easing (first 800 chars of body is usually enough)
+    // or use the first 4 key sections
+    const tokens = extractMotionTokens(motionSystemBody, motionSystemTitle);
     parts.push(
-      `\n\n## Active motion design system${motionSystemTitle ? ` — ${motionSystemTitle}` : ''}\n\nTreat the following MOTION.md as authoritative for palette, typography, easing signatures, transition preferences, and timing rules. Bind these tokens into the composition's \`:root\` or \`<style>\` block before generating any layout. Do not invent colors, fonts, or easing curves outside this palette.\n\n${motionSystemBody.trim()}`,
+      `\n\n## Active motion system${motionSystemTitle ? ` — ${motionSystemTitle}` : ''}\n\nBind these tokens into the composition:\n\n${tokens}\n\nFull MOTION.md available at: motion-systems/${motionSystemTitle || 'tech'}/MOTION.md — Read it for detailed rules.`,
     );
   }
 
   // Layer 2.5: Script system (narrative constraints — compact summary)
   if (scriptSystemBody && scriptSystemBody.trim().length > 0) {
     parts.push(
-      `\n\n## Active script system${scriptSystemTitle ? ` — ${scriptSystemTitle}` : ''}\n\nFollow this narrative structure. The full SCRIPT.md is available on disk for detailed scene templates, hook patterns, and anti-slop checklist — read it via your Read tool if you need more detail. Summary:\n\n${scriptSystemBody.trim()}`,
+      `\n\n## Active script system${scriptSystemTitle ? ` — ${scriptSystemTitle}` : ''}\n\nNarrative structure:\n${scriptSystemBody.trim()}\n\nFull SCRIPT.md at: script-systems/${scriptSystemTitle || 'tech-demo'}/SCRIPT.md`,
     );
   }
 
-  // Layer 3: Skill (video-specific workflow)
+  // Layer 3: Skill (video-specific workflow — compact reference)
   if (skillBody && skillBody.trim().length > 0) {
-    const preflight = deriveVideoPreflight(skillBody);
     parts.push(
-      `\n\n## Active skill${skillName ? ` — ${skillName}` : ''}\n\nFollow this skill's workflow exactly.${preflight}\n\n${skillBody.trim()}`,
+      `\n\n## Active skill${skillName ? ` — ${skillName}` : ''}\n\nScene count, animation patterns, and checklist are in the full SKILL.md at video-skills/${skillName || 'product-launch'}/SKILL.md — Read it before building. Key pointers:${extractSkillHints(skillBody)}`,
     );
   }
 
@@ -172,4 +174,42 @@ function deriveVideoPreflight(skillBody: string): string {
     refs.push('`references/timing.md`');
   if (refs.length === 0) return '';
   return ` **Pre-flight (do this before any other tool):** Read ${refs.join(', ')}. The template defines the composition skeleton; the storyboard is the only acceptable scene structure; the checklist is your pre-render gate.`;
+}
+
+function extractMotionTokens(body: string, title?: string): string {
+  const lines: string[] = [];
+  // Extract palette (Canvas + Accent + Accent 2)
+  const canvas = body.match(/\*\*Canvas.*?:\*\*\s*`(#[0-9a-fA-F]{6})`/);
+  const accent = body.match(/\*\*Primary accent.*?:\*\*\s*`(#[0-9a-fA-F]{6})`/);
+  const accent2 = body.match(/\*\*Secondary accent.*?:\*\*\s*`(#[0-9a-fA-F]{6})`/);
+  const display = body.match(/\*\*Display font:\*\*\s*(.+?)(?:\n|$)/);
+  const bodyFont = body.match(/\*\*Body font:\*\*\s*(.+?)(?:\n|$)/);
+  const entrance = body.match(/Entrance.*?:\s*`([^`]+)`/);
+  const exit = body.match(/Exit.*?:\s*`([^`]+)`/);
+  const transition = body.match(/Default.*?:\s*(.+?)(?:\n|$)/);
+  const headlineSize = body.match(/headlines[,:]\s*(\d+)[–-](\d+)px/);
+
+  if (canvas) lines.push(`Canvas: ${canvas[1]}`);
+  if (accent) lines.push(`Accent: ${accent[1]}`);
+  if (accent2) lines.push(`Accent 2: ${accent2[1]}`);
+  if (display) lines.push(`Display font: ${display[1].trim()}`);
+  if (bodyFont) lines.push(`Body font: ${bodyFont[1].trim()}`);
+  if (entrance) lines.push(`Entrance ease: ${entrance[1]}`);
+  if (exit) lines.push(`Exit ease: ${exit[1]}`);
+  if (transition) lines.push(`Transition: ${transition[1].trim()}`);
+  if (headlineSize) lines.push(`Headline size: ${headlineSize[1]}-${headlineSize[2]}px`);
+
+  return lines.length > 0 ? lines.join('\n') : `Use the "${title || 'motion system'}" palette from MOTION.md`;
+}
+
+function extractSkillHints(body: string): string {
+  const lines: string[] = [];
+  const sceneCount = body.match(/(\d)[–-](\d)\s*scenes/i);
+  const patterns = body.match(/Pattern\s+[A-D][.:]\s*(.+?)(?:\n|$)/gi);
+  if (sceneCount) lines.push(`  ${sceneCount[1]}-${sceneCount[2]} scenes`);
+  if (patterns) {
+    const names = patterns.map(p => p.replace(/Pattern\s+[A-D][.:]\s*/, '').trim()).slice(0, 3);
+    lines.push(`  Patterns: ${names.join(', ')}`);
+  }
+  return lines.length > 0 ? '\n' + lines.join('\n') : '';
 }
