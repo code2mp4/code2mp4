@@ -1,12 +1,12 @@
-# Contributing to Open Video
+# Contributing to Code2MP4
 
-Thank you for your interest in contributing! Open Video is an open-source project that welcomes contributions of all kinds — code, docs, motion systems, video skills, templates, and bug reports.
+Thank you for your interest in contributing! Code2MP4 is an open-source project that welcomes contributions of all kinds — code, docs, motion systems, video skills, templates, and bug reports.
 
 ## Getting started
 
 ```bash
-git clone https://github.com/openvideo-ai/openvideo.git
-cd open-video
+git clone https://github.com/code2mp4/code2mp4.git
+cd code2mp4
 pnpm install
 pnpm dev       # start the server
 pnpm test      # run tests

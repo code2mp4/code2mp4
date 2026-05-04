@@ -3,7 +3,7 @@ import { navigate, useRoute } from './router';
 import { EntryView } from './components/EntryView';
 import { ProjectView } from './components/ProjectView';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import type { VideoProjectConfig } from '@open-video/contracts';
+import type { VideoProjectConfig } from '@code2mp4/contracts';
 
 interface ProjectItem {
   id: string;

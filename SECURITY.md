@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Open Video, please report it privately.
+If you discover a security vulnerability in Code2MP4, please report it privately.
 
 **Do not open a public issue.**
 

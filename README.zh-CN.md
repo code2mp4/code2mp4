@@ -1,8 +1,8 @@
-# Open Video
+# Code2MP4
 
 > **AI 驱动的视频制作 — 当设计智能体遇见动效图形。**
 
-Open Video 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames][hf] 的 HTML-to-MP4 渲染引擎。描述你想要的视频——产品发布、社媒短片、品牌片头——AI Agent 会编写 HyperFrames 合成文件，渲染为 MP4，并将结果流式传输回你的浏览器。**每一层都可替换、可定制（BYOK）。**
+Code2MP4 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames][hf] 的 HTML-to-MP4 渲染引擎。描述你想要的视频——产品发布、社媒短片、品牌片头——AI Agent 会编写 HyperFrames 合成文件，渲染为 MP4，并将结果流式传输回你的浏览器。**每一层都可替换、可定制（BYOK）。**
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" /></a>
@@ -20,7 +20,7 @@ Open Video 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames
 
 今天的 AI 视频生成分为两极：写实文本生成视频（Kling、Veo、Sora）给你一个无法编辑的黑箱输出，手工时间线编辑器（After Effects、DaVinci）给你控制权但要求专业能力。没有一个开源工具能让你通过文本描述，让 AI Agent 来编排、动画化并渲染一个视频——同时保持源码完全可见和可编辑。
 
-**Open Video 填补了这个空白。** 它融合了两个经过验证的开源范式：
+**Code2MP4 填补了这个空白。** 它融合了两个经过验证的开源范式：
 
 - **[Open Design][od]** 教会我们如何将任何编程 Agent CLI 转变为设计引擎：通过 Prompt 编排、交互式追问表单、技能驱动的工作流和基于文件系统的项目模型。
 - **[HyperFrames][hf]** 教会我们视频可以当作单个 HTML 文件来创作——用 `data-*` 属性控制时间轴，用 GSAP 做动画，通过 Puppeteer + FFmpeg 帧精确渲染。
@@ -47,8 +47,8 @@ Open Video 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames
 ### 三条命令启动
 
 ```bash
-git clone https://github.com/openvideo-ai/openvideo.git
-cd open-video
+git clone https://github.com/code2mp4/code2mp4.git
+cd code2mp4
 pnpm install && pnpm dev
 ```
 
@@ -78,16 +78,16 @@ pnpm install && pnpm dev
 
 ## 致谢
 
-Open Video 能够存在，是因为以下项目的开创性工作：
+Code2MP4 能够存在，是因为以下项目的开创性工作：
 
 ### Open Design
-**[nexu-io/open-design](https://github.com/nexu-io/open-design)** — Claude Design 的开源替代方案。Open Design 开创了 Open Video 继承的架构：**Prompt 编排**（discovery → identity → design system → skill → metadata 的分层组合模式）、**Agent 自动检测**（PATH 扫描 13 个编程 Agent CLI）、**交互式追问表单**（XML 块在前端解析为实时表单）、**`agents.ts` 模式**、**`runs.ts` SSE 管理器**以及**skill + design-system 加载器模式**。我们的 `video-discovery.ts` 是 `discovery.ts` 的概念适配，`composeVideoSystemPrompt` 镜像了 `composeSystemPrompt`。没有 Open Design 的 daemon-first、BYOK 架构，就不会有 Open Video。
+**[nexu-io/open-design](https://github.com/nexu-io/open-design)** — Claude Design 的开源替代方案。Open Design 开创了 Code2MP4 继承的架构：**Prompt 编排**（discovery → identity → design system → skill → metadata 的分层组合模式）、**Agent 自动检测**（PATH 扫描 13 个编程 Agent CLI）、**交互式追问表单**（XML 块在前端解析为实时表单）、**`agents.ts` 模式**、**`runs.ts` SSE 管理器**以及**skill + design-system 加载器模式**。我们的 `video-discovery.ts` 是 `discovery.ts` 的概念适配，`composeVideoSystemPrompt` 镜像了 `composeSystemPrompt`。没有 Open Design 的 daemon-first、BYOK 架构，就不会有 Code2MP4。
 
 ### HyperFrames  
-**[heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)** — HTML-first 视频合成和渲染。HyperFrames 是让 Open Video 成为可能的渲染引擎：视频可以当作单个 HTML 文件来创作，用 `data-*` 属性控制时间轴，通过 Puppeteer + FFmpeg 帧精确渲染。我们使用 HF 的 CLI 命令、`<hyperframes-player>` web component、`visual-styles.md` 模式（启发了 `MOTION.md` 格式）以及 `registry.json` 区块生态。
+**[heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)** — HTML-first 视频合成和渲染。HyperFrames 是让 Code2MP4 成为可能的渲染引擎：视频可以当作单个 HTML 文件来创作，用 `data-*` 属性控制时间轴，通过 Puppeteer + FFmpeg 帧精确渲染。我们使用 HF 的 CLI 命令、`<hyperframes-player>` web component、`visual-styles.md` 模式（启发了 `MOTION.md` 格式）以及 `registry.json` 区块生态。
 
 ### GSAP
-**[GreenSock/GSAP](https://gsap.com)** — 驱动每个 HF 合成文件的动画引擎。Open Video 中所有视频运镜都通过 GSAP 时间轴运行。
+**[GreenSock/GSAP](https://gsap.com)** — 驱动每个 HF 合成文件的动画引擎。Code2MP4 中所有视频运镜都通过 GSAP 时间轴运行。
 
 ### 其他启发
 - **[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)** — 设计哲学（Junior-Designer 工作流、反 AI 烂片检查清单、5 维自我批评）
@@ -98,7 +98,7 @@ Open Video 能够存在，是因为以下项目的开创性工作：
 
 ## 许可证
 
-Apache 2.0 © 2026 Open Video contributors。详见 [LICENSE](LICENSE)。
+Apache 2.0 © 2026 Code2MP4 contributors。详见 [LICENSE](LICENSE)。
 
 [od]: https://github.com/nexu-io/open-design
 [hf]: https://github.com/heygen-com/hyperframes

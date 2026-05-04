@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { VideoProjectConfig } from '@open-video/contracts';
+import type { VideoProjectConfig } from '@code2mp4/contracts';
 import { MotionSystemPicker } from './MotionSystemPicker';
 import { MusicPicker } from './MusicPicker';
 

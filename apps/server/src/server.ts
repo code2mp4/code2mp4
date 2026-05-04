@@ -66,7 +66,7 @@ export async function createServer(): Promise<express.Express> {
   app.get('/api/health', async (_req, res) => {
     const sys = await checkSystemRequirements();
     res.json({
-      status: 'ok', name: 'open-video', version: '0.1.0',
+      status: 'ok', name: 'code2mp4', version: '0.1.0',
       system: sys, detectedAgents: agents.filter(a => a.detected).length,
       dbProjects: DB.listProjects(db).length,
     });

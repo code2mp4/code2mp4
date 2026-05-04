@@ -1,5 +1,5 @@
 {
-  "name": "@open-video/server",
+  "name": "@code2mp4/server",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Open Video
+about: Suggest an idea for Code2MP4
 title: ''
 labels: enhancement
 assignees: ''

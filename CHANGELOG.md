@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to Open Video are documented in this file.
+All notable changes to Code2MP4 are documented in this file.
 
 ## [0.1.0] — 2026-05-04
 
 ### 🎬 Initial Release
 
-First public release of Open Video — AI-driven video production combining Open Design's agent orchestration with HyperFrames' HTML-to-MP4 rendering.
+First public release of Code2MP4 — AI-driven video production combining Open Design's agent orchestration with HyperFrames' HTML-to-MP4 rendering.
 
 ### Core
 - **6-layer prompt stack**: video discovery → identity → MOTION.md → SKILL.md → metadata → HyperFrames contract

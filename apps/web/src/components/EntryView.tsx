@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { VideoProjectConfig } from '@open-video/contracts';
+import type { VideoProjectConfig } from '@code2mp4/contracts';
 import { NewVideoProjectPanel } from './NewVideoProjectPanel';
 import { QuickChatPanel } from './QuickChatPanel';
 import { AgentPicker } from './AgentPicker';

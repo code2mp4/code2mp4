@@ -1,8 +1,8 @@
-# Open Video
+# Code2MP4
 
 > **AI-driven video production — where design agents meet motion graphics.**
 
-Open Video combines [Open Design][od]'s AI agent orchestration with [HyperFrames][hf]' HTML-to-MP4 rendering engine. Describe what you want — a product launch, a social reel, a brand intro — and an AI coding agent writes a HyperFrames composition, renders it to MP4, and streams the result back to your browser. **BYOK at every layer.**
+Code2MP4 combines [Open Design][od]'s AI agent orchestration with [HyperFrames][hf]' HTML-to-MP4 rendering engine. Describe what you want — a product launch, a social reel, a brand intro — and an AI coding agent writes a HyperFrames composition, renders it to MP4, and streams the result back to your browser. **BYOK at every layer.**
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" /></a>
@@ -20,7 +20,7 @@ Open Video combines [Open Design][od]'s AI agent orchestration with [HyperFrames
 
 AI video generation today falls into two camps: photoreal text-to-video (Kling, Veo, Sora) that gives you a black-box output you can barely edit, and manual timeline editors (After Effects, DaVinci) that give you control but demand expertise. There is no open tool that lets an AI agent compose, animate, and render a video from a text prompt — with full source visibility and editability.
 
-**Open Video fills this gap.** It combines two proven open-source paradigms:
+**Code2MP4 fills this gap.** It combines two proven open-source paradigms:
 
 - **[Open Design][od]** taught us how to turn any coding-agent CLI into a design engine through prompt stacking, interactive discovery forms, skill-driven workflows, and a real filesystem-backed project model.
 - **[HyperFrames][hf]** taught us that video can be authored as a single HTML file — with `data-*` attributes for timing and GSAP for animation — and rendered frame-accurately via Puppeteer + FFmpeg.
@@ -30,7 +30,7 @@ The result: you type "Make a 15-second product launch video", the agent asks cla
 ## Demo
 
 <p align="center">
-  <img src="docs/demo-preview.gif" alt="Open Video Demo" width="640" />
+  <img src="docs/demo-preview.gif" alt="Code2MP4 Demo" width="640" />
 </p>
 <p align="center"><b>60s demo</b> · 1920×1080 · background music + SFX · <a href="docs/demo.mp4">Download MP4</a></p>
 
@@ -94,8 +94,8 @@ Express Server (port 7456)
 ### 3 commands to start
 
 ```bash
-git clone https://github.com/openvideo-ai/openvideo.git
-cd open-video
+git clone https://github.com/code2mp4/code2mp4.git
+cd code2mp4
 pnpm install && pnpm dev
 ```
 
@@ -161,7 +161,7 @@ Server returns: { file: { name: "output.mp4", size: 2450000, kind: "video" } }
 ## Directory layout
 
 ```
-open-video/
+code2mp4/
 ├── apps/
 │   ├── web/                   # Next.js 16 SPA frontend
 │   │   └── src/components/    # EntryView, ProjectView, VideoPreview, FileWorkspace, MotionSystemPicker
@@ -229,24 +229,24 @@ pnpm status           # Check server health
 
 Filter by package:
 ```bash
-pnpm --filter @open-video/server typecheck
-pnpm --filter @open-video/web build
+pnpm --filter @code2mp4/server typecheck
+pnpm --filter @code2mp4/web build
 ```
 
 ---
 
 ## Standing on shoulders
 
-Open Video exists because of the groundbreaking work of these projects:
+Code2MP4 exists because of the groundbreaking work of these projects:
 
 ### Open Design
-**[nexu-io/open-design](https://github.com/nexu-io/open-design)** — The open-source alternative to Claude Design. Open Design pioneered the architecture that Open Video inherits: **prompt stacking** (discovery → identity → design system → skill → metadata — the exact layered composition pattern), **agent auto-detection** (scanning PATH for 13 coding-agent CLIs), **interactive question forms** (XML blocks that the frontend parses into live forms before the agent writes a single pixel), **the `agents.ts` pattern** for buildArgs/streamFormat per CLI, the **`runs.ts` SSE manager**, and the **skill + design-system loader** pattern (YAML frontmatter parsing from `SKILL.md` and `DESIGN.md`). Our `video-discovery.ts` is a direct conceptual adaptation of their `discovery.ts`. Our 6-layer `composeVideoSystemPrompt` mirrors their `composeSystemPrompt`. Without Open Design's daemon-first, BYOK-at-every-layer architecture, Open Video would not exist.
+**[nexu-io/open-design](https://github.com/nexu-io/open-design)** — The open-source alternative to Claude Design. Open Design pioneered the architecture that Code2MP4 inherits: **prompt stacking** (discovery → identity → design system → skill → metadata — the exact layered composition pattern), **agent auto-detection** (scanning PATH for 13 coding-agent CLIs), **interactive question forms** (XML blocks that the frontend parses into live forms before the agent writes a single pixel), **the `agents.ts` pattern** for buildArgs/streamFormat per CLI, the **`runs.ts` SSE manager**, and the **skill + design-system loader** pattern (YAML frontmatter parsing from `SKILL.md` and `DESIGN.md`). Our `video-discovery.ts` is a direct conceptual adaptation of their `discovery.ts`. Our 6-layer `composeVideoSystemPrompt` mirrors their `composeSystemPrompt`. Without Open Design's daemon-first, BYOK-at-every-layer architecture, Code2MP4 would not exist.
 
 ### HyperFrames
-**[heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)** — HTML-first video composition and rendering. HyperFrames is the rendering engine that makes Open Video possible: the insight that a video can be authored as a **single HTML file** with `data-*` attributes for timing and GSAP for animation, and rendered **frame-accurately** via Puppeteer + FFmpeg. We use HyperFrames' CLI (`npx hyperframes {init,lint,validate,inspect,render,tts,transcribe}`), its `<hyperframes-player>` web component for preview, its `visual-styles.md` pattern (which inspired our `MOTION.md` format), and its `registry.json` block ecosystem. HyperFrames ships as a peer dependency and is called through our `hyperframes-bridge.ts` and `media.ts` render pipeline.
+**[heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)** — HTML-first video composition and rendering. HyperFrames is the rendering engine that makes Code2MP4 possible: the insight that a video can be authored as a **single HTML file** with `data-*` attributes for timing and GSAP for animation, and rendered **frame-accurately** via Puppeteer + FFmpeg. We use HyperFrames' CLI (`npx hyperframes {init,lint,validate,inspect,render,tts,transcribe}`), its `<hyperframes-player>` web component for preview, its `visual-styles.md` pattern (which inspired our `MOTION.md` format), and its `registry.json` block ecosystem. HyperFrames ships as a peer dependency and is called through our `hyperframes-bridge.ts` and `media.ts` render pipeline.
 
 ### GSAP
-**[GreenSock/GSAP](https://gsap.com)** — The animation engine that powers every HyperFrames composition. All video motion in Open Video runs through GSAP timelines (`gsap.timeline({ paused: true })`), using GSAP's easing library (`power3.out`, `back.out(1.7)`, `elastic.out(1,0.3)`), and GSAP's deterministic seek model that makes frame-accurate rendering possible.
+**[GreenSock/GSAP](https://gsap.com)** — The animation engine that powers every HyperFrames composition. All video motion in Code2MP4 runs through GSAP timelines (`gsap.timeline({ paused: true })`), using GSAP's easing library (`power3.out`, `back.out(1.7)`, `elastic.out(1,0.3)`), and GSAP's deterministic seek model that makes frame-accurate rendering possible.
 
 ### Additional inspiration
 - **[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)** — Design philosophy (Junior-Designer workflow, anti-AI-slop checklist, 5-dimension self-critique) that shaped our discovery and philosophy directives.
@@ -268,7 +268,7 @@ pnpm typecheck && pnpm build && pnpm test
 
 ## License
 
-Apache 2.0 © 2026 Open Video contributors. See [LICENSE](LICENSE) for details.
+Apache 2.0 © 2026 Code2MP4 contributors. See [LICENSE](LICENSE) for details.
 
 Third-party dependencies are used under their respective licenses. See [NOTICE](NOTICE) for attribution details.
 
