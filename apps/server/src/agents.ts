@@ -138,9 +138,9 @@ function defineOpencode(): AgentDef {
     detected: false,
     supportsExtraDirs: false,
     models: [{ id: 'default', label: 'Default (CLI config)' }],
-    buildArgs(_prompt: string, _cwd: string) {
-      // OpenCode reads from stdin, no -p flag needed
-      return ['--yes'];
+    buildArgs(_prompt: string, cwd: string) {
+      // OpenCode takes project dir as positional, reads prompt from stdin
+      return [cwd];
     },
   };
 }
