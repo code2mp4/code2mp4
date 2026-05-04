@@ -70,6 +70,41 @@ export function ProjectView({ projectId, onBack, selectedAgentId, onSelectAgent 
     return () => clearInterval(iv);
   }, [working]);
 
+  // Completion notification
+  useEffect(() => {
+    if (!working && msgs.length > 0 && statusLine === '') {
+      const last = msgs[msgs.length - 1];
+      if (last?.role === 'assistant' && last.content) {
+        // Desktop notification
+        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('Open Video — Agent finished', { body: 'Your video is ready', icon: '/favicon.ico' });
+        }
+        // Request permission for next time
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      }
+    }
+  }, [working, msgs.length]);
+
+  // Reattach to running agent on page refresh
+  useEffect(() => {
+    fetch('/api/runs')
+      .then(r => r.json())
+      .then((runs: Array<{ id: string; projectId: string; status: string }>) => {
+        const activeRun = runs.find(r => r.projectId === projectId && r.status === 'running');
+        if (activeRun) {
+          setWorking(true);
+          startTimeRef.current = Date.now() - 5000; // approximate
+          setStatusLine('Reconnecting to agent...');
+          const aid = crypto.randomUUID();
+          setMsgs(prev => [...prev, { id: aid, role: 'assistant', content: '' }]);
+          connect(activeRun.id, aid);
+        }
+      })
+      .catch(() => {});
+  }, [projectId]);
+
   async function loadConvs() {
     const convs = await fetch(`/api/projects/${projectId}/conversations`).then(r => r.json());
     setConvs(convs);
