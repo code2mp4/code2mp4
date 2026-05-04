@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * VideoPreview — sandboxed player for HyperFrames compositions and rendered MP4s.
@@ -8,27 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  *   "design"   — <hyperframes-player> web component (timeline, seek, GSAP playback)
  *   "rendered" — <video> tag for final MP4
  */
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'hyperframes-player': React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          src?: string;
-          srcdoc?: string;
-          controls?: boolean;
-          muted?: boolean;
-          autoplay?: boolean;
-          loop?: boolean;
-          width?: number;
-          height?: number;
-          ref?: React.Ref<HyperframesPlayerElement>;
-        },
-        HTMLElement
-      >;
-    }
-  }
-}
 
 interface HyperframesPlayerElement extends HTMLElement {
   play(): void;
@@ -159,13 +138,13 @@ export function VideoPreview({
             onPause={() => setPlaying(false)}
           />
         ) : html ? (
-          <hyperframes-player
-            ref={playerRef as React.Ref<HyperframesPlayerElement>}
-            srcdoc={html}
-            controls={false}
-            muted={true}
-            style={styles.media}
-          />
+          React.createElement('hyperframes-player', {
+            ref: playerRef as React.Ref<HyperframesPlayerElement>,
+            srcdoc: html,
+            controls: false,
+            muted: true,
+            style: styles.media,
+          } as Record<string, unknown>)
         ) : (
           <div style={styles.empty}>
             <span style={{ fontSize: 40 }}>🎬</span>
