@@ -1,0 +1,26 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source files
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Generated files
+*.sqlite binary
+*.mp4 binary
+*.wav binary
+*.png binary
+*.jpg binary
+*.svg binary
+
+# Declare linguist overrides for accurate GitHub stats
+*.md linguist-detectable=true
+SKILL.md linguist-language=Markdown
+MOTION.md linguist-language=Markdown
+pnpm-lock.yaml linguist-generated=true

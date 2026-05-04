@@ -1,13 +1,13 @@
 # Open Video — AI-driven video production
 
-Open Video combines Open Design's AI agent orchestration with HyperFrames'
-HTML-first video rendering. The AI agent writes HyperFrames-compatible HTML
-compositions guided by video-specific prompt discovery, motion design systems,
-and composable video skills. The result is rendered to MP4 by HyperFrames.
+Open Video combines [Open Design][od]'s AI agent orchestration with [HyperFrames][hf]' HTML-first video rendering. The AI agent writes HyperFrames-compatible HTML compositions guided by video-specific prompt discovery, motion design systems, and composable video skills. The result is rendered to MP4 by HyperFrames.
 
 🏗 **Production-grade**: 4 agents auto-detected, 5 motion systems, 6 video skills,
 SSE streaming, agent run lifecycle management, HyperFrames render pipeline,
-SQLite persistence, `od` CLI dispatcher.
+SQLite persistence, `od` CLI dispatcher, 49 tests, CI.
+
+[od]: https://github.com/nexu-io/open-design
+[hf]: https://github.com/heygen-com/hyperframes
 
 ## Architecture
 
