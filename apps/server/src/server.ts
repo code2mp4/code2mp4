@@ -229,11 +229,12 @@ export async function createServer(): Promise<express.Express> {
   });
 
   app.get('/api/projects/:id/files/:fileName(*)', async (req, res) => {
+    const fileName = (req.params as Record<string, string>)['fileName(*)'] || req.params.fileName || '';
     try {
-      const content = await FILES.readProjectFile(PROJECTS_DIR, req.params.id, req.params.fileName);
+      const content = await FILES.readProjectFile(PROJECTS_DIR, req.params.id, fileName);
       if (!content) { res.status(404).json({ error: 'File not found' }); return; }
       const file = await FILES.listProjectFiles(PROJECTS_DIR, req.params.id)
-        .then(files => files.find(f => f.path === req.params.fileName));
+        .then(files => files.find(f => f.path === fileName));
       res.setHeader('Content-Type', file?.mime ?? 'application/octet-stream');
       res.send(content);
     } catch {
@@ -242,17 +243,19 @@ export async function createServer(): Promise<express.Express> {
   });
 
   app.post('/api/projects/:id/files/:fileName(*)', async (req, res) => {
+    const fileName = (req.params as Record<string, string>)['fileName(*)'] || req.params.fileName || '';
     try {
       const content = req.body.content ?? req.body;
-      await FILES.writeProjectFile(PROJECTS_DIR, req.params.id, req.params.fileName, content);
-      res.json({ written: req.params.fileName });
+      await FILES.writeProjectFile(PROJECTS_DIR, req.params.id, fileName, content);
+      res.json({ written: fileName });
     } catch (err) {
       res.status(400).json({ error: 'Failed to write file', detail: String(err) });
     }
   });
 
   app.delete('/api/projects/:id/files/:fileName(*)', async (req, res) => {
-    const deleted = await FILES.deleteProjectFile(PROJECTS_DIR, req.params.id, req.params.fileName);
+    const fileName = (req.params as Record<string, string>)['fileName(*)'] || req.params.fileName || '';
+    const deleted = await FILES.deleteProjectFile(PROJECTS_DIR, req.params.id, fileName);
     res.json({ deleted });
   });
 
