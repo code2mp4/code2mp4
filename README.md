@@ -27,6 +27,15 @@ AI video generation today falls into two camps: photoreal text-to-video (Kling, 
 
 The result: you type "Make a 15-second product launch video", the agent asks clarifying questions (video type? duration? energy? audio needs?), scaffolds a HyperFrames composition, authors the animation, runs lint + validate + inspect, dispatches the render, and streams an MP4 back to your browser. The entire composition — HTML, CSS, GSAP timeline — is yours to edit.
 
+## Demo
+
+<p align="center">
+  <a href="docs/demo.mp4">
+    <img src="docs/demo-thumb.jpg" alt="Open Video Demo" width="640" />
+  </a>
+</p>
+<p align="center"><b>← Click to play the 60-second demo</b>（1920×1080 · H.264 · AAC · background music + SFX）</p>
+
 ---
 
 ## Architecture
