@@ -138,8 +138,9 @@ function defineOpencode(): AgentDef {
     detected: false,
     supportsExtraDirs: false,
     models: [{ id: 'default', label: 'Default (CLI config)' }],
-    buildArgs(prompt, cwd) {
-      return ['-p', prompt, '--yes'];
+    buildArgs(_prompt: string, _cwd: string) {
+      // OpenCode reads from stdin, no -p flag needed
+      return ['--yes'];
     },
   };
 }
