@@ -34,6 +34,7 @@ const MOTION_SYSTEMS_DIR = path.join(PROJECT_ROOT, 'motion-systems');
 const VIDEO_SKILLS_DIR = path.join(PROJECT_ROOT, 'video-skills');
 const TEMPLATES_DIR = path.join(PROJECT_ROOT, 'templates');
 const PROJECTS_DIR = path.join(PROJECT_ROOT, 'projects');
+const SCRIPT_SYSTEMS_DIR = path.join(PROJECT_ROOT, 'script-systems');
 const WEB_DIST = path.join(PROJECT_ROOT, 'apps', 'web', 'out');
 
 export { composeVideoSystemPrompt };
@@ -177,7 +178,6 @@ export async function createServer(): Promise<express.Express> {
   });
 
   // ── Script systems ─────────────────────────────────────────────────
-  const SCRIPT_SYSTEMS_DIR = path.join(PROJECT_ROOT, 'script-systems');
 
   app.get('/api/script-systems', async (_req, res) => {
     try {
