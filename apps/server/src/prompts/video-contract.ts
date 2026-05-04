@@ -145,14 +145,26 @@ and put elements directly in the stage:
 
 ### TTS integration (when the user wants voiceover)
 
+**Fast path (agent-side shell):**
 \`\`\`bash
-# Generate speech audio
+# Generate speech audio directly
 npx hyperframes tts "The narration text goes here" \\
-  --voice af_heart --output "\$COMP/narration.wav"
+  --voice af_heart --output "\$OD_PROJECT_DIR/narration.wav"
 
 # Or transcribe existing audio
-npx hyperframes transcribe "\$COMP/voiceover.mp3"
+npx hyperframes transcribe "\$OD_PROJECT_DIR/voiceover.mp3"
 # → produces transcript.json with word-level timestamps
+\`\`\`
+
+**Daemon dispatch (for unsupported environments):**
+\`\`\`bash
+out=\$(node "\$OD_BIN" media generate \\
+  --project "\$OD_PROJECT_ID" \\
+  --surface audio \\
+  --model hyperframes-tts \\
+  --output "narration.wav" \\
+  --prompt "The narration text" \\
+  --voice af_heart)
 \`\`\`
 
 ### Captions (when synced to audio)

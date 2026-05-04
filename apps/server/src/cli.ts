@@ -63,6 +63,9 @@ async function handleMediaGenerate(args: string[]): Promise<void> {
     length: 'number',
     fps: 'number',
     quality: 'string',
+    prompt: 'string',
+    voice: 'string',
+    speed: 'number',
   });
 
   const project = params.project;
@@ -85,6 +88,9 @@ async function handleMediaGenerate(args: string[]): Promise<void> {
     length: params.length,
     fps: params.fps,
     quality: params.quality ?? 'standard',
+    prompt: params.prompt,
+    voice: params.voice,
+    speed: params.speed,
   };
 
   try {

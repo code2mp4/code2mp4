@@ -42,12 +42,21 @@ export async function handleMediaGenerate(req: {
     length?: number;
     fps?: number;
     quality?: string;
+    prompt?: string;
+    voice?: string;
+    speed?: number;
   };
 }, res: Response): Promise<void> {
-  const { projectId, model, output, compositionDir, quality, fps } = req.body;
+  const { projectId, model, output, compositionDir, quality, fps, surface, prompt, voice, speed } = req.body;
 
   if (!projectId) {
     res.status(400).json({ error: 'projectId is required' });
+    return;
+  }
+
+  // ── Audio surface (TTS) ──────────────────────────────────────
+  if (surface === 'audio') {
+    handleTtsGenerate(res, projectId, output, prompt, voice, speed);
     return;
   }
 
@@ -152,6 +161,67 @@ export async function handleMediaWait(
   } else {
     res.end();
   }
+}
+
+// ── TTS handler ──────────────────────────────────────────────────────
+
+async function handleTtsGenerate(
+  res: Response,
+  projectId: string,
+  output: string,
+  prompt?: string,
+  voice?: string,
+  speed?: number,
+): Promise<void> {
+  if (!prompt) {
+    res.status(400).json({ error: '--prompt is required for TTS generation' });
+    return;
+  }
+
+  const { spawn } = await import('node:child_process');
+  const path = await import('node:path');
+  const fs = await import('node:fs/promises');
+
+  const projectsRoot = path.resolve(process.cwd(), 'projects');
+  const outputPath = path.join(projectsRoot, projectId, output || 'tts-output.wav');
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+
+  const args = ['hyperframes', 'tts', prompt, '--output', outputPath];
+  if (voice) args.push('--voice', voice);
+  if (speed) args.push('--speed', String(speed));
+
+  return new Promise((resolve) => {
+    const child = spawn('npx', args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    child.stderr?.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+
+    child.on('close', async (code) => {
+      if (code === 0) {
+        try {
+          const stats = await fs.stat(outputPath);
+          res.json({
+            file: { name: path.basename(outputPath), size: stats.size, kind: 'audio', mime: 'audio/wav' },
+          });
+        } catch {
+          res.status(500).json({ error: 'TTS completed but output file not found' });
+        }
+      } else {
+        res.status(500).json({ error: `TTS failed (exit ${code}): ${stderr.slice(0, 500)}` });
+      }
+      resolve();
+    });
+
+    child.on('error', (err) => {
+      res.status(500).json({ error: `Failed to spawn hyperframes tts: ${err.message}` });
+      resolve();
+    });
+  });
 }
 
 // ── Render task runner ────────────────────────────────────────────────
