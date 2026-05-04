@@ -88,6 +88,8 @@ ec=\$?
 
 4. **body must have explicit \`width\` and \`height\` matching the canvas.** \`body { width: 1920px; height: 1080px; overflow: hidden; }\` — these must match \`data-width\`/\`data-height\` on the stage div.
 
+5. **\`data-composition-id\` goes ONLY on the \`#stage\` div, NOT on \`<html>\`.** The HyperFrames producer reads dimensions from the FIRST element with \`data-composition-id\` in the DOM. If \`<html>\` has it without \`data-width\`/\`data-height\`, the producer falls back to portrait defaults (1080×1920). Always put \`data-composition-id\` exclusively on the stage div alongside its dimension attributes.
+
 ### Resolution presets
 
 | Resolution | Width | Height | \`data-resolution\` |
