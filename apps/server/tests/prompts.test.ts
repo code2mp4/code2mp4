@@ -117,8 +117,8 @@ describe('video-contract prompt', () => {
   });
 
   it('contains the fast path scaffold instructions', () => {
-    expect(HYPERFRAMES_CONTRACT).toContain('hyperframes init');
-    expect(HYPERFRAMES_CONTRACT).toContain('--example blank');
+    expect(HYPERFRAMES_CONTRACT).toContain('Write HTML directly');
+    expect(HYPERFRAMES_CONTRACT).toContain('Write tool');
     expect(HYPERFRAMES_CONTRACT).toContain('.hf-cache');
   });
 

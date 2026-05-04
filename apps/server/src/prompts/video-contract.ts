@@ -30,39 +30,37 @@ may hang under agent shell sandboxes — the daemon runs unsandboxed).
 
 ### Fast path (use this for 90% of requests)
 
-DO NOT write the composition HTML from scratch. The scaffold costs seconds;
-authoring from scratch costs minutes of model output.
+**IMPORTANT: Write HTML directly — do NOT use shell commands for authoring.**
+The agent's shell tool may block \`npx hyperframes\` commands due to sandbox restrictions.
+Use your **Write tool** to write \`index.html\` directly. The daemon handles rendering.
 
-\`\`\`bash
+\`\`\`
 # 1. Create a cache directory (dotfile prefix → hidden from project file listing)
-COMP="\$OD_PROJECT_DIR/.hf-cache/comp-\$(date +%s)"
+mkdir -p "$OD_PROJECT_DIR/.hf-cache/comp-$(date +%s)"
 
-# 2. Get an immediately-renderable scaffold
-npx hyperframes init "\$COMP" --example blank --skip-skills --non-interactive
-
-# 3. Edit ONLY \$COMP/index.html:
-#    - Change data-duration on root if non-default
-#    - Swap palette in <style> to match MOTION.md
-#    - Add 1-3 scene divs with text/imagery
-#    - Append matching GSAP tweens inside the existing timeline block
+# 2. Write the composition HTML directly using your Write tool → index.html
+#    - Set data-duration on root
+#    - Use palette from MOTION.md
+#    - Add scene divs with text/imagery  
+#    - Append GSAP tweens inside window.__timelines["main"] = gsap.timeline({paused:true})
 \`\`\`
 
 ### Render (daemon dispatch)
 
-The daemon renders for you. Dispatch via:
+After writing \`index.html\`, dispatch the render through the daemon:
 
 \`\`\`bash
-out=\$(node "\$OD_BIN" media generate \\
-  --project "\$OD_PROJECT_ID" \\
+mkdir -p "$OD_PROJECT_DIR/.hf-cache/comp-$(date +%s)"
+# Write index.html via your Write tool (NOT Bash)
+out=\$(node "$OD_BIN" media generate \\
+  --project "$OD_PROJECT_ID" \\
   --surface video \\
   --model hyperframes-html \\
   --output "output.mp4" \\
-  --composition-dir "\$COMP_REL")
+  --composition-dir "<the-comp-dir-you-created>")
 ec=\$?
-# Check exit code, loop wait if needed, etc.
+# Check exit code, loop wait if needed.
 \`\`\`
-
-See the full media-generation loop in the media generation contract above.
 
 ### Data attribute reference (cheat sheet)
 

@@ -18,7 +18,7 @@ You operate inside a filesystem-backed project: the project folder is your worki
 1. **Understand the video brief.** For new or ambiguous work, ask clarifying questions before authoring — what's the video type, duration, energy level, audio needs, brand context?
 2. **Explore provided resources.** Read the active MOTION.md (stacked below), any user-attached files, brand references, copy/script. Use file-listing and read tools liberally.
 3. **Plan with TodoWrite.** For anything beyond a one-shot fix, lay out a todo list before writing files. Update it live.
-4. **Scaffold from template.** Use \`npx hyperframes init --example blank\` — do not write the composition skeleton from scratch.
+4. **Scaffold from template.** Create a cache directory \`.hf-cache/\` using \`mkdir\`, then write \`index.html\` directly with your Write tool. Do NOT use \`npx hyperframes init\` — shell commands may be sandbox-blocked. Use the scene structure and GSAP patterns from this prompt.
 5. **Build layout end-state.** Position all elements at their most visible moment with static CSS. Then animate into/out of those positions with GSAP.
 6. **Lint + validate + render.** Run all three checks. Fix every error. Then render to MP4.
 7. **Finish.** Summarize briefly: what was produced, the filename, what's still open.

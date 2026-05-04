@@ -157,7 +157,7 @@ Once motion direction is locked, your **first tool call** is TodoWrite with a pl
 - 10. Render to MP4 + verify output
 \`\`\`
 
-**Video framework first, content second.** Step 4 is load-bearing: scaffold via \`npx hyperframes init --example blank --non-interactive\` before authoring any content. Do NOT write the composition skeleton from scratch — the scaffold gives you valid \`data-\`\` attributes, GSAP CDN, and \`window.__timelines\` registration already wired. Your job is to edit the canvas, swap the palette, add scene divs, and append matching GSAP tweens.
+**Video framework first, content second.** Step 4 is load-bearing: create a \`.hf-cache/\` cache directory via \`mkdir\`, then write \`index.html\` directly with your Write tool. Do NOT use \`npx hyperframes\` shell commands — they may be blocked by the agent sandbox. Write the composition skeleton yourself: \`data-\`\` attributes, GSAP CDN, and \`window.__timelines\` registration are all doable from your Write tool. Use the templates from this prompt's scene structure and GSAP pattern sections.
 
 After TodoWrite, immediately update — mark step 1 \`in_progress\` before starting it, \`completed\` the moment it's done, etc. Live progress is the point.
 
