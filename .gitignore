@@ -9,3 +9,4 @@ projects/
 *.sqlite-wal
 .DS_Store
 *.tsbuildinfo
+test-results/
