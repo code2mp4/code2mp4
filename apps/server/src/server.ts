@@ -25,6 +25,7 @@ import {
   inspectComposition,
 } from './renderer/hyperframes-bridge.js';
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
+import { listMusic, readMusicFile } from './music-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -144,6 +145,34 @@ export async function createServer(): Promise<express.Express> {
     } catch {
       res.status(404).json({ error: 'Template not found' });
     }
+  });
+
+  // ── Music library ──────────────────────────────────────────────────
+  const MUSIC_DIR = path.join(PROJECT_ROOT, 'music');
+
+  app.get('/api/music', async (req, res) => {
+    try {
+      const tracks = await listMusic(MUSIC_DIR);
+      const { style, mood } = req.query;
+      let filtered = tracks;
+      if (typeof style === 'string') filtered = filtered.filter(t => t.style === style);
+      if (typeof mood === 'string') filtered = filtered.filter(t => t.mood === mood);
+      res.json(filtered.map(t => ({
+        id: t.id, title: t.title, style: t.style, mood: t.mood,
+        bpm: t.bpm, durationSec: t.durationSec, license: t.license,
+        attribution: t.attribution, tags: t.tags, size: t.size,
+      })));
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.get('/api/music/:id/play', async (req, res) => {
+    const result = await readMusicFile(MUSIC_DIR, req.params.id);
+    if (!result) { res.status(404).json({ error: 'Track not found' }); return; }
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Length', result.track.size);
+    res.send(result.buffer);
   });
 
   // ── Projects (SQLite-backed) ──────────────────────────────────────
