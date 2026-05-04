@@ -113,16 +113,17 @@ function defineClaude(): AgentDef {
       { id: 'opus', label: 'Claude Opus 4' },
     ],
     buildArgs(_prompt: string, cwd: string, options?: { model?: string; imagePaths?: string[] }) {
+      // v0.1 proven: -p "message" = non-interactive, respond once
       const args = [
-        '-p',                        // read prompt from stdin (not CLI arg)
+        '-p',
         '--output-format', 'stream-json',
         '--verbose',
-        '--permission-mode', 'bypassPermissions',
+        '--permission-mode', 'acceptEdits',
+        '--add-dir', cwd,
       ];
       if (options?.model && options.model !== 'default') {
         args.push('--model', options.model);
       }
-      // --add-dir for each extra directory
       return args;
     },
   };
