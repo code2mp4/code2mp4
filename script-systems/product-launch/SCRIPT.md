@@ -2,6 +2,7 @@
 > Category: Marketing
 > Duration: 15-45s
 > Scenes: 4-5
+> Summary: Hero(product reveal+name,0-8s)→Feature1(benefit,8-16s)→Feature2(contrast,16-24s)→Specs(3specs grid staggered,24-32s)→CTA(command+URL,32-40s). ONE feature/scene, product name in hero AND CTA, emotional benefit > technical spec. Numbers in monospace with labels. Hook: product reveal from darkness, no text for 0.5s.
 
 ## Narrative Arc
 Hero → Feature 1 → Feature 2 → Specs → CTA

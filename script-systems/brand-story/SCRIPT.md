@@ -2,6 +2,7 @@
 > Category: Brand & Identity
 > Duration: 20-45s
 > Scenes: 4-6
+> Summary: Philosophy(big idea,slow,0-8s)→Problem(tension/gap,8-16s)→Solution(how we solve,16-26s)→Impact(aspirational vision,26-36s)→Identity(brand lockup+tagline,36-45s). Abstract concepts grounded in concrete metaphors. MAX 1 idea/scene, every scene quotable alone. Voice: philosophical,warm,human. No buzzwords(synergy,ecosystem,disruption). Arc: tension→release→resolution. Breathing room between every statement.
 
 ## Narrative Arc
 Philosophy → Problem → Solution → Impact → Identity

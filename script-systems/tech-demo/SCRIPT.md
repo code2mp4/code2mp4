@@ -2,6 +2,7 @@
 > Category: Developer & Engineering
 > Duration: 30-60s
 > Scenes: 5-6
+> Summary: Hook(title slam,0-5s)→Context(problem/value,5-15s)→Features(3items×5s,15-35s)→Proof(metrics,35-50s)→CTA(command+URL,50-60s). MAX 1 concept/scene, 15char headlines, 2 text elements visible at once. Voice: technical,precise,no marketing fluff. Numbers > adjectives. Anti-slop: no invented metrics, hook in first 1s, energy varies across arc.
 
 ## Narrative Arc
 Hook → Context → Features → Proof → CTA

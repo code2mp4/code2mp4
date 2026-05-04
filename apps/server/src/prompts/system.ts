@@ -61,10 +61,10 @@ export function composeVideoSystemPrompt({
     );
   }
 
-  // Layer 2.5: Script system (narrative constraints)
+  // Layer 2.5: Script system (narrative constraints — compact summary)
   if (scriptSystemBody && scriptSystemBody.trim().length > 0) {
     parts.push(
-      `\n\n## Active script system${scriptSystemTitle ? ` — ${scriptSystemTitle}` : ''}\n\nTreat the following SCRIPT.md as authoritative for narrative structure, information density, pacing, voice & tone, hook patterns, and scene templates. Plan your storyboard and copy following these constraints. Do not deviate from the prescribed arc, scene count, or information density limits. The SCRIPT.md determines WHAT to say and in WHAT ORDER — the MOTION.md determines HOW it looks.\n\n${scriptSystemBody.trim()}`,
+      `\n\n## Active script system${scriptSystemTitle ? ` — ${scriptSystemTitle}` : ''}\n\nFollow this narrative structure. The full SCRIPT.md is available on disk for detailed scene templates, hook patterns, and anti-slop checklist — read it via your Read tool if you need more detail. Summary:\n\n${scriptSystemBody.trim()}`,
     );
   }
 

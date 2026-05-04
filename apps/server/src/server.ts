@@ -51,7 +51,7 @@ export async function createServer(): Promise<express.Express> {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 
   const skillDirs = await listVideoSkillDirs(VIDEO_SKILLS_DIR);
-  const extraAllowedDirs = [MOTION_SYSTEMS_DIR, TEMPLATES_DIR, ...skillDirs].filter(fs.existsSync);
+  const extraAllowedDirs = [MOTION_SYSTEMS_DIR, SCRIPT_SYSTEMS_DIR, TEMPLATES_DIR, ...skillDirs].filter(fs.existsSync);
   // Track agent runs per project
   const projectRuns = new Map<string, string>();
 
@@ -355,7 +355,12 @@ export async function createServer(): Promise<express.Express> {
         motionBody = await readMotionSystem(MOTION_SYSTEMS_DIR, motionSystemId) ?? undefined;
       }
       if (scriptSystemId) {
-        scriptBody = await readScriptSystem(SCRIPT_SYSTEMS_DIR, scriptSystemId) ?? undefined;
+        const fullBody = await readScriptSystem(SCRIPT_SYSTEMS_DIR, scriptSystemId);
+        if (fullBody) {
+          // Extract compact summary (from the `> Summary:` field in frontmatter)
+          const summaryMatch = fullBody.match(/^>\s*Summary:\s*(.+?)\s*$/m);
+          scriptBody = summaryMatch?.[1] ?? fullBody.slice(0, 500);
+        }
       }
       if (skillId) {
         const skill = await readVideoSkill(VIDEO_SKILLS_DIR, skillId);

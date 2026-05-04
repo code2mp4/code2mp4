@@ -11,6 +11,7 @@ export interface ScriptSystemSummary {
   title: string;
   category: string;
   summary: string;
+  compactSummary: string;
   duration: string;
   scenes: number;
   body: string;
@@ -38,6 +39,7 @@ export async function listScriptSystems(root: string): Promise<ScriptSystemSumma
         title,
         category: extractField(raw, 'Category') ?? 'Uncategorized',
         summary: summarize(raw),
+        compactSummary: extractField(raw, 'Summary') ?? summarize(raw),
         duration: extractField(raw, 'Duration') ?? '30s',
         scenes: parseInt(extractField(raw, 'Scenes') ?? '5', 10),
         body: raw,
