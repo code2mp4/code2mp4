@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>incompetech error: 404 File Not Found</title>
+  <meta name="description" content="Custom graph paper generators and royalty-free music.">
+  <link rel="icon" href="/images/zicon.ico" type="image/x-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=Droid+Sans:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- New CSS -->
+  <link rel="stylesheet" href="/2025css/base.css">
+  <link rel="stylesheet" href="/2025css/layout.css">
+  <link rel="stylesheet" href="/2025css/components.css">
+  <link rel="stylesheet" href="/2025css/graphpaper.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+<a href="/" class="logo" aria-label="Incompetech">
+  <span class="logo-word">INC</span>
+  <span class="play-badge" aria-hidden="true">
+    <!-- Square badge; large centered triangle -->
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <!-- smaller badge -->
+  <rect x="18" y="18" width="64" height="64" rx="10" class="badge-rect"/>
+  <!-- same triangle size -->
+  <polygon points="34,24 34,76 78,50" class="badge-play"/>
+</svg>
+  </span>
+  <span class="logo-word">MPETECH</span>
+</a>
+
+    <!-- Main nav: keeps your existing UL structure -->
+    <nav class="main-nav">
+      <ul id="menu-main-menu" class="menu">
+        <li><a href="/music/royalty-free/music.html">Royalty-Free Music</a></li>
+        <li><a href="/music/royalty-free/faq.html">Music FAQ</a></li>
+        <li><a href="/music/royalty-free/licenses/">Music Licenses</a></li>
+        <li><a href="/graphpaper/">Graph Paper</a></li>
+        <li><a href="/gallimaufry/">Calendars and More</a></li>
+        <li><a href="/email.html">Contact</a></li>
+      </ul>
+    </nav>
+
+    <!-- Dark-mode toggle -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+  </div>
+</header>
+<main class="site-content container">
+
+
+
+
+
+
+ 
+
+
+<H1>awwww, <I>Man!</I></H1>
+
+<H2>404: Document not found</H2>
+
+
+<P>Yeah, the file you came for isn't here. It may still be on the site. Difficult to know at this point...</P>
+<P>There's really nothing to be done.</P>
+
+
+<div style="height: 400px;"></div>
+
+
+
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>&copy; 1997–2026 Incompetech Inc.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const root = document.documentElement;
+  const btn  = document.getElementById('theme-toggle');
+  const key  = 'theme';
+
+  const sysPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = localStorage.getItem(key) || (sysPrefersDark ? 'dark' : 'light');
+  setTheme(initial);
+
+  btn.addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+  function setTheme(mode) {
+    root.dataset.theme = mode;
+    localStorage.setItem(key, mode);
+    btn.textContent = mode === 'dark' ? '🌙' : '☀️';
+    btn.setAttribute('aria-label', mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+})();
+</script>
+</body>
+</html>
+
+
+

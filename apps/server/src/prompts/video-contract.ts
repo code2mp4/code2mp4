@@ -170,15 +170,15 @@ Embed a track in your composition:
 \`\`\`html
 <audio id="bg-music" data-start="0" data-duration="60"
        data-track-index="50" data-volume="0.3"
-       src="music/ambient-tech.wav"></audio>
+       src="music/ambient-calm.wav"></audio>
 \`\`\`
 
-Available starter tracks:
+Available tracks:
 | ID | Style | Mood | BPM | Best for |
 |----|-------|------|-----|----------|
-| \`ambient-tech\` | ambient | calm | 80 | tech demos, tutorials |
-| \`cinematic-drive\` | cinematic | dramatic | 100 | trailers, reveals |
-| \`corporate-upbeat\` | corporate | energetic | 120 | product launches, promos |
+| \`ambient-calm\` | ambient | calm | 70 | tutorials, demos, calm backgrounds |
+| \`cinematic-epic\` | cinematic | dramatic | 120 | trailers, reveals, dramatic moments |
+| \`corporate-upbeat\` | corporate | energetic | 140 | product launches, promos, upbeat content |
 
 **Volume control:** Use \`data-volume="0.0"\` to \`data-volume="1.0"\`. Background music typically at 0.2-0.4. Sound effects at 0.4-0.6. Voiceover at 0.7-0.9.
 

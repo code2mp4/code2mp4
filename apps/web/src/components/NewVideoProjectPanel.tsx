@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { VideoProjectConfig } from '@open-video/contracts';
 import { MotionSystemPicker } from './MotionSystemPicker';
+import { MusicPicker } from './MusicPicker';
 
 interface Props {
   onCreate: (name: string, config: VideoProjectConfig) => void;
@@ -42,6 +43,7 @@ export function NewVideoProjectPanel({ onCreate }: Props) {
   const [energy, setEnergy] = useState<string>('medium');
   const [duration, setDuration] = useState<number>(10);
   const [motionSystem, setMotionSystem] = useState<string>('tech');
+  const [musicId, setMusicId] = useState<string | null>(null);
   const [audioNeeds, setAudioNeeds] = useState<string[]>([]);
   const [copy, setCopy] = useState('');
   const [name, setName] = useState('');
@@ -54,6 +56,7 @@ export function NewVideoProjectPanel({ onCreate }: Props) {
       energy,
       duration,
       motionSystemId: motionSystem,
+      musicId,
       audioNeeds: audioNeeds.length > 0 ? audioNeeds : undefined,
       copy: copy.trim() || undefined,
     });
@@ -135,6 +138,11 @@ export function NewVideoProjectPanel({ onCreate }: Props) {
           selectedId={motionSystem}
           onSelect={setMotionSystem}
         />
+      </Section>
+
+      {/* Background music */}
+      <Section label="Background Music">
+        <MusicPicker selectedId={musicId} onSelect={setMusicId} />
       </Section>
 
       {/* Audio */}

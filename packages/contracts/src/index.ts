@@ -31,6 +31,7 @@ export interface VideoProjectConfig {
   audioNeeds?: string[];
   copy?: string;
   motionSystemId?: string;
+  musicId?: string | null;
   voiceModel?: string;
   voiceId?: string;
 }
