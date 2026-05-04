@@ -23,6 +23,9 @@ jobs:
 
       - run: pnpm install
 
+      - name: Build contracts (required for typecheck)
+        run: pnpm --filter @open-video/contracts build
+
       - name: Typecheck
         run: pnpm typecheck
 
