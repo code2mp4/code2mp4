@@ -1,75 +1,51 @@
 # Music Library
 
-Each track is a royalty-free audio file. Add your own tracks under `music/`
-and register them below. Tracks are embedded as `<audio>` elements in
-HyperFrames compositions and mixed into the final MP4.
+Royalty-free music tracks for HyperFrames compositions.
+Embed as `<audio>` elements with `data-start`, `data-duration`, `data-volume`.
 
-## Catalog format
+## Tracks
 
-```yaml
-- id: "track-id"
-  title: "Human Readable Title"
-  file: "filename.wav"
-  style: ambient | cinematic | corporate | electronic | minimal | orchestral | lo-fi
-  mood: calm | energetic | dramatic | uplifting | dark | neutral
-  bpm: 120
-  duration_sec: 60
-  license: CC0 | Pixabay | YouTube-Audio | custom
-  attribution: "Artist Name — Source"
-  tags: [tag1, tag2]
-```
-
----
-
-## Starter Tracks
-
-- id: "ambient-tech"
-  title: "Ambient Tech"
-  file: "ambient-tech.wav"
+- id: "ambient-calm"
+  title: "Evening Melodrama"
+  file: "ambient-calm.wav"
   style: ambient
   mood: calm
-  bpm: 80
+  bpm: 70
   duration_sec: 60
-  license: CC0
-  attribution: "Open Video — generated"
-  tags: [tech, ambient, calm, background, pad]
+  license: CC-BY-3.0
+  attribution: "Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 3.0"
+  tags: [ambient, calm, piano, strings, emotional]
 
-- id: "cinematic-drive"
-  title: "Cinematic Drive"
-  file: "cinematic-drive.wav"
+- id: "cinematic-epic"
+  title: "Five Armies"
+  file: "cinematic-epic.wav"
   style: cinematic
   mood: dramatic
-  bpm: 100
+  bpm: 120
   duration_sec: 60
-  license: CC0
-  attribution: "Open Video — generated"
-  tags: [cinematic, dramatic, epic, tension, build]
+  license: CC-BY-3.0
+  attribution: "Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 3.0"
+  tags: [cinematic, epic, orchestral, dramatic, tension]
 
 - id: "corporate-upbeat"
-  title: "Corporate Upbeat"
+  title: "Carefree"
   file: "corporate-upbeat.wav"
   style: corporate
   mood: energetic
-  bpm: 120
+  bpm: 140
   duration_sec: 60
-  license: CC0
-  attribution: "Open Video — generated"
-  tags: [corporate, upbeat, energetic, product, launch]
+  license: CC-BY-3.0
+  attribution: "Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 3.0"
+  tags: [corporate, upbeat, energetic, cheerful, positive]
 
----
+## Sources
 
-## How to add real music
+Music by Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 3.0
+http://creativecommons.org/licenses/by/3.0/
 
-1. Download royalty-free tracks from:
-   - https://pixabay.com/music/ (CC0, no attribution)
-   - https://uppbeat.io/ (free with attribution)
-   - https://www.youtube.com/audiolibrary/music (free, check license)
+## How to add more
 
-2. Convert to 16-bit 48kHz mono WAV:
-   ```bash
-   ffmpeg -i downloaded.mp3 -ar 48000 -ac 1 -sample_fmt s16 music/track-name.wav
-   ```
-
-3. Add an entry above with the track metadata.
-
-4. Agent will auto-discover via `GET /api/music` and embed in compositions.
+1. Download royalty-free MP3/WAV
+2. Convert with: ffmpeg -i track.mp3 -t 60 -ar 48000 -ac 1 -sample_fmt s16 music/track-name.wav
+3. Add entry above
