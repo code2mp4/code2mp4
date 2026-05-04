@@ -105,7 +105,7 @@ function buildFfmpegArgs(
       return [
         '-f', 'lavfi',
         '-i', `anoisesrc=d=${dur}:c=pink:a=${vol}`,
-        '-af', `highpass=f=200:lowpass=f=2000,afade=t=in:d=0.03,afade=t=out:st=${(duration - 0.1).toFixed(2)}:d=0.1`,
+        '-af', `highpass=f=200,lowpass=f=2000,afade=t=in:d=0.03,afade=t=out:st=${(duration - 0.1).toFixed(2)}:d=0.1`,
         '-ar', '48000', '-ac', '1', '-sample_fmt', 's16',
       ];
 
