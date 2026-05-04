@@ -30,11 +30,9 @@ The result: you type "Make a 15-second product launch video", the agent asks cla
 ## Demo
 
 <p align="center">
-  <a href="docs/demo.mp4">
-    <img src="docs/demo-thumb.jpg" alt="Open Video Demo" width="640" />
-  </a>
+  <img src="docs/demo-preview.gif" alt="Open Video Demo" width="640" />
 </p>
-<p align="center"><b>← Click to play the 60-second demo</b>（1920×1080 · H.264 · AAC · background music + SFX）</p>
+<p align="center"><b>60s demo</b> · 1920×1080 · background music + SFX · <a href="docs/demo.mp4">Download MP4</a></p>
 
 ---
 
