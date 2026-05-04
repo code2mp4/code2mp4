@@ -32,16 +32,18 @@ describe('agents', () => {
     expect(getAgentDef(result.agents, 'nonexistent')).toBeNull();
   });
 
-  it('builds Claude Code args with model selection', async () => {
+  it('builds Claude Code args correctly (prompt via stdin)', async () => {
     const result = await detectAgents();
     const claude = getAgentDef(result.agents, 'claude')!;
     const args = claude.buildArgs('test prompt', '/tmp/test', { model: 'sonnet' });
     expect(args).toContain('-p');
-    expect(args).toContain('test prompt');
     expect(args).toContain('--output-format');
     expect(args).toContain('stream-json');
     expect(args).toContain('--model');
     expect(args).toContain('sonnet');
+    expect(args).toContain('bypassPermissions');
+    // Prompt should NOT be in CLI args — it goes via stdin
+    expect(args).not.toContain('test prompt');
   });
 
   it('builds Codex CLI args correctly', async () => {
