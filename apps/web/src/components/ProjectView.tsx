@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VideoPreview } from './video/VideoPreview';
 import { FileWorkspace } from './FileWorkspace';
+import { AgentPicker } from './AgentPicker';
 
 interface Message {
   id: string; role: 'user' | 'assistant' | 'system'; content: string;
@@ -14,9 +15,14 @@ interface ToolCall {
   id: string; name: string; input: Record<string, unknown>;
 }
 
-interface Props { projectId: string; onBack: () => void; }
+interface Props {
+  projectId: string;
+  onBack: () => void;
+  selectedAgentId: string | null;
+  onSelectAgent: (id: string) => void;
+}
 
-export function ProjectView({ projectId, onBack }: Props) {
+export function ProjectView({ projectId, onBack, selectedAgentId, onSelectAgent }: Props) {
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [working, setWorking] = useState(false);
@@ -105,7 +111,7 @@ export function ProjectView({ projectId, onBack }: Props) {
       const res = await fetch('/api/runs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: t, projectId, conversationId: convId }),
+        body: JSON.stringify({ prompt: t, projectId, conversationId: convId, agentId: selectedAgentId }),
       });
 
       if (!res.ok) {
@@ -271,6 +277,7 @@ export function ProjectView({ projectId, onBack }: Props) {
       {/* Header */}
       <header style={S.header} role="banner">
         <button onClick={onBack} style={S.back} aria-label="Back to projects">← Back</button>
+        <AgentPicker selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
         <span style={S.title} aria-label={`Project ${projectId.slice(0, 8)}`}>{projectId.slice(0, 8)}</span>
 
         <div style={S.convTabs} role="tablist" aria-label="Conversations">

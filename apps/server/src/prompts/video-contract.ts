@@ -80,6 +80,16 @@ See the full media-generation loop in the media generation contract above.
 | \`data-media-start\` | Video/audio | \`"2"\` (trim offset in seconds) |
 | \`data-zoom-keyframes\` | Stage zoom container | JSON string |
 
+### CRITICAL rules (load-bearing — violating any of these = broken composition)
+
+1. **class="clip" REQUIRED on every timed element.** Every element with \`data-start\`+ \`data-duration\` MUST also have \`class="clip"\`. The HyperFrames runtime uses \`.clip\` to hide/show elements based on their scheduled time range. Without it, elements stay visible for the entire composition, overlapping each other.
+
+2. **NO track-index overlap.** Clips on the same \`data-track-index\` MUST NOT overlap in time. If two clips share track 0 and both are visible at t=2s, the renderer will error. Assign unique track indices to any clip that overlaps in time with another. Decorative elements (scanlines, grid backgrounds) that span the full duration can share the same track index.
+
+3. **NEVER use \`<meta name="viewport" content="width=device-width">\`.** HyperFrames compositions use FIXED canvas dimensions. The viewport meta caused the headless Chrome renderer to use a different size (1080×1920 instead of 1920×1080), pushing content off-screen. Always match the viewport to the composition's \`data-width\` and \`data-height\`. Omit the viewport meta entirely, or use \`<meta name="viewport" content="width=1920,height=1080">\` matching your canvas.
+
+4. **body must have explicit \`width\` and \`height\` matching the canvas.** \`body { width: 1920px; height: 1080px; overflow: hidden; }\` — these must match \`data-width\`/\`data-height\` on the stage div.
+
 ### Resolution presets
 
 | Resolution | Width | Height | \`data-resolution\` |
@@ -195,4 +205,8 @@ Place them on the highest track-index so they render on top:
 - [ ] Font sizes ≥ 20px for body, ≥ 60px for headlines
 - [ ] Palette matches MOTION.md (not default gray/blue)
 - [ ] Scene transitions present (multi-scene only)
+- [ ] ALL timed elements have \`class="clip"\` (MANDATORY for visibility control)
+- [ ] NO track-index overlap — unique tracks per overlapping clip
+- [ ] NO \`width=device-width\` in viewport meta — use fixed canvas dimensions
+- [ ] Body CSS width/height match canvas \`data-width\`/\`data-height\` exactly
 `;

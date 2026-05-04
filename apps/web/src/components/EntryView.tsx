@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { VideoProjectConfig } from '@open-video/contracts';
 import { NewVideoProjectPanel } from './NewVideoProjectPanel';
-import { MotionSystemPicker } from './MotionSystemPicker';
+import { AgentPicker } from './AgentPicker';
 
 interface ProjectItem {
   id: string;
@@ -14,6 +14,8 @@ interface Props {
   onCreateProject: (name: string, config: VideoProjectConfig) => void;
   onOpenProject: (id: string) => void;
   onDeleteProject: (id: string) => void;
+  selectedAgentId: string | null;
+  onSelectAgent: (id: string) => void;
 }
 
 export function EntryView({
@@ -21,6 +23,8 @@ export function EntryView({
   onCreateProject,
   onOpenProject,
   onDeleteProject,
+  selectedAgentId,
+  onSelectAgent,
 }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -67,6 +71,9 @@ export function EntryView({
               >
                 «
               </button>
+            </div>
+            <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border)' }}>
+              <AgentPicker selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
             </div>
             <NewVideoProjectPanel onCreate={onCreateProject} />
           </>

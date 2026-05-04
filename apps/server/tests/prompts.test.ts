@@ -76,7 +76,7 @@ describe('composeVideoSystemPrompt', () => {
     const lastIdx = result.lastIndexOf('HyperFrames composition contract');
     const suffixLen = result.length - lastIdx;
     // Contract itself is ~6KB, suffix should be close to that
-    expect(suffixLen).toBeLessThan(7000);
+    expect(suffixLen).toBeLessThan(9000);
   });
 });
 
