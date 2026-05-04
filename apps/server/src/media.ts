@@ -1,7 +1,7 @@
 /**
  * Media generation handler — HyperFrames render pipeline.
  *
- * Handles the `od media generate --surface video --model hyperframes-html` dispatch.
+ * Handles the `code2mp4 media generate --surface video --model hyperframes-html` dispatch.
  * This runs on the daemon (unsandboxed) because Puppeteer/Chrome don't
  * work under agent shell sandboxes.
  *

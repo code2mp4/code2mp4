@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Open Video — AI Video Production',
+  title: 'Code2MP4 — Prompt-to-MP4 for coding agents',
   description: 'AI-driven video production powered by HyperFrames',
 };
 

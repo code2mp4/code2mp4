@@ -74,16 +74,16 @@ function parseFrontmatter(raw: string): { data: Record<string, unknown>; body: s
 
     // Handle nested od.* keys
     const nested = line.match(/^\s{2}(\w[\w_]*)\s*:\s*(.*)$/);
-    if (nested && data['od']) {
+    if (nested && data["code2mp4"]) {
       const nestedKey = nested[1];
       let nestedValue: string = nested[2].trim();
       nestedValue = nestedValue.replace(/^['"]|['"]$/g, '');
-      (data['od'] as Record<string, unknown>)[nestedKey] = nestedValue;
+      (data["code2mp4"] as Record<string, unknown>)[nestedKey] = nestedValue;
     }
 
     // Start of od: block
     if (line.match(/^od\s*:/)) {
-      data['od'] = {};
+      data["code2mp4"] = {};
     }
   }
 

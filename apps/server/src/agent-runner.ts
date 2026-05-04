@@ -14,9 +14,9 @@ import { formatAgentPrompt } from './agents.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Path to the od CLI script that agents call
-const OD_BIN = path.resolve(__dirname, '..', 'cli.js');
+const C2M_BIN = path.resolve(__dirname, '..', 'code2mp4-cli.js');
 // Default daemon URL
-const DEFAULT_DAEMON_URL = process.env.OV_DAEMON_URL ?? 'http://localhost:7456';
+const DEFAULT_DAEMON_URL = process.env.C2M_DAEMON_URL_LEGACY ?? 'http://localhost:7456';
 
 export interface AgentRunOptions {
   run: ChatRun;
@@ -55,13 +55,13 @@ export async function startAgentRun({
 
   const env: Record<string, string> = {
     ...safeEnv,
-    OD_PROJECT_DIR: cwd,                                   // agent's cwd
-    OD_PROJECT_ID: projectId ?? run.projectId ?? '',       // project UUID
-    OD_DAEMON_URL: process.env.OV_DAEMON_URL ?? DEFAULT_DAEMON_URL,
-    OD_BIN: OD_BIN,                                        // path to `od` CLI
+    C2M_PROJECT_DIR: cwd,                                   // agent's cwd
+    C2M_PROJECT_ID: projectId ?? run.projectId ?? '',       // project UUID
+    C2M_DAEMON_URL: process.env.C2M_DAEMON_URL_LEGACY ?? DEFAULT_DAEMON_URL,
+    C2M_BIN: C2M_BIN,                                        // path to `od` CLI
     // Legacy OV_ prefix kept for backward compat
-    OV_PROJECT_DIR: cwd,
-    OV_DAEMON_URL: DEFAULT_DAEMON_URL,
+    C2M_PROJECT_DIR_LEGACY: cwd,
+    C2M_DAEMON_URL_LEGACY: DEFAULT_DAEMON_URL,
   };
 
   if (extraAllowedDirs && agent.supportsExtraDirs && agent.id === 'claude') {

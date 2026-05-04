@@ -2,7 +2,7 @@
 /**
  * od CLI — the agent-facing dispatcher.
  *
- * Agents call `node "$OD_BIN" media generate ...` to request media
+ * Agents call `code2mp4 media generate ...` to request media
  * generation (HyperFrames render) from the daemon. The daemon runs
  * the unsandboxed render and streams progress back.
  *
@@ -10,7 +10,7 @@
  */
 import { randomBytes } from 'node:crypto';
 
-const DAEMON_URL = process.env.OD_DAEMON_URL ?? 'http://localhost:7456';
+const DAEMON_URL = process.env.C2M_DAEMON_URL ?? 'http://localhost:7456';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -31,7 +31,7 @@ async function main(): Promise<void> {
     } else if (sub === 'wait') {
       await handleMediaWait(args.slice(2));
     } else {
-      console.error('od media: expected generate or wait');
+      console.error('code2mp4 media: expected generate or wait');
       process.exit(1);
     }
   } else {
@@ -146,7 +146,7 @@ async function handleMediaWait(args: string[]): Promise<void> {
   const since = sinceIdx >= 0 ? parseInt(args[sinceIdx + 1], 10) : 0;
 
   if (!taskId) {
-    console.error('Usage: od media wait <taskId> [--since N]');
+    console.error('Usage: code2mp4 media wait <taskId> [--since N]');
     process.exit(1);
   }
 

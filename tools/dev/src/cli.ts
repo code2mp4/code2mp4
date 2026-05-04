@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * ov-dev — Open Video development lifecycle CLI.
+ * c2m-dev — Open Video development lifecycle CLI.
  *
  * Usage:
- *   ov-dev start          Start server
- *   ov-dev status         Check server health
- *   ov-dev stop           Stop the server (via SIGTERM to process on port)
+ *   c2m-dev start          Start server
+ *   c2m-dev status         Check server health
+ *   c2m-dev stop           Stop the server (via SIGTERM to process on port)
  */
 
 import { execSync } from 'node:child_process';
@@ -23,11 +23,11 @@ const cmd = process.argv[2];
 async function main() {
   if (!cmd || cmd === 'help') {
     console.log('Open Video Dev Tools');
-    console.log('  ov-dev start     Start the server');
-    console.log('  ov-dev status    Check server health');
-    console.log('  ov-dev stop      Stop the server');
-    console.log('  ov-dev build     Build all packages');
-    console.log('  ov-dev typecheck Typecheck all packages');
+    console.log('  c2m-dev start     Start the server');
+    console.log('  c2m-dev status    Check server health');
+    console.log('  c2m-dev stop      Stop the server');
+    console.log('  c2m-dev build     Build all packages');
+    console.log('  c2m-dev typecheck Typecheck all packages');
     process.exit(0);
   }
 
