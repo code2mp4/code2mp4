@@ -23,6 +23,8 @@ export interface VideoComposeInput {
   skillName?: string;
   motionSystemBody?: string;
   motionSystemTitle?: string;
+  scriptSystemBody?: string;
+  scriptSystemTitle?: string;
   metadata?: VideoProjectMetadata;
 }
 
@@ -40,10 +42,9 @@ export interface VideoProjectMetadata {
 }
 
 export function composeVideoSystemPrompt({
-  skillBody,
-  skillName,
-  motionSystemBody,
-  motionSystemTitle,
+  skillBody, skillName,
+  motionSystemBody, motionSystemTitle,
+  scriptSystemBody, scriptSystemTitle,
   metadata,
 }: VideoComposeInput): string {
   const parts: string[] = [
@@ -57,6 +58,13 @@ export function composeVideoSystemPrompt({
   if (motionSystemBody && motionSystemBody.trim().length > 0) {
     parts.push(
       `\n\n## Active motion design system${motionSystemTitle ? ` — ${motionSystemTitle}` : ''}\n\nTreat the following MOTION.md as authoritative for palette, typography, easing signatures, transition preferences, and timing rules. Bind these tokens into the composition's \`:root\` or \`<style>\` block before generating any layout. Do not invent colors, fonts, or easing curves outside this palette.\n\n${motionSystemBody.trim()}`,
+    );
+  }
+
+  // Layer 2.5: Script system (narrative constraints)
+  if (scriptSystemBody && scriptSystemBody.trim().length > 0) {
+    parts.push(
+      `\n\n## Active script system${scriptSystemTitle ? ` — ${scriptSystemTitle}` : ''}\n\nTreat the following SCRIPT.md as authoritative for narrative structure, information density, pacing, voice & tone, hook patterns, and scene templates. Plan your storyboard and copy following these constraints. Do not deviate from the prescribed arc, scene count, or information density limits. The SCRIPT.md determines WHAT to say and in WHAT ORDER — the MOTION.md determines HOW it looks.\n\n${scriptSystemBody.trim()}`,
     );
   }
 

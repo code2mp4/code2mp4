@@ -26,6 +26,7 @@ import {
 } from './renderer/hyperframes-bridge.js';
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
 import { listMusic, readMusicFile } from './music-library.js';
+import { listScriptSystems, readScriptSystem } from './script-systems.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -175,6 +176,25 @@ export async function createServer(): Promise<express.Express> {
     res.send(result.buffer);
   });
 
+  // ── Script systems ─────────────────────────────────────────────────
+  const SCRIPT_SYSTEMS_DIR = path.join(PROJECT_ROOT, 'script-systems');
+
+  app.get('/api/script-systems', async (_req, res) => {
+    try {
+      const systems = await listScriptSystems(SCRIPT_SYSTEMS_DIR);
+      res.json(systems.map(s => ({
+        id: s.id, title: s.title, category: s.category, summary: s.summary,
+        duration: s.duration, scenes: s.scenes,
+      })));
+    } catch { res.json([]); }
+  });
+
+  app.get('/api/script-systems/:id', async (req, res) => {
+    const body = await readScriptSystem(SCRIPT_SYSTEMS_DIR, req.params.id);
+    if (!body) { res.status(404).json({ error: 'Not found' }); return; }
+    res.json({ id: req.params.id, body });
+  });
+
   // ── Projects (SQLite-backed) ──────────────────────────────────────
   app.post('/api/projects', (req, res) => {
     try {
@@ -291,7 +311,7 @@ export async function createServer(): Promise<express.Express> {
   // ── Agent runs (with conversation persistence) ────────────────────
   app.post('/api/runs', async (req, res) => {
     try {
-      const { prompt, projectId, conversationId, agentId: requestedAgentId, motionSystemId, skillId } = req.body;
+      const { prompt, projectId, conversationId, agentId: requestedAgentId, motionSystemId, scriptSystemId, skillId } = req.body;
       if (!prompt) { res.status(400).json({ error: 'prompt required' }); return; }
 
       const agentId = requestedAgentId ?? defaultAgentId;
@@ -327,11 +347,15 @@ export async function createServer(): Promise<express.Express> {
 
       // Compose system prompt
       let motionBody: string | undefined;
+      let scriptBody: string | undefined;
       let skillBody: string | undefined;
       let skillName: string | undefined;
 
       if (motionSystemId) {
         motionBody = await readMotionSystem(MOTION_SYSTEMS_DIR, motionSystemId) ?? undefined;
+      }
+      if (scriptSystemId) {
+        scriptBody = await readScriptSystem(SCRIPT_SYSTEMS_DIR, scriptSystemId) ?? undefined;
       }
       if (skillId) {
         const skill = await readVideoSkill(VIDEO_SKILLS_DIR, skillId);
@@ -346,6 +370,8 @@ export async function createServer(): Promise<express.Express> {
         skillName,
         motionSystemBody: motionBody,
         motionSystemTitle: motionSystemId,
+        scriptSystemBody: scriptBody,
+        scriptSystemTitle: scriptSystemId,
         metadata: config,
       });
 

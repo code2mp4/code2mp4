@@ -41,9 +41,18 @@ export async function startAgentRun({
   emitToRun(r, 'status', { status: 'starting', agent: agent.name });
 
   // ── Environment variables the agent contract depends on ───────────
-  // These MUST match what the prompt tells the agent (video-contract.ts).
+  // Strip API keys from the agent environment (security). The daemon
+  // handles provider calls; the agent should never see credentials.
+  const safeEnv: Record<string, string> = {};
+  const stripKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_BASE_URL', 'OPENAI_BASE_URL'];
+  for (const [k, v] of Object.entries(process.env as Record<string, string>)) {
+    if (!stripKeys.includes(k) && !k.endsWith('_API_KEY') && !k.endsWith('_TOKEN')) {
+      safeEnv[k] = v;
+    }
+  }
+
   const env: Record<string, string> = {
-    ...process.env as Record<string, string>,
+    ...safeEnv,
     OD_PROJECT_DIR: cwd,                                   // agent's cwd
     OD_PROJECT_ID: projectId ?? run.projectId ?? '',       // project UUID
     OD_DAEMON_URL: process.env.OV_DAEMON_URL ?? DEFAULT_DAEMON_URL,
