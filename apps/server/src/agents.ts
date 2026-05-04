@@ -112,14 +112,12 @@ function defineClaude(): AgentDef {
       { id: 'sonnet', label: 'Claude Sonnet 4' },
       { id: 'opus', label: 'Claude Opus 4' },
     ],
-    buildArgs(_prompt: string, cwd: string, options?: { model?: string; imagePaths?: string[] }) {
-      // v0.1 proven: -p "message" = non-interactive, respond once
+    buildArgs(_prompt: string, _cwd: string, options?: { model?: string }) {
       const args = [
         '-p',
         '--output-format', 'stream-json',
         '--verbose',
-        '--permission-mode', 'acceptEdits',
-        '--add-dir', cwd,
+        '--permission-mode', 'bypassPermissions',
       ];
       if (options?.model && options.model !== 'default') {
         args.push('--model', options.model);
