@@ -192,8 +192,15 @@ Three examples illustrate what Code2MP4 is built for:
 | [Vision](docs/vision.md) | Why agents need video as an output format |
 | [Comparison](docs/comparison.md) | How Code2MP4 differs from black-box tools, Remotion, HyperFrames, and Open Design |
 | [Architecture](docs/architecture.md) | Full pipeline architecture — prompt stack, agent orchestration, render engine |
+| **Production schemas** | |
+| [Brief Schema](docs/brief-schema.md) | Video intent model — goal, audience, format, constraints (`brief.json`) |
+| [Script Schema](docs/script-schema.md) | Narrative structure — hook, segments, pacing, CTA (`script.json`) |
+| [Storyboard Schema](docs/storyboard-schema.md) | Structured scene plan — visuals, text, motion (`storyboard.json`) |
+| [Scene Schema](docs/scene-schema.md) | Per-scene agent spec — layout, elements, motion grammar (`scene.json`) |
+| [Render Config](docs/render-config.md) | Execution config — quality, fps, resolution, variants (`render.config.json`) |
+| [Quality Checklist](docs/quality-checklist.md) | Video Review Theater — 7 dimensions, 40+ checks (`quality-report.json`) |
+| **Guides** | |
 | [Agent Workflow](docs/agent-workflow.md) | Step-by-step guide for coding agents using Code2MP4 |
-| [Storyboard Schema](docs/storyboard-schema.md) | Formal JSON schema for structured storyboards |
 | [Templates](docs/templates.md) | Template system documentation |
 | [Roadmap](ROADMAP.md) | Development phases and milestones |
 

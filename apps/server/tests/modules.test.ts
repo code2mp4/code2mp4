@@ -53,13 +53,15 @@ describe('motion-systems', () => {
 });
 
 describe('video-skills-loader', () => {
-  it('lists all 6 video skills from disk', async () => {
+  it('lists all 8 video skills from disk', async () => {
     const skills = await listVideoSkills(SKILLS_DIR);
-    expect(skills.length).toBe(6);
+    expect(skills.length).toBe(8);
     const ids = skills.map(s => s.id).sort();
     expect(ids).toEqual([
       'audio-reactive-video',
       'caption-reel-video',
+      'code2mp4-director',
+      'code2mp4-reviewer',
       'motion-brand-intro',
       'product-launch-video',
       'social-short-video',
