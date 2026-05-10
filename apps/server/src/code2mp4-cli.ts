@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * od CLI — the agent-facing dispatcher.
+ * Code2MP4 CLI — the agent-facing dispatcher.
  *
  * Agents call `code2mp4 media generate ...` to request media
  * generation (HyperFrames render) from the daemon. The daemon runs
@@ -8,8 +8,6 @@
  *
  * Also handles: media wait, health
  */
-import { randomBytes } from 'node:crypto';
-
 const DAEMON_URL = process.env.C2M_DAEMON_URL ?? 'http://localhost:7456';
 
 async function main(): Promise<void> {
@@ -87,7 +85,7 @@ async function handleMediaGenerate(args: string[]): Promise<void> {
     projectId: project,
     surface,
     model,
-    output: params.output ?? `output-${Date.now()}.mp4`,
+    output: params.output ?? 'output.mp4',
     compositionDir: params['composition-dir'],
     aspect: params.aspect,
     length: params.length,

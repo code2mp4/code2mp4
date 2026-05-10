@@ -34,7 +34,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @code2mp4/tools-dev build && node tools/dev/dist/c2m-dev.js start",
+    "dev": "pnpm --filter @code2mp4/tools-dev build && node tools/dev/dist/cli.js start",
     "start": "pnpm --filter @code2mp4/server build && node apps/server/dist/server.js",
     "typecheck": "pnpm -r --if-present run typecheck",
     "build": "pnpm -r --if-present run build",
@@ -43,8 +43,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "npx oxlint --quiet apps/ packages/ tools/ 2>/dev/null || true",
     "format": "npx oxfmt apps/ packages/ tools/ 2>/dev/null || true",
-    "status": "node tools/dev/dist/c2m-dev.js status",
-    "stop": "node tools/dev/dist/c2m-dev.js stop"
+    "status": "pnpm --filter @code2mp4/tools-dev build && node tools/dev/dist/cli.js status",
+    "stop": "pnpm --filter @code2mp4/tools-dev build && node tools/dev/dist/cli.js stop"
   },
   "workspaces": [
     "packages/*",

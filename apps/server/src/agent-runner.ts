@@ -2,7 +2,7 @@
  * Agent runner — spawns agent CLI processes and pipes their output
  * to the SSE run manager.
  *
- * Sets OD_* environment variables that the prompt contract tells the
+ * Sets C2M_* environment variables that the prompt contract tells the
  * agent to use for HyperFrames shell commands.
  */
 import { spawn } from 'node:child_process';
@@ -13,10 +13,10 @@ import type { ChatRun, RunManager } from './runs.js';
 import { formatAgentPrompt } from './agents.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Path to the od CLI script that agents call
-const C2M_BIN = path.resolve(__dirname, '..', 'code2mp4-cli.js');
+// Path to the Code2MP4 CLI script that agents call
+const C2M_BIN = path.resolve(__dirname, '..', 'bin', 'code2mp4-cli.mjs');
 // Default daemon URL
-const DEFAULT_DAEMON_URL = process.env.C2M_DAEMON_URL_LEGACY ?? 'http://localhost:7456';
+const DEFAULT_DAEMON_URL = process.env.C2M_DAEMON_URL ?? process.env.C2M_DAEMON_URL_LEGACY ?? 'http://localhost:7456';
 
 export interface AgentRunOptions {
   run: ChatRun;
@@ -57,8 +57,8 @@ export async function startAgentRun({
     ...safeEnv,
     C2M_PROJECT_DIR: cwd,                                   // agent's cwd
     C2M_PROJECT_ID: projectId ?? run.projectId ?? '',       // project UUID
-    C2M_DAEMON_URL: process.env.C2M_DAEMON_URL_LEGACY ?? DEFAULT_DAEMON_URL,
-    C2M_BIN: C2M_BIN,                                        // path to `od` CLI
+    C2M_DAEMON_URL: DEFAULT_DAEMON_URL,
+    C2M_BIN: C2M_BIN,                                        // node-executable CLI wrapper
     // Legacy OV_ prefix kept for backward compat
     C2M_PROJECT_DIR_LEGACY: cwd,
     C2M_DAEMON_URL_LEGACY: DEFAULT_DAEMON_URL,

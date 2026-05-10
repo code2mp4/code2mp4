@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { QuestionForm } from './QuestionForm';
+import { parseQuestionForms } from './question-form-parser';
 
 interface ToolCall {
   id: string; name: string; input: Record<string, unknown>;
@@ -15,10 +17,11 @@ interface Props {
   tokens?: number;
   working?: boolean;
   status?: string;
+  onSubmitQuestionForm?: (message: string) => void;
 }
 
 export function AssistantMessage({
-  content, toolCalls, thinking, agentName, model, elapsed, tokens, working, status,
+  content, toolCalls, thinking, agentName, model, elapsed, tokens, working, status, onSubmitQuestionForm,
 }: Props) {
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(true);
@@ -55,9 +58,7 @@ export function AssistantMessage({
 
         {/* Prose content */}
         {content && (
-          <div style={S.prose}>
-            {renderContent(content)}
-          </div>
+          renderMessageContent(content, working, onSubmitQuestionForm)
         )}
 
         {/* Waiting pill */}
@@ -114,14 +115,50 @@ export function AssistantMessage({
   );
 }
 
+function renderMessageContent(
+  text: string,
+  working: boolean | undefined,
+  onSubmitQuestionForm: ((message: string) => void) | undefined,
+) {
+  return parseQuestionForms(text).map((segment, i) => {
+    if (segment.type === 'form') {
+      return (
+        <QuestionForm
+          key={`${segment.id}-${i}`}
+          id={segment.id}
+          title={segment.title}
+          form={segment.form}
+          disabled={working || !onSubmitQuestionForm}
+          onSubmit={(message) => onSubmitQuestionForm?.(message)}
+        />
+      );
+    }
+
+    if (!segment.text.trim()) return null;
+    return (
+      <div key={`text-${i}`} style={S.prose}>
+        {renderContent(segment.text)}
+      </div>
+    );
+  });
+}
+
 function renderContent(text: string) {
   return text.split('\n').map((line, i) => {
-    // Bold
-    const bolded = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Inline code
+    const escaped = escapeHtml(line);
+    const bolded = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     const coded = bolded.replace(/`([^`]+)`/g, '<code>$1</code>');
     return <div key={i} style={{ marginBottom: 2 }} dangerouslySetInnerHTML={{ __html: coded || '&nbsp;' }} />;
   });
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function summarizeInput(input: Record<string, unknown>): string {

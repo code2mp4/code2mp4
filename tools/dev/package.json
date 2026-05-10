@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "c2m-dev": "dist/c2m-dev.js"
+    "c2m-dev": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

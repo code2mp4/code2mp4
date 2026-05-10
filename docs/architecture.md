@@ -93,10 +93,10 @@ Code2MP4 scans the user's PATH for known coding agent CLIs. Currently supports:
 Spawns the detected agent as a child process with environment variables that tell it how to reach the Code2MP4 server:
 
 ```
-OD_BIN          → path to the `od` CLI dispatcher
-OD_PROJECT_ID   → current project identifier
-OD_PROJECT_DIR  → filesystem path to project directory
-OD_DAEMON_URL   → the server URL (http://localhost:7456)
+C2M_BIN         → path to the Code2MP4 CLI dispatcher
+C2M_PROJECT_ID  → current project identifier
+C2M_PROJECT_DIR → filesystem path to project directory
+C2M_DAEMON_URL  → the server URL (http://localhost:7456)
 ```
 
 ### Run manager (`runs.ts`)

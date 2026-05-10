@@ -245,4 +245,4 @@ Project configuration is stored in `code2mp4.config.json` at the project root:
 | `code2mp4 variants` | Schema defined, implementation pending |
 | `code2mp4 package` | Campaign manifest schema defined, implementation pending |
 
-The `od` CLI dispatcher already handles agent-facing `media generate` / `media wait` / `health` commands and is fully operational.
+The Code2MP4 CLI dispatcher exposed through `C2M_BIN` handles agent-facing `media generate` / `media wait` / `health` commands.

@@ -77,7 +77,7 @@ Fix all errors. Warnings should be addressed unless intentionally suppressed wit
 ### Step 5: Render
 
 ```bash
-node "$OD_BIN" media generate \
+node "$C2M_BIN" media generate \
   --surface video \
   --model hyperframes-html \
   --composition-dir <dir> \

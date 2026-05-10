@@ -115,7 +115,7 @@ export function listProjects(db: Database.Database): DbProject[] {
   return db.prepare(
     `SELECT id, name, config_json AS configJson, skill_id AS skillId,
             motion_system_id AS motionSystemId, created_at AS createdAt, updated_at AS updatedAt
-     FROM projects ORDER BY updated_at DESC`,
+     FROM projects ORDER BY updated_at DESC, rowid DESC`,
   ).all() as DbProject[];
 }
 

@@ -14,7 +14,7 @@ curl -X POST http://localhost:7456/api/projects \
   -d '{"name": "my-video", "videoType": "product-launch", "duration": 30, "orientation": "16:9", "energy": "medium"}'
 
 # Generate video (agent calls this):
-node "$OD_BIN" media generate \
+node "$C2M_BIN" media generate \
   --project-id <id> \
   --surface video \
   --model hyperframes-html \
@@ -129,7 +129,7 @@ Fix all errors. Warnings should be addressed.
 ### 7. Render to MP4
 
 ```bash
-node "$OD_BIN" media generate \
+node "$C2M_BIN" media generate \
   --project-id proj_abc123 \
   --surface video \
   --model hyperframes-html \
@@ -149,14 +149,14 @@ The server spawns HyperFrames render, streams progress via SSE. On completion:
 
 ```bash
 # TTS voiceover
-node "$OD_BIN" media generate \
+node "$C2M_BIN" media generate \
   --project-id proj_abc123 \
   --surface audio \
   --prompt "Welcome to WidgetX v2. The fastest way to build dashboards." \
   --output voiceover.wav
 
 # SFX
-node "$OD_BIN" media generate \
+node "$C2M_BIN" media generate \
   --project-id proj_abc123 \
   --surface audio \
   --audio-kind sfx \

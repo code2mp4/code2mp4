@@ -47,6 +47,39 @@ const WEB_DIST = path.join(PROJECT_ROOT, 'apps', 'web', 'out');
 
 export { composeVideoSystemPrompt };
 
+interface ProjectDto {
+  id: string;
+  name: string;
+  config: Record<string, unknown>;
+  skillId: string | null;
+  motionSystemId: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export function parseProjectConfig(configJson: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(configJson);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+export function projectDto(project: DB.DbProject): ProjectDto {
+  return {
+    id: project.id,
+    name: project.name,
+    config: parseProjectConfig(project.configJson),
+    skillId: project.skillId,
+    motionSystemId: project.motionSystemId,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  };
+}
+
 export async function createServer(): Promise<express.Express> {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
@@ -213,20 +246,20 @@ export async function createServer(): Promise<express.Express> {
         motionSystemId: req.body.motionSystemId ?? null,
       });
       FILES.ensureProjectDir(PROJECTS_DIR, project.id);
-      res.json(project);
+      res.json(projectDto(project));
     } catch (err) {
       res.status(500).json({ error: 'Failed to create project', detail: String(err) });
     }
   });
 
   app.get('/api/projects', (_req, res) => {
-    res.json(DB.listProjects(db));
+    res.json(DB.listProjects(db).map(projectDto));
   });
 
   app.get('/api/projects/:id', (req, res) => {
     const project = DB.getProject(db, req.params.id);
     if (!project) { res.status(404).json({ error: 'Not found' }); return; }
-    res.json(project);
+    res.json(projectDto(project));
   });
 
   app.patch('/api/projects/:id', (req, res) => {
@@ -237,7 +270,7 @@ export async function createServer(): Promise<express.Express> {
       motionSystemId: req.body.motionSystemId,
     });
     if (!updated) { res.status(404).json({ error: 'Not found' }); return; }
-    res.json(updated);
+    res.json(projectDto(updated));
   });
 
   app.delete('/api/projects/:id', (req, res) => {
@@ -499,7 +532,7 @@ export async function createServer(): Promise<express.Express> {
     res.json({ available: await checkHyperframesAvailable(), ...(await checkSystemRequirements()) });
   });
 
-  // ── Media generation (agent-dispatched via od CLI) ─────────────────
+  // ── Media generation (agent-dispatched via C2M CLI) ────────────────
   app.post('/api/media/generate', async (req, res) => {
     await handleMediaGenerate(req, res);
   });
