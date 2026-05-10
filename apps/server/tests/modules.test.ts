@@ -13,11 +13,11 @@ const MOTION_DIR = path.join(ROOT, 'motion-systems');
 const SKILLS_DIR = path.join(ROOT, 'video-skills');
 
 describe('motion-systems', () => {
-  it('lists all 5 motion systems from disk', async () => {
+  it('lists all 8 motion systems from disk', async () => {
     const systems = await listMotionSystems(MOTION_DIR);
-    expect(systems.length).toBe(5);
+    expect(systems.length).toBe(8);
     const ids = systems.map(s => s.id).sort();
-    expect(ids).toEqual(['brutalist', 'cinematic', 'editorial', 'tech', 'warm-soft']);
+    expect(ids).toEqual(['brutalist', 'cinematic', 'editorial', 'neon', 'orbital', 'organic', 'tech', 'warm-soft']);
   });
 
   it('each system has required fields', async () => {

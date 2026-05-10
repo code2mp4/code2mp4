@@ -123,6 +123,60 @@ export const MOTION_DIRECTIONS: MotionDirection[] = [
     textShadow: 'none',
     energy: 'high / aggressive',
   },
+  {
+    id: 'neon',
+    label: 'Neon / Cyber',
+    description:
+      'Dark void canvas, hot magenta + electric cyan accents. Neon tube glow, scanline overlays, chrome gradients. High-energy, retro-future aesthetic. Think: synthwave music videos, cyberpunk title sequences.',
+    reference: '80s synthwave, Blade Runner credits, Chrome experiments, retrowave album art',
+    canvas: '#0A0A14',
+    accent: '#FF00FF',
+    accent2: '#00FFFF',
+    displayFont: "'Orbitron', 'Share Tech Mono', 'Rajdhani', sans-serif",
+    bodyFont: "'Exo 2', 'Rajdhani', 'Inter', sans-serif",
+    entranceEase: 'expo.out',
+    exitEase: 'power3.in',
+    emphasisEase: 'sine.inOut',
+    transition: 'chromatic dissolve / neon beam wipe (0.3s, power2.inOut)',
+    textShadow: '0 0 10px currentColor, 0 0 40px currentColor',
+    energy: 'high / electric',
+  },
+  {
+    id: 'orbital',
+    label: 'Space / Orbital',
+    description:
+      'Pure black canvas, spectral white text, uppercase typography with positive letter-spacing. Ghost UI elements. Radical minimalism — zero shadows, zero cards, zero containers. Think: SpaceX mission control, NASA titles.',
+    reference: 'SpaceX website, NASA documentary titles, Interstellar credits, aerospace HUDs',
+    canvas: '#000000',
+    accent: '#F0F0FA',
+    accent2: '#B8C4D8',
+    displayFont: "'D-DIN', 'Barlow Semi Condensed', 'Rajdhani', sans-serif",
+    bodyFont: "'Barlow', 'Inter', system-ui, sans-serif",
+    entranceEase: 'power4.out',
+    exitEase: 'power3.in',
+    emphasisEase: 'expo.out',
+    transition: 'gravitational zoom-through / crossfade to black (0.5s, power3.inOut)',
+    textShadow: 'none',
+    energy: 'dramatic / monumental',
+  },
+  {
+    id: 'organic',
+    label: 'Nature / Organic',
+    description:
+      'Warm eggshell canvas, forest green + harvest gold accents. Organic curves, generous breathing room, soft light leaks, serif typography. Nothing moves fast — everything breathes. Think: wellness reels, sustainable brands.',
+    reference: 'Headspace animations, Patagonia films, botanical illustration, meditation apps',
+    canvas: '#F4F1EA',
+    accent: '#4A7C59',
+    accent2: '#D4A853',
+    displayFont: "'Lora', 'Cormorant Garamond', 'Source Serif', serif",
+    bodyFont: "'Source Serif 4', 'Lora', Georgia, serif",
+    entranceEase: 'power2.out',
+    exitEase: 'power1.in',
+    emphasisEase: 'sine.inOut',
+    transition: 'light leak / soft blur crossfade (0.6s, sine.inOut)',
+    textShadow: '0 1px 2px rgba(44,44,30,0.06)',
+    energy: 'calm / serene',
+  },
 ];
 
 export function renderMotionDirectionFormBody(): string {
@@ -178,7 +232,7 @@ export function renderMotionDirectionSpecBlock(): string {
   );
   return (
     '## Motion direction library\n\n' +
-    'These 5 curated directions are the only supported visual starting points. ' +
+    'These 8 curated directions are the only supported visual starting points. ' +
     'Each is a deterministic package: palette, fonts, easing signatures, ' +
     'transition preference, and energy level. When the user picks one, bind ' +
     'its tokens verbatim into the composition. Do not improvise.\n\n' +

@@ -169,7 +169,7 @@ The system prompt that drives the agent is carefully composed from seven layers:
 | | |
 |---|---|
 | **Agents** | Claude Code · OpenCode · Codex CLI · Gemini CLI · Cursor Agent · Qwen Code — auto-detected on PATH |
-| **Motion systems** | 5 curated directions (Editorial · Tech · Warm & Soft · Cinematic · Brutalist) — each a deterministic palette, font stack, easing signature, and transition matrix |
+| **Motion systems** | 8 curated directions (Editorial · Tech · Warm & Soft · Cinematic · Brutalist · Neon · Orbital · Organic) — each a deterministic palette, font stack, easing signature, and transition matrix |
 | **Script systems** | 3 narrative structures (Tech Demo · Product Launch · Brand Story) with hook patterns and pacing maps |
 | **Video skills** | 6 composable workflows — SKILL.md bundles with scene templates, animation rules, and output checklists |
 | **Multi-stage pipeline** | Director Agent → Storyboard → Scene Agents → Assembly — per-scene retry, filesystem persistence |
