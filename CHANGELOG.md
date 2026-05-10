@@ -4,13 +4,26 @@ All notable changes to Code2MP4 are documented in this file.
 
 ## [Unreleased] — 2026-05-10
 
-### Repositioning
+### Brand reinforcement
 
-Code2MP4's project expression has been restructured around its core identity as an **agent-native video production pipeline** — not a code-to-MP4 format converter.
+Code2MP4's project identity has been hardened — removing old org references and establishing independent positioning.
 
-- **README rewritten**: New first-screen positioning with Mermaid architecture diagram, comparison table ("Black-box text-to-video" vs "Code2MP4"), and clear distinction from HyperFrames and Open Design
-- **AGENTS.md rewritten**: Now an executable SOP for coding agents — step-by-step workflow, HyperFrames contract rules, project directory conventions, and a "never do" list
-- **New documentation**: `docs/vision.md` (why agents need video output), `docs/comparison.md` (vs Sora, Remotion, HyperFrames, Open Design), `docs/architecture.md` (full pipeline with Mermaid diagrams), `docs/agent-workflow.md` (step-by-step for agents), `docs/storyboard-schema.md` (formal JSON schema with validation rules), `docs/templates.md` (template system guide)
+- **package.json**: Removed `openvideo-ai/openvideo` references, removed "Open Design meets HyperFrames" from description. New description: "Agent-native video production pipeline."
+- **README.md**: First screen rewritten — "AI agents can write code. Now they can write videos." New "Not just HyperFrames + Open Design" section clarifying that Code2MP4 is the workflow layer.
+- **AGENTS.md**: Added CI/automated workflow path — storyboard proceeds on validation pass without requiring manual approval.
+
+### New documentation
+
+Three core docs defining Code2MP4's independent value:
+- **`docs/motion-source.md`**: The source code of a video — why it matters that video source is editable, reviewable, diffable, and agent-modifiable
+- **`docs/quality-system.md`**: Video Review Theater — anti-AI-template detection, platform-aware review, 7 dimensions with per-platform duration/safe-zone requirements
+- **`docs/campaign-workflow.md`**: Single motion source → multi-platform campaign pipeline — aspect ratio variants, duration variants, audio modes, cover/caption/copy generation, CI/CD integration
+
+### Roadmap restructured
+
+v0.5 split into two tracks:
+- **Code2MP4's own standards** (brief, script, storyboard, scene, render, quality schemas + motion-source + quality-system + campaign-workflow docs) — all marked complete
+- **Ecosystem integration** (HyperFrames blocks, music, SFX, more motion/script systems) — in progress
 
 ### Examples
 

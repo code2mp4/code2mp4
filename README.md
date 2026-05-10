@@ -2,16 +2,19 @@
 
 > **AI agents can write code. Now they can write videos.**
 
-Code2MP4 is an open-source, agent-native video production pipeline. It lets coding agents like Claude Code, OpenCode, and Codex generate editable motion source and render it into deterministic MP4 output — not as a black box, but as structured, version-controllable source files.
+Code2MP4 is an open-source agent-native video production pipeline. It helps Claude Code, OpenCode, Codex, Gemini CLI and other coding agents **plan, script, storyboard, generate, review, and render** videos from editable source files.
+
+**Prompt in. Editable motion source out. Deterministic MP4 rendered.**
 
 ```mermaid
 flowchart LR
-    A[Prompt] --> B[Director Agent]
+    A[Brief] --> B[Script]
     B --> C[Storyboard]
     C --> D[Scene Agent]
-    D --> E[Editable Motion Source]
+    D --> E[Motion Source]
     E --> F[Render Engine]
-    F --> G[MP4]
+    F --> G[Quality Check]
+    G --> H[MP4]
 ```
 
 <p align="center">
@@ -20,6 +23,22 @@ flowchart LR
 </p>
 
 <p align="center"><b>English</b> · <a href="README.zh-CN.md">简体中文</a></p>
+
+---
+
+## Not just HyperFrames + Open Design
+
+Code2MP4 is not a wrapper. It's the workflow layer for agent-generated video production.
+
+```
+HyperFrames     = render engine       (solves: HTML → MP4)
+Open Design     = agent orchestration (inspired prompt stacking, agent detection)
+Code2MP4        = video workflow layer (solves: brief → script → storyboard → source → review → render)
+```
+
+HyperFrames gets stronger every month. So does Open Design. That's good for everyone. Code2MP4 exists because neither project solves the *workflow* problem: how does a coding agent go from "make a product launch video" to a finished, reviewed, platform-ready MP4 — repeatably, at scale?
+
+That's the layer Code2MP4 defines.
 
 ---
 
@@ -192,13 +211,17 @@ Three examples illustrate what Code2MP4 is built for:
 | [Vision](docs/vision.md) | Why agents need video as an output format |
 | [Comparison](docs/comparison.md) | How Code2MP4 differs from black-box tools, Remotion, HyperFrames, and Open Design |
 | [Architecture](docs/architecture.md) | Full pipeline architecture — prompt stack, agent orchestration, render engine |
+| [Motion Source](docs/motion-source.md) | The source code of a video — editable, reviewable, version-controllable |
 | **Production schemas** | |
 | [Brief Schema](docs/brief-schema.md) | Video intent model — goal, audience, format, constraints (`brief.json`) |
 | [Script Schema](docs/script-schema.md) | Narrative structure — hook, segments, pacing, CTA (`script.json`) |
 | [Storyboard Schema](docs/storyboard-schema.md) | Structured scene plan — visuals, text, motion (`storyboard.json`) |
 | [Scene Schema](docs/scene-schema.md) | Per-scene agent spec — layout, elements, motion grammar (`scene.json`) |
 | [Render Config](docs/render-config.md) | Execution config — quality, fps, resolution, variants (`render.config.json`) |
-| [Quality Checklist](docs/quality-checklist.md) | Video Review Theater — 7 dimensions, 40+ checks (`quality-report.json`) |
+| **Quality & campaigns** | |
+| [Quality System](docs/quality-system.md) | Video Review Theater — AI-template detection, platform-aware review |
+| [Quality Checklist](docs/quality-checklist.md) | 7 dimensions, 40+ checks (`quality-report.json`) |
+| [Campaign Workflow](docs/campaign-workflow.md) | Single motion source → multi-platform campaign package |
 | **Guides** | |
 | [Agent Workflow](docs/agent-workflow.md) | Step-by-step guide for coding agents using Code2MP4 |
 | [Templates](docs/templates.md) | Template system documentation |

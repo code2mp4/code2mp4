@@ -28,16 +28,30 @@ Single-pass agent generates HyperFrames HTML → rendered MP4.
 - Partial assembly (render with any subset of completed scenes)
 - Filesystem persistence (survives server restarts)
 
-## v0.5 🔲 — Template gallery + ecosystem
-- [ ] More motion systems (minimal, vintage, neon)
-- [ ] More script systems (explainer, interview, unboxing)
-- [ ] Template gallery in frontend — curate from HyperFrames 50+ registry blocks (texture-mask-text, VFX: liquid-background, shatter, portal, magnetic, text-cursor, iphone-device)
+## v0.5 🔲 — Video production standards + ecosystem
+
+Independent standard-building (Code2MP4's own moat):
+
+- [x] `brief.json` schema — video intent model (goal, audience, format, constraints)
+- [x] `script.json` schema — narrative structure (hook, segments, pacing, CTA)
+- [x] `storyboard.json` schema — structured scene plan with validation rules
+- [x] `scene.json` schema — per-scene agent-executable specification grammar
+- [x] `render.config.json` schema — deterministic render configuration with variants
+- [x] `quality-report.json` schema — Video Review Theater (7 dimensions, 40+ checks)
+- [x] `docs/motion-source.md` — source code of a video positioning
+- [x] `docs/quality-system.md` — anti-AI-template detection, platform-aware review
+- [x] `docs/campaign-workflow.md` — single source → multi-platform campaign pipeline
+
+Ecosystem integration (leveraging HyperFrames infrastructure):
+
+- [x] Transcribe pipeline (`hyperframes transcribe` → captions)
+- [x] Remove-background pipeline (`hyperframes remove-background` → presenter overlays)
+- [x] Composition variables (`data-composition-variables`, `getVariables()`, `--variables`)
+- [ ] Template gallery — curate from HyperFrames 50+ registry blocks (texture-mask-text, VFX blocks)
 - [ ] Music library expansion (10+ tracks)
 - [ ] SFX library with pre-made effects
-- [ ] Examples directory
-- [ ] Transcribe pipeline (audio → transcript → captions via hyperframes transcribe)
-- [ ] Remove-background pipeline (presenter-overlay compositions via hyperframes remove-background)
-- [ ] Composition variables support (parametrized templates via data-composition-variables + getVariables())
+- [ ] More motion systems (minimal, vintage, neon)
+- [ ] More script systems (explainer, interview, unboxing)
 
 ## v0.6 🔲 — CLI-first workflow
 - [ ] `code2mp4 init` — project scaffolding (delegates to `hyperframes init`)

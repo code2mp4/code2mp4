@@ -40,17 +40,7 @@ Create `storyboard.json` in the project directory:
   "title": "string",
   "duration": 30,
   "aspectRatio": "16:9",
-  "scenes": [
-    {
-      "id": "unique-scene-id",
-      "duration": 7,
-      "goal": "What this scene communicates",
-      "visual": "Visual description (background, layout, key elements)",
-      "text": "On-screen text",
-      "motion": "Animation description (entrance, emphasis, exit)",
-      "audio": "Audio cue (optional)"
-    }
-  ]
+  "scenes": [...]
 }
 ```
 
@@ -59,7 +49,9 @@ Rules:
 - Every scene must have an `id`
 - Scene count: 3-5 for short videos, 5-8 for longer ones
 
-Present the storyboard to the user for approval before proceeding.
+**In interactive sessions**: present the storyboard to the user for approval before proceeding.
+
+**In automated / CI workflows**: proceed if the storyboard passes validation (duration sum matches, scene ids unique, first scene is a hook, last scene is a CTA).
 
 ### Step 3: Motion source generation
 
