@@ -176,3 +176,158 @@ describe('projects (file management)', () => {
     expect(await readProjectFile(tmpDir, projectId, 'does-not-exist.txt')).toBeNull();
   });
 });
+
+// ── Pipeline validation ──────────────────────────────────────────────
+
+import { validateStoryboard } from '../src/pipeline.js';
+
+function makeScene(id: string, number: number, duration: number) {
+  return { id, number, duration, goal: 'Test goal', visual: 'Test visual', text: 'Test text', motion: 'Test motion' };
+}
+
+describe('validateStoryboard', () => {
+  it('passes a valid storyboard', () => {
+    const result = validateStoryboard({
+      title: 'Test',
+      duration: 30,
+      aspectRatio: '16:9',
+      scenes: [
+        makeScene('hook', 1, 5),
+        makeScene('feature', 2, 20),
+        makeScene('cta', 3, 5),
+      ],
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors.length).toBe(0);
+  });
+
+  it('rejects empty scenes array', () => {
+    const result = validateStoryboard({
+      title: 'Empty',
+      duration: 10,
+      aspectRatio: '16:9',
+      scenes: [],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('At least one scene required');
+  });
+
+  it('rejects missing title', () => {
+    const result = validateStoryboard({
+      title: '',
+      duration: 30,
+      aspectRatio: '16:9',
+      scenes: [makeScene('s1', 1, 30)],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Storyboard must have a title');
+  });
+
+  it('rejects duplicate scene ids', () => {
+    const result = validateStoryboard({
+      title: 'Dupes',
+      duration: 20,
+      aspectRatio: '16:9',
+      scenes: [
+        makeScene('hook', 1, 10),
+        makeScene('hook', 2, 10),
+      ],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('Duplicate scene id'))).toBe(true);
+  });
+
+  it('rejects scene duration < 2s', () => {
+    const result = validateStoryboard({
+      title: 'Too short',
+      duration: 5,
+      aspectRatio: '16:9',
+      scenes: [
+        makeScene('hook', 1, 1),
+        makeScene('cta', 2, 4),
+      ],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('duration must be'))).toBe(true);
+  });
+
+  it('rejects missing scene fields', () => {
+    const result = validateStoryboard({
+      title: 'Incomplete',
+      duration: 10,
+      aspectRatio: '16:9',
+      scenes: [
+        { id: 's1', number: 1, duration: 10, goal: '', visual: '', text: '', motion: '' },
+      ],
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('warns on duration mismatch', () => {
+    const result = validateStoryboard({
+      title: 'Mismatch',
+      duration: 30,
+      aspectRatio: '16:9',
+      scenes: [
+        makeScene('hook', 1, 5),
+        makeScene('cta', 2, 5),
+      ],
+    });
+    expect(result.warnings.some(w => w.includes('sum to'))).toBe(true);
+  });
+
+  it('warns on long hook scene', () => {
+    const result = validateStoryboard({
+      title: 'Slow hook',
+      duration: 20,
+      aspectRatio: '16:9',
+      scenes: [
+        makeScene('hook', 1, 8),
+        makeScene('cta', 2, 12),
+      ],
+    });
+    expect(result.warnings.some(w => w.includes('recommend'))).toBe(true);
+  });
+
+  it('warns when storyboard aspect differs from brief', () => {
+    const result = validateStoryboard(
+      {
+        title: 'Wrong aspect',
+        duration: 30,
+        aspectRatio: '9:16',
+        scenes: [
+          makeScene('hook', 1, 10),
+          makeScene('cta', 2, 20),
+        ],
+      },
+      {
+        id: 'test',
+        goal: { primary: 'test', secondary: 'test' },
+        audience: { who: 'devs', context: 'web', awareness: 'problem-aware' },
+        format: { primary: '16:9', duration: 30 },
+      },
+    );
+    expect(result.warnings.some(w => w.includes('differs from brief format'))).toBe(true);
+  });
+
+  it('warns on duration mismatch with brief', () => {
+    const result = validateStoryboard(
+      {
+        title: 'Long',
+        duration: 60,
+        aspectRatio: '16:9',
+        scenes: [
+          makeScene('s1', 1, 30),
+          makeScene('s2', 2, 30),
+        ],
+      },
+      {
+        id: 'test',
+        goal: { primary: 'test', secondary: 'test' },
+        audience: { who: 'devs', context: 'web', awareness: 'problem-aware' },
+        format: { primary: '16:9', duration: 30 },
+      },
+    );
+    expect(result.warnings.some(w => w.includes('differs from brief'))).toBe(true);
+  });
+});

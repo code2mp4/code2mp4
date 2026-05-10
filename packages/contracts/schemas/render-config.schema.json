@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://code2mp4.com/schemas/render-config.schema.json",
+  "title": "Render Configuration",
+  "description": "Execution config — controls how a composition is rendered to MP4.",
+  "type": "object",
+  "required": ["compositionDir", "output"],
+  "properties": {
+    "compositionDir": { "type": "string", "description": "Path to HyperFrames composition directory" },
+    "output": { "type": "string", "description": "Output MP4 file path" },
+    "engine": { "type": "string", "enum": ["hyperframes", "remotion"], "default": "hyperframes" },
+    "quality": { "type": "string", "enum": ["draft", "standard", "high"], "default": "standard" },
+    "fps": { "type": "number", "minimum": 12, "maximum": 60, "default": 30 },
+    "resolution": { "type": "string", "enum": ["hd", "fhd", "4k"], "default": "fhd" },
+    "format": { "type": "string", "enum": ["mp4", "webm"], "default": "mp4" },
+    "codec": { "type": "string", "enum": ["h264", "h265", "vp9"], "default": "h264" },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "codec": { "type": "string", "enum": ["aac", "opus"], "default": "aac" },
+        "bitrate": { "type": "string", "default": "128k" },
+        "sampleRate": { "type": "number", "default": 48000 }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "variant": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "parent": { "type": "string" }
+      }
+    },
+    "preCheck": {
+      "type": "object",
+      "properties": {
+        "lint": { "type": "boolean", "default": true },
+        "validate": { "type": "boolean", "default": false },
+        "inspect": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}
