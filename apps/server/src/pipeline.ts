@@ -1,14 +1,17 @@
 /**
  * Multi-stage video production pipeline.
  *
- * Stage 1: Director — generates a structured storyboard from user brief
+ * Stage 0: Brief + script — structured intent input (brief.json, script.json)
+ * Stage 1: Director — generates a structured storyboard from brief + script
  * Stage 2: Scene Agent — generates one scene at a time
  * Stage 3: Assembly — combines fragments, renders MP4
  *
  * Pipeline state is persisted to the project directory on disk:
- *   projects/<id>/pipeline.json   — job state
- *   projects/<id>/storyboard.json — director output
- *   projects/<id>/scenes/         — scene fragments
+ *   projects/<id>/brief.json       — structured brief (input)
+ *   projects/<id>/script.json      — structured script (input)
+ *   projects/<id>/pipeline.json    — job state
+ *   projects/<id>/storyboard.json  — director output
+ *   projects/<id>/scenes/          — scene fragments
  *
  * This survives server restarts — read pipeline.json to resume.
  */
@@ -16,16 +19,69 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
+// ── Pipeline types ───────────────────────────────────────────────
+
 export interface PipelineJob {
   id: string;
   projectId: string;
   brief: string;
   status: 'scripting' | 'rendering_scenes' | 'assembling' | 'done' | 'failed';
   script?: Storyboard;
-  scenes: SceneFragment[];
+  scenes: PipelineSceneFragment[];
   outputMp4?: string;
   error?: string;
-  sceneRunIds: string[];
+  sceneRunIds?: string[];
+}
+
+export interface Storyboard {
+  title: string;
+  duration: number;
+  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:5';
+  motionSystem?: string;
+  scenes: StoryboardScene[];
+}
+
+export interface StoryboardScene {
+  id: string;
+  number: number;
+  duration: number;
+  goal: string;
+  visual: string;
+  text: string;
+  motion: string;
+  audio?: string | null;
+}
+
+export interface PipelineSceneFragment {
+  number: number;
+  html: string;
+  duration: number;
+  status: 'pending' | 'running' | 'done' | 'failed';
+  error?: string;
+}
+
+export interface VideoBrief {
+  id: string;
+  goal: { primary: string; secondary: string };
+  audience: { who: string; context: string; pain?: string; awareness: string };
+  format: { primary: string; variants?: string[]; duration: number };
+  constraints?: { noAudio?: boolean; safeZone?: number; includeCaptions?: boolean };
+}
+
+export interface VideoScript {
+  briefId: string;
+  hook: { line: string; type: string; duration: number };
+  narrativeArc: string;
+  segments: Array<{ id: string; type: string; duration: number; text: string }>;
+  cta: { text: string; style: string; duration: number };
+}
+
+// ── Validation ────────────────────────────────────────────────────
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -40,9 +96,49 @@ function storyboardPath(projectsRoot: string, jobId: string): string {
   return path.join(projectsRoot, '.pipelines', `${jobId}-storyboard.json`);
 }
 
+function briefPath(projectsRoot: string, projectId: string): string {
+  return path.join(projectsRoot, projectId, 'brief.json');
+}
+
+function scriptPath(projectsRoot: string, projectId: string): string {
+  return path.join(projectsRoot, projectId, 'script.json');
+}
+
 function scenePath(projectsRoot: string, jobId: string, sceneNum: number): string {
   return path.join(projectsRoot, '.pipelines', `${jobId}-scene-${sceneNum}.html`);
 }
+
+// ── Load/save brief ──────────────────────────────────────────────
+
+export async function loadBrief(projectsRoot: string, projectId: string): Promise<VideoBrief | null> {
+  try {
+    const raw = await fs.readFile(briefPath(projectsRoot, projectId), 'utf8');
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+export async function saveBrief(projectsRoot: string, projectId: string, brief: VideoBrief): Promise<void> {
+  const dir = path.join(projectsRoot, projectId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(briefPath(projectsRoot, projectId), JSON.stringify(brief, null, 2));
+}
+
+// ── Load/save script ─────────────────────────────────────────────
+
+export async function loadScript(projectsRoot: string, projectId: string): Promise<VideoScript | null> {
+  try {
+    const raw = await fs.readFile(scriptPath(projectsRoot, projectId), 'utf8');
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+export async function saveScript(projectsRoot: string, projectId: string, script: VideoScript): Promise<void> {
+  const dir = path.join(projectsRoot, projectId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(scriptPath(projectsRoot, projectId), JSON.stringify(script, null, 2));
+}
+
+// ── Load/save pipeline ───────────────────────────────────────────
 
 export async function loadPipelineJob(projectsRoot: string, jobId: string): Promise<PipelineJob | null> {
   try {
@@ -57,13 +153,13 @@ export async function savePipelineJob(projectsRoot: string, job: PipelineJob): P
   await fs.writeFile(pipelinePath(projectsRoot, job.id), JSON.stringify(job, null, 2));
 }
 
-export async function saveStoryboard(projectsRoot: string, jobId: string, script: Storyboard): Promise<void> {
+export async function saveStoryboard(projectsRoot: string, jobId: string, storyboard: Storyboard): Promise<void> {
   const dir = path.join(projectsRoot, '.pipelines');
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(storyboardPath(projectsRoot, jobId), JSON.stringify(script, null, 2));
+  await fs.writeFile(storyboardPath(projectsRoot, jobId), JSON.stringify(storyboard, null, 2));
 }
 
-export async function saveSceneFragment(projectsRoot: string, jobId: string, fragment: SceneFragment): Promise<void> {
+export async function saveSceneFragment(projectsRoot: string, jobId: string, fragment: PipelineSceneFragment): Promise<void> {
   const dir = path.join(projectsRoot, '.pipelines');
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(scenePath(projectsRoot, jobId, fragment.number), fragment.html);
@@ -75,43 +171,69 @@ export async function loadSceneFragment(projectsRoot: string, projectId: string,
   } catch { return null; }
 }
 
-export interface PipelineJob {
-  id: string;
-  projectId: string;
-  brief: string;
-  status: 'scripting' | 'rendering_scenes' | 'assembling' | 'done' | 'failed';
-  script?: Storyboard;
-  scenes: SceneFragment[];
-  outputMp4?: string;
-  error?: string;
+// ══════════════════════════════════════════════════════════════════
+// Storyboard validation
+// ══════════════════════════════════════════════════════════════════
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
-export interface Storyboard {
-  title: string;
-  duration: number;
-  scenes: StoryboardScene[];
+export function validateStoryboard(storyboard: Storyboard, brief?: VideoBrief): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!storyboard.title) errors.push('Storyboard must have a title');
+  if (!storyboard.duration || storyboard.duration <= 0) errors.push('Duration must be positive');
+  if (!storyboard.scenes || storyboard.scenes.length === 0) errors.push('At least one scene required');
+
+  if (storyboard.scenes) {
+    const totalDuration = storyboard.scenes.reduce((s, sc) => s + (sc.duration || 0), 0);
+    if (Math.abs(totalDuration - storyboard.duration) > 1) {
+      warnings.push(`Scene durations sum to ${totalDuration}s but storyboard says ${storyboard.duration}s`);
+    }
+
+    const ids = new Set<string>();
+    for (const scene of storyboard.scenes) {
+      if (!scene.id) errors.push(`Scene missing id`);
+      else if (ids.has(scene.id)) errors.push(`Duplicate scene id: ${scene.id}`);
+      else ids.add(scene.id);
+
+      if (!scene.goal) errors.push(`Scene "${scene.id}" missing goal`);
+      if (!scene.visual) errors.push(`Scene "${scene.id}" missing visual description`);
+      if (!scene.text) errors.push(`Scene "${scene.id}" missing text`);
+      if (!scene.motion) errors.push(`Scene "${scene.id}" missing motion description`);
+      if (!scene.duration || scene.duration < 2) errors.push(`Scene "${scene.id}" duration must be >= 2s`);
+    }
+
+    // First scene should be a hook (≤ 5s)
+    const first = storyboard.scenes[0];
+    if (first && first.duration > 5) warnings.push(`First scene (hook) is ${first.duration}s — recommend ≤ 5s`);
+
+    // Last scene should be a CTA (≤ 8s)
+    const last = storyboard.scenes[storyboard.scenes.length - 1];
+    if (last && last.duration > 8) warnings.push(`Last scene (CTA) is ${last.duration}s — recommend ≤ 8s`);
+  }
+
+  // Validate against brief if provided
+  if (brief) {
+    if (storyboard.aspectRatio && brief.format.primary && storyboard.aspectRatio !== brief.format.primary) {
+      warnings.push(`Storyboard aspect ${storyboard.aspectRatio} differs from brief format ${brief.format.primary}`);
+    }
+    if (Math.abs(storyboard.duration - brief.format.duration) > 1) {
+      warnings.push(`Storyboard duration ${storyboard.duration}s differs from brief ${brief.format.duration}s`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors, warnings };
 }
 
-export interface StoryboardScene {
-  number: number;
-  title: string;
-  duration: number;
-  description: string;
-  elements: string[];
-}
+// ══════════════════════════════════════════════════════════════════
+// Stage 1 prompt — Director Agent
+// ══════════════════════════════════════════════════════════════════
 
-export interface SceneFragment {
-  number: number;
-  html: string;
-  duration: number;
-  status: 'pending' | 'running' | 'done' | 'failed';
-  error?: string;
-}
-
-/**
- * Stage 1 prompt — compact, focused only on storyboard generation.
- * Agent receives: brief + motion system tokens + script system summary.
- */
 export function buildDirectorPrompt(
   brief: string,
   motionTokens: string,
@@ -129,34 +251,44 @@ Return ONLY a JSON storyboard with this exact format (no markdown, no explanatio
 {
   "title": "Video Title",
   "duration": 30,
+  "aspectRatio": "16:9",
   "scenes": [
     {
+      "id": "unique-scene-id",
       "number": 1,
-      "title": "Scene Title",
-      "duration": 8,
-      "description": "What happens in this scene",
-      "elements": ["element 1", "element 2", "element 3"]
+      "duration": 7,
+      "goal": "What this scene communicates to the viewer",
+      "visual": "Visual description — background, layout, key elements, colors",
+      "text": "On-screen text for this scene",
+      "motion": "Animation description — entrance, emphasis, exit patterns",
+      "audio": "Audio cue (voiceover line, SFX, music — or null)"
     }
   ]
 }
 
 Rules:
-- Total duration should match brief (or default to 30s)
-- 4-6 scenes for a standard video
-- Each scene 5-10 seconds
-- Scene titles should be short (2-5 words)
-- Elements should be specific visual items (headline, subhead, badge, chart, etc.)`;
+- Total duration must match the brief
+- Scene ids must be unique kebab-case (e.g., "hook", "problem", "feature-1", "cta")
+- Scene numbers must be sequential starting from 1
+- 3-5 scenes for short videos (< 30s), 5-8 for longer
+- Each scene 3-10 seconds (hook ≤ 5s, CTA ≤ 6s)
+- First scene is a hook — communicate the core premise
+- Last scene is a CTA — tell the viewer what to do
+- Goal should be one clear sentence about what this scene achieves
+- Visual should describe the layout archetype and specific elements
+- Motion should reference the easing from VISUAL STYLE
+- Text field is what appears on screen (NOT voiceover audio)`;
 }
 
-/**
- * Stage 2 prompt — compact, focused on ONE scene only.
- * Agent receives: the full storyboard + the specific scene to render.
- */
+// ══════════════════════════════════════════════════════════════════
+// Stage 2 prompt — Scene Agent
+// ══════════════════════════════════════════════════════════════════
+
 export function buildScenePrompt(
   scene: StoryboardScene,
   storyboard: Storyboard,
   motionTokens: string,
-  previousScenes: SceneFragment[],
+  previousScenes: PipelineSceneFragment[],
 ): string {
   const prevInfo = previousScenes.length > 0
     ? `Previous scenes (match their visual style):\n${previousScenes.filter(s => s.status === 'done').map(s => `Scene ${s.number} — ${s.html.slice(0, 200)}...`).join('\n\n')}`
@@ -164,14 +296,16 @@ export function buildScenePrompt(
 
   return `You are a motion designer. Create ONE scene for a HyperFrames composition.
 
-STORYBOARD: "${storyboard.title}", ${storyboard.duration}s total, scene ${scene.number}/${storyboard.scenes.length}
+STORYBOARD: "${storyboard.title}", ${storyboard.duration}s total, scene ${scene.id}
 
 THIS SCENE:
-- Number: ${scene.number}
-- Title: ${scene.title}
+- Id: ${scene.id}
 - Duration: ${scene.duration}s
-- Description: ${scene.description}
-- Elements: ${scene.elements.join(', ')}
+- Goal: ${scene.goal}
+- Visual: ${scene.visual}
+- Text: ${scene.text}
+- Motion: ${scene.motion}
+${scene.audio ? `- Audio: ${scene.audio}` : ''}
 
 ${prevInfo}
 
@@ -179,22 +313,25 @@ VISUAL STYLE: ${motionTokens}
 
 CRITICAL RULES:
 - class="clip" on ALL elements with data-start
-- data-start + data-duration on every timed element  
-- NO transitions needed (assembly handles scene switching)
-- window.__timelines["scene${scene.number}"] = gsap.timeline({paused:true})
-- Body: width:1920px; height:1080px; overflow:hidden
+- data-start + data-duration on every timed element
+- NO transitions needed (assembly handles scene switching via crossfade)
+- window.__timelines["${scene.id}"] = gsap.timeline({paused:true})
+- html,body { width:1920px; height:1080px; overflow:hidden }
 - Meta viewport: width=1920,height=1080
 - Use the exact palette, fonts, and easing from VISUAL STYLE
+- Never use Math.random(), Date.now(), or repeat:-1 in GSAP
+- Never use <br> in body text — use max-width and natural wrapping
+- Font sizes: headlines ≥ 60px, body text ≥ 20px
 
 Return ONLY the HTML for this scene (the <div class="scene"> and its contents + <style> + <script>).
 Do NOT include <!DOCTYPE>, <html>, or <body> tags. Just the scene div and its assets.
 Do NOT write to a file — output the HTML directly in your response text.`;
 }
 
-/**
- * Stage 3 — no agent needed. Pure code: assemble fragments into a full
- * HyperFrames composition and render to MP4.
- */
+// ══════════════════════════════════════════════════════════════════
+// Stage 3 — Assembly (pure code, no agent)
+// ══════════════════════════════════════════════════════════════════
+
 export function assembleComposition(
   job: PipelineJob,
   motionTokens: string,
@@ -203,38 +340,32 @@ export function assembleComposition(
   const scenes = job.scenes
     .filter(s => s.status === 'done' && s.html)
     .sort((a, b) => a.number - b.number);
-  
+
   if (scenes.length === 0) throw new Error('No completed scenes to assemble');
-  
+
   const totalDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
 
   const palette = extractPalette(motionTokens);
   const fonts = extractFonts(motionTokens);
 
   const sceneDivs = scenes.map((s, i) => `
-    <!-- Scene ${s.number}: ${job.script?.scenes.find(sc => sc.number === s.number)?.title || ''} -->
+    <!-- Scene ${s.number} -->
     <div class="scene" data-scene="${s.number}" ${i === 0 ? 'style="opacity:1"' : 'style="opacity:0"'}>
       <div class="scene-content">
         ${s.html}
       </div>
     </div>`).join('\n');
 
-  const timelineJs = scenes.map((s, i) => {
-    const startTime = scenes.slice(0, i).reduce((sum, prev) => sum + prev.duration, 0);
-    const endTime = startTime + s.duration;
-    
+  // Crossfade transitions between consecutive scenes
+  const timelineJs = scenes.map((_s, i) => {
     if (i < scenes.length - 1) {
-      return `  // Scene ${s.number} → ${scenes[i+1].number} transition
-  tl.to(zoom, { x: -60, opacity: 0.4, duration: 0.5, ease: "power2.inOut" }, ${endTime - 0.5});
-  tl.call(() => {
-    document.querySelector('[data-scene="${s.number}"]').style.opacity = "0";
-    document.querySelector('[data-scene="${scenes[i+1].number}"]').style.opacity = "1";
-  }, [], ${endTime - 0.3});
-  tl.to(zoom, { x: 0, opacity: 1, duration: 0.5, ease: "power2.inOut" }, ${endTime - 0.3});`;
+      const transitionTime = scenes.slice(0, i + 1).reduce((sum, prev) => sum + prev.duration, 0) - 0.5;
+      return `  // Scene ${scenes[i].number} → ${scenes[i + 1].number} crossfade
+  tl.to('[data-scene="${scenes[i + 1].number}"]', { opacity: 1, duration: 0.5, ease: "power2.inOut" }, ${transitionTime});
+  tl.to('[data-scene="${scenes[i].number}"]', { opacity: 0, duration: 0.5, ease: "power2.inOut" }, ${transitionTime});`;
     }
-    return `  // Final scene ${s.number} — fade out
-  tl.to(zoom, { opacity: 0, duration: 0.8, ease: "power2.in" }, ${endTime - 1});`;
-  }).join('\n');
+    return '';
+  }).filter(Boolean).join('\n');
 
   const audioTag = musicTrack
     ? `<audio id="bg-music" data-start="0" data-duration="${totalDuration}" data-track-index="50" data-volume="0.3" src="${musicTrack}"></audio>`
@@ -250,25 +381,20 @@ export function assembleComposition(
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:1920px; height:1080px; overflow:hidden; background:var(--bg); color:var(--fg); font-family:${fonts}; }
   #stage { position:relative; width:1920px; height:1080px; overflow:hidden; }
-  #stage-zoom-container { width:100%; height:100%; }
-  .scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; opacity:0; }
+  .scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; opacity:0; pointer-events:none; }
   .scene:first-child { opacity:1; }
   .scene-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; padding:120px 160px; gap:16px; box-sizing:border-box; }
-  .clip { visibility:hidden; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 </head>
 <body>
 <div id="stage" data-composition-id="pipeline" data-start="0" data-duration="${totalDuration}" data-width="1920" data-height="1080">
-<div id="stage-zoom-container">
   ${audioTag}
   ${sceneDivs}
-</div>
 </div>
 <script>
   window.__timelines = window.__timelines || {};
   const tl = gsap.timeline({ paused: true });
-  const zoom = document.getElementById("stage-zoom-container");
   ${timelineJs}
   window.__timelines["pipeline"] = tl;
 </script>
@@ -294,18 +420,16 @@ function extractFonts(tokens: string): string {
 }
 
 export function parseStoryboard(text: string): Storyboard | null {
-  // Try to find JSON block with scenes array
   const jsonMatch = text.match(/\{[\s\S]*"scenes"\s*:\s*\[[\s\S]*?\][\s\S]*\}/);
   if (!jsonMatch) return null;
 
   try {
     return JSON.parse(jsonMatch[0]);
   } catch {
-    // Try cleaning common JSON issues
     let cleaned = jsonMatch[0]
-      .replace(/,\s*}/g, '}')       // trailing comma before }
-      .replace(/,\s*\]/g, ']')      // trailing comma before ]
-      .replace(/[\u201C\u201D]/g, '"'); // smart quotes → regular quotes
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*\]/g, ']')
+      .replace(/[\u201C\u201D]/g, '"');
     try {
       return JSON.parse(cleaned);
     } catch {
@@ -315,19 +439,15 @@ export function parseStoryboard(text: string): Storyboard | null {
 }
 
 export function extractSceneHtml(text: string): string | null {
-  // Try finding the scene-content div
   const contentMatch = text.match(/<div class="scene-content"[\s\S]*?<\/div>\s*<\/div>/i);
   if (contentMatch) return contentMatch[0];
 
-  // Try finding any div block with style and script
   const divMatch = text.match(/(<div[\s\S]*?<\/div>\s*<script[\s\S]*?<\/script>)/i);
   if (divMatch) return divMatch[1];
 
-  // Try markdown code fence extraction
   const fenceMatch = text.match(/```html\n([\s\S]*?)```/i);
   if (fenceMatch) return fenceMatch[1];
 
-  // Last resort: any substantial HTML block
   const htmlMatch = text.match(/(<div[\s\S]{200,}?<\/div>)/i);
   return htmlMatch?.[1] || null;
 }
