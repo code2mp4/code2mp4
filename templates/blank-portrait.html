@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html data-composition-id="ov-portrait" data-composition-duration="8" data-resolution="portrait">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=1080,height=1920">
   <style>
     :root {
       --bg: #0D1117;
@@ -13,23 +13,25 @@
       --font-display: 'Inter', system-ui, -apple-system, sans-serif;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+    html, body {
       background: var(--bg);
+      width: 1080px; height: 1920px;
+      overflow: hidden;
+    }
+    body {
       color: var(--fg);
       font-family: var(--font-display);
-      overflow: hidden;
-      width: 1080px; height: 1920px;
     }
     #stage {
       position: relative;
       width: 1080px; height: 1920px;
       overflow: hidden;
     }
-    #stage-zoom-container { width: 100%; height: 100%; }
     .scene {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 20px; opacity: 0;
+      flex-direction: column; gap: 20px;
+      pointer-events: none;
     }
     .scene:first-child { opacity: 1; }
     .scene-content {
@@ -58,29 +60,27 @@
 </head>
 <body>
 <div id="stage" data-composition-id="ov-portrait" data-start="0" data-duration="8" data-width="1080" data-height="1920">
-  <div id="stage-zoom-container">
 
-    <div class="scene" data-scene="1" style="opacity: 1">
-      <div class="scene-content">
-        <div class="headline" id="s1-title">Short Title</div>
-        <div class="subhead" id="s1-sub">Grab attention fast</div>
-      </div>
+  <div class="scene" data-scene="1" style="opacity: 1">
+    <div class="scene-content">
+      <div class="headline" id="s1-title">Short Title</div>
+      <div class="subhead" id="s1-sub">Grab attention fast</div>
     </div>
-
-    <div class="scene" data-scene="2">
-      <div class="scene-content">
-        <div class="headline" id="s2-title" style="font-size: 64px;">Key Message</div>
-        <div class="subhead" id="s2-body">Your main point here</div>
-      </div>
-    </div>
-
-    <div class="scene" data-scene="3">
-      <div class="scene-content">
-        <div class="headline" id="s3-cta" style="font-size: 64px; color: var(--accent2);">CTA Here</div>
-      </div>
-    </div>
-
   </div>
+
+  <div class="scene" data-scene="2">
+    <div class="scene-content">
+      <div class="headline" id="s2-title" style="font-size: 64px;">Key Message</div>
+      <div class="subhead" id="s2-body">Your main point here</div>
+    </div>
+  </div>
+
+  <div class="scene" data-scene="3">
+    <div class="scene-content">
+      <div class="headline" id="s3-cta" style="font-size: 64px; color: var(--accent2);">CTA Here</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -90,25 +90,20 @@
   tl.from("#s1-title", { scale: 1.2, opacity: 0, duration: 0.4, ease: "power3.out" }, 0.1);
   tl.from("#s1-sub",  { y: 30, opacity: 0, duration: 0.3, ease: "power2.out" }, 0.4);
 
-  const zoom = document.getElementById("stage-zoom-container");
-  tl.to(zoom, { y: -40, opacity: 0, duration: 0.3, ease: "power2.inOut" }, 2.5);
-  tl.call(() => {
-    document.querySelector('[data-scene="1"]').style.opacity = "0";
-    document.querySelector('[data-scene="2"]').style.opacity = "1";
-  }, [], 2.7);
-  tl.to(zoom, { y: 0, opacity: 1, duration: 0.3, ease: "power2.inOut" }, 2.7);
+  // ── Scene 1 → 2: Crossfade ──────────────────────────────────────
+  const scene2 = document.querySelector('[data-scene="2"]');
+  tl.to(scene2, { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 2.5);
+  tl.to('[data-scene="1"]', { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 2.5);
 
-  tl.from("#s2-title", { y: 30, opacity: 0, duration: 0.4, ease: "back.out(1.2)" }, 2.9);
-  tl.from("#s2-body",  { opacity: 0, duration: 0.3, ease: "power1.out" }, 3.2);
+  tl.from("#s2-title", { y: 30, opacity: 0, duration: 0.4, ease: "back.out(1.2)" }, 2.7);
+  tl.from("#s2-body",  { opacity: 0, duration: 0.3, ease: "power1.out" }, 3.0);
 
-  tl.to(zoom, { y: -40, opacity: 0, duration: 0.3, ease: "power2.inOut" }, 5.5);
-  tl.call(() => {
-    document.querySelector('[data-scene="2"]').style.opacity = "0";
-    document.querySelector('[data-scene="3"]').style.opacity = "1";
-  }, [], 5.7);
-  tl.to(zoom, { y: 0, opacity: 1, duration: 0.3, ease: "power2.inOut" }, 5.7);
+  // ── Scene 2 → 3: Crossfade ──────────────────────────────────────
+  const scene3 = document.querySelector('[data-scene="3"]');
+  tl.to(scene3, { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 5.5);
+  tl.to('[data-scene="2"]', { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 5.5);
 
-  tl.from("#s3-cta", { scale: 1.1, opacity: 0, duration: 0.5, ease: "elastic.out(1,0.3)" }, 5.9);
+  tl.from("#s3-cta", { scale: 1.1, opacity: 0, duration: 0.5, ease: "elastic.out(1,0.3)" }, 5.7);
 
   window.__timelines["ov-portrait"] = tl;
 </script>

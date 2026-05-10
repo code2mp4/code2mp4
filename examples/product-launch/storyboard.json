@@ -1,0 +1,62 @@
+{
+  "title": "DeployBot Launch",
+  "duration": 30,
+  "aspectRatio": "16:9",
+  "motionSystem": "tech",
+  "scenes": [
+    {
+      "id": "problem",
+      "duration": 5,
+      "goal": "Hook — make the viewer recognize the pain of manual deployment",
+      "visual": "Dark canvas (#0D1117). Centered headline in monospace (#58A6FF) with soft blue glow. Subtle background grid fade-in.",
+      "text": "Deploying should not take an afternoon.",
+      "motion": "Headline fades in character-by-character (typewriter effect), background grid reveals with power3.out",
+      "audio": "Low tension drone fade in"
+    },
+    {
+      "id": "promise",
+      "duration": 5,
+      "goal": "Reveal DeployBot as the solution with a bold value proposition",
+      "visual": "Background shifts to slightly brighter (#161B22). Headline transitions to product name with accent color. Accent 2 (#3FB950) underline sweep.",
+      "text": "DeployBot ships your code in 60 seconds.",
+      "motion": "Previous headline fades out, new headline scales in with back.out(1.4). Green underline sweeps left-to-right.",
+      "audio": "Whoosh transition + upbeat music start"
+    },
+    {
+      "id": "feature-1",
+      "duration": 5,
+      "goal": "Showcase one-click deploy feature",
+      "visual": "Left: feature icon (terminal window with green checkmark). Right: headline + description. Accent 2 (#3FB950) for success indicators.",
+      "text": "One-click deploy\n\nConnect your repo, pick a branch, hit deploy. That's it.",
+      "motion": "Feature icon draws in (stroke animation), text slides in from right. Checkmark pulses on emphasis.",
+      "audio": null
+    },
+    {
+      "id": "feature-2",
+      "duration": 5,
+      "goal": "Showcase rollback and preview features",
+      "visual": "Two-column card layout. Left card: 'Instant Rollback' with undo icon. Right card: 'Preview Environments' with eye icon. Cards have subtle border (#30363D).",
+      "text": "Instant Rollback\n\nOne click to undo.\n\nPreview Environments\n\nSee changes before they ship.",
+      "motion": "Cards scale in sequentially from below (0.3s stagger). Icons rotate slightly on entrance.",
+      "audio": null
+    },
+    {
+      "id": "feature-3",
+      "duration": 5,
+      "goal": "Showcase team collaboration features",
+      "visual": "Three avatar circles overlapping, with notification badges. Below: team activity feed with timestamp indicators.",
+      "text": "Built for teams\n\nDeploy approvals, activity feed, Slack notifications. Everyone stays in sync.",
+      "motion": "Avatars fade in with bounce. Feed items scroll in one by one. Badges pulse.",
+      "audio": null
+    },
+    {
+      "id": "cta",
+      "duration": 5,
+      "goal": "Drive sign-up with clear call to action",
+      "visual": "Centered layout. Large CTA button on accent color (#58A6FF) with subtle glow. URL below in muted (#8B949E). Background returns to deep canvas.",
+      "text": "Start deploying in 60 seconds\n\ndeploybot.io",
+      "motion": "Button scales up from 0.8 to 1.0 with elastic.out. URL fades in after 1s delay.",
+      "audio": "Music swells, then fades out with final accent hit"
+    }
+  ]
+}

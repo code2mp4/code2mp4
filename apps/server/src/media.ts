@@ -14,6 +14,11 @@ import path from 'node:path';
 import fs from 'node:fs';
 import type { Response } from 'express';
 import { generateSfx, type SfxKind } from './audio.js';
+import {
+  generateTts,
+  generateTranscribe,
+  generateRemoveBackground,
+} from './renderer/hyperframes-bridge.js';
 
 interface RenderTask {
   id: string;
@@ -51,22 +56,35 @@ export async function handleMediaGenerate(req: {
     sfxDuration?: number;
     sfxFrequency?: number;
     sfxVolume?: number;
+    mediaPath?: string;
+    transcribeModel?: string;
+    transcribeLanguage?: string;
+    removeBgFormat?: string;
+    removeBgBackgroundOutput?: string;
   };
 }, res: Response): Promise<void> {
-  const { projectId, model, output, compositionDir, quality, fps, surface, prompt, voice, speed, audioKind, sfxKind, sfxDuration, sfxFrequency, sfxVolume } = req.body;
+  const { projectId, model, output, compositionDir, quality, fps, surface, prompt, voice, speed, audioKind, sfxKind, sfxDuration, sfxFrequency, sfxVolume, mediaPath, transcribeModel, transcribeLanguage, removeBgFormat, removeBgBackgroundOutput } = req.body;
 
   if (!projectId) {
     res.status(400).json({ error: 'projectId is required' });
     return;
   }
 
-  // ── Audio surface (TTS or SFX) ───────────────────────────────
+  // ── Audio surface (TTS, SFX, or transcribe) ───────────────────
   if (surface === 'audio') {
     if (audioKind === 'sfx') {
       handleSfxGenerate(res, projectId, output, sfxKind, sfxDuration, sfxFrequency, sfxVolume);
+    } else if (audioKind === 'transcribe') {
+      handleTranscribeGenerate(res, projectId, output, mediaPath, transcribeModel, transcribeLanguage);
     } else {
       handleTtsGenerate(res, projectId, output, prompt, voice, speed);
     }
+    return;
+  }
+
+  // ── Video surface (remove background) ──────────────────────────
+  if (surface === 'video' && model === 'hyperframes-remove-bg') {
+    handleRemoveBackgroundGenerate(res, projectId, output, mediaPath, removeBgFormat, removeBgBackgroundOutput);
     return;
   }
 
@@ -83,7 +101,7 @@ export async function handleMediaGenerate(req: {
     outputPath: output,
     compositionDir: compositionDir ?? '',
     quality: quality ?? 'standard',
-    fps: fps ?? 24,
+    fps: fps ?? 30,
     progress: [],
     nextSince: 0,
     createdAt: Date.now(),
@@ -220,50 +238,89 @@ async function handleTtsGenerate(
     return;
   }
 
-  const { spawn } = await import('node:child_process');
-  const path = await import('node:path');
-  const fs = await import('node:fs/promises');
+  const pathModule = await import('node:path');
+  const fsp = await import('node:fs/promises');
 
-  const projectsRoot = path.resolve(process.cwd(), 'projects');
-  const outputPath = path.join(projectsRoot, projectId, output || 'tts-output.wav');
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
+  const outputPath = pathModule.join(projectsRoot, projectId, output || 'tts-output.wav');
+  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
 
-  const args = ['hyperframes', 'tts', prompt, '--output', outputPath];
-  if (voice) args.push('--voice', voice);
-  if (speed) args.push('--speed', String(speed));
-
-  return new Promise((resolve) => {
-    const child = spawn('npx', args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
+  try {
+    const result = await generateTts({ prompt, outputPath, voice, speed });
+    res.json({
+      file: { name: pathModule.basename(outputPath), size: result.fileSize, kind: 'audio', mime: 'audio/wav' },
     });
+  } catch (err) {
+    res.status(500).json({ error: `TTS generation failed: ${(err as Error).message}` });
+  }
+}
 
-    let stdout = '';
-    let stderr = '';
+// ── Transcribe handler ────────────────────────────────────────────────
 
-    child.stdout?.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
-    child.stderr?.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+async function handleTranscribeGenerate(
+  res: Response,
+  projectId: string,
+  output: string,
+  mediaPath?: string,
+  model?: string,
+  language?: string,
+): Promise<void> {
+  if (!mediaPath) {
+    res.status(400).json({ error: '--media-path is required for transcription' });
+    return;
+  }
 
-    child.on('close', async (code) => {
-      if (code === 0) {
-        try {
-          const stats = await fs.stat(outputPath);
-          res.json({
-            file: { name: path.basename(outputPath), size: stats.size, kind: 'audio', mime: 'audio/wav' },
-          });
-        } catch {
-          res.status(500).json({ error: 'TTS completed but output file not found' });
-        }
-      } else {
-        res.status(500).json({ error: `TTS failed (exit ${code}): ${stderr.slice(0, 500)}` });
-      }
-      resolve();
+  const pathModule = await import('node:path');
+  const fsp = await import('node:fs/promises');
+
+  const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
+  const outputPath = pathModule.join(projectsRoot, projectId, output || 'transcript.json');
+  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
+
+  try {
+    const result = await generateTranscribe({ mediaPath, outputPath, model, language });
+    res.json({
+      file: { name: pathModule.basename(outputPath), size: result.fileSize, kind: 'text', mime: 'application/json' },
     });
+  } catch (err) {
+    res.status(500).json({ error: `Transcription failed: ${(err as Error).message}` });
+  }
+}
 
-    child.on('error', (err) => {
-      res.status(500).json({ error: `Failed to spawn hyperframes tts: ${err.message}` });
-      resolve();
+// ── Remove-background handler ─────────────────────────────────────────
+
+async function handleRemoveBackgroundGenerate(
+  res: Response,
+  projectId: string,
+  output: string,
+  mediaPath?: string,
+  format?: string,
+  backgroundOutput?: string,
+): Promise<void> {
+  if (!mediaPath) {
+    res.status(400).json({ error: '--media-path is required for remove-background' });
+    return;
+  }
+
+  const pathModule = await import('node:path');
+  const fsp = await import('node:fs/promises');
+
+  const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
+  const outputPath = pathModule.join(projectsRoot, projectId, output || 'output.webm');
+  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
+
+  try {
+    const result = await generateRemoveBackground({
+      mediaPath, outputPath,
+      format: format as 'webm' | 'mov' | undefined,
+      backgroundOutput,
     });
-  });
+    res.json({
+      file: { name: pathModule.basename(outputPath), size: result.fileSize, kind: 'video', mime: format === 'mov' ? 'video/quicktime' : 'video/webm' },
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Remove-background failed: ${(err as Error).message}` });
+  }
 }
 
 // ── Render task runner ────────────────────────────────────────────────

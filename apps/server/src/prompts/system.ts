@@ -62,6 +62,10 @@ export function composeVideoSystemPrompt({
     parts.push(
       `\n\n## Active motion system${motionSystemTitle ? ` — ${motionSystemTitle}` : ''}\n\nBind these tokens into the composition:\n\n${tokens}\n\nFull MOTION.md available at: motion-systems/${motionSystemTitle || 'tech'}/MOTION.md — Read it for detailed rules.`,
     );
+  } else {
+    parts.push(
+      '\n\n## No motion system selected — choose a style\n\nIf no motion system is active, you MUST pick a deliberate visual identity from the 5 curated motion directions (editorial, tech, warm-soft, cinematic, brutalist) or from the HyperFrames visual-styles.md presets. Never use browser defaults (#333, #3b82f6, Roboto). Always define a palette, font stack, and easing signature before writing composition HTML.',
+    );
   }
 
   // Layer 2.5: Script system (narrative constraints — compact summary)

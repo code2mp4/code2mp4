@@ -1,35 +1,74 @@
 # Code2MP4
 
-> **AI 驱动的视频制作 — 当设计智能体遇见动效图形。**
+> **AI Agent 能写代码，现在也能写视频了。**
 
-Code2MP4 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames][hf] 的 HTML-to-MP4 渲染引擎。描述你想要的视频——产品发布、社媒短片、品牌片头——AI Agent 会编写 HyperFrames 合成文件，渲染为 MP4，并将结果流式传输回你的浏览器。**每一层都可替换、可定制（BYOK）。**
+Code2MP4 是一个面向 Coding Agent 的开源视频生产流水线。它让 Claude Code、OpenCode、Codex 等编程智能体可以生成**可编辑的动态源文件**，并将其渲染为**确定性 MP4**——不是黑盒输出，而是结构化、可版本管理的源文件。
+
+```mermaid
+flowchart LR
+    A[需求描述] --> B[导演 Agent]
+    B --> C[分镜脚本]
+    C --> D[场景 Agent]
+    D --> E[可编辑动态源文件]
+    E --> F[渲染引擎]
+    F --> G[MP4]
+```
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" /></a>
-  <a href="#agents"><img alt="Agents" src="https://img.shields.io/badge/agents-6%20CLIs%20自动检测-black?style=flat-square" /></a>
-  <a href="#motion-systems"><img alt="Motion systems" src="https://img.shields.io/badge/动效系统-5%20套-orange?style=flat-square" /></a>
-  <a href="#video-skills"><img alt="Skills" src="https://img.shields.io/badge/技能-6%20个-teal?style=flat-square" /></a>
-  <a href="#快速开始"><img alt="Quickstart" src="https://img.shields.io/badge/快速开始-3%20条命令-green?style=flat-square" /></a>
+  <a href="https://code2mp4.com"><img alt="Website" src="https://img.shields.io/badge/website-code2mp4.com-blue?style=flat-square" /></a>
 </p>
 
 <p align="center"><a href="README.md">English</a> · <b>简体中文</b></p>
 
 ---
 
-## 为什么做这个
+## Code2MP4 是什么
 
-今天的 AI 视频生成分为两极：写实文本生成视频（Kling、Veo、Sora）给你一个无法编辑的黑箱输出，手工时间线编辑器（After Effects、DaVinci）给你控制权但要求专业能力。没有一个开源工具能让你通过文本描述，让 AI Agent 来编排、动画化并渲染一个视频——同时保持源码完全可见和可编辑。
+Code2MP4 是一个**面向 Agent 的视频生产流水线**，不是黑盒文生视频工具。
 
-**Code2MP4 填补了这个空白。** 它融合了两个经过验证的开源范式：
+```
+黑盒 AI 视频：    需求 ──────────────────────► MP4（不透明，不可编辑）
 
-- **[Open Design][od]** 教会我们如何将任何编程 Agent CLI 转变为设计引擎：通过 Prompt 编排、交互式追问表单、技能驱动的工作流和基于文件系统的项目模型。
-- **[HyperFrames][hf]** 教会我们视频可以当作单个 HTML 文件来创作——用 `data-*` 属性控制时间轴，用 GSAP 做动画，通过 Puppeteer + FFmpeg 帧精确渲染。
+Code2MP4：        需求 → 分镜脚本 → 动态源文件 → 渲染 → MP4
+                              ↑ 可编辑，可版本管理
+```
 
-你输入"做一个 15 秒的产品发布视频"，Agent 先追问（视频类型？时长？能量级？音频需求？），然后脚手架搭建 HyperFrames 合成文件，编写动画，执行 lint + validate + inspect 检查，调度渲染，最终将 MP4 流式返回浏览器。整个合成文件——HTML、CSS、GSAP 时间轴——都是你的，可任意编辑。
+Code2MP4 生成的每个视频都有**分镜脚本**（结构化 JSON）、**动态源文件**（可编辑的 HTML/CSS/GSAP）和**确定性 MP4**（相同输入 = 相同输出）。你可以审查、编辑、版本管理、反复修改。
+
+## Code2MP4 不是什么
+
+- ❌ 不是照片级文生视频模型（Sora、Veo、Kling、Runway）
+- ❌ 不是手动时间线编辑器（Premiere、DaVinci、CapCut）
+- ❌ 不是 SaaS 在线服务——在你本地运行
+- ❌ 不是简单的代码转 MP4 格式转换器
+
+## 关键对比
+
+| 能力 | 黑盒文生视频 | 传统编辑器 | HyperFrames | **Code2MP4** |
+|---|---|---|---|---|
+| 可编辑源文件 | 否 | 部分 | 是 | **是** |
+| 确定性输出 | 否 | 是 | 是 | **是** |
+| Agent 原生工作流 | 否 | 否 | 部分 | **是** |
+| Git 友好 | 否 | 否 | 是 | **是** |
+| CI/CD 就绪 | 否 | 否 | 部分 | **是** |
+| 分镜驱动 | 否 | 否 | 否 | **是** |
+| 多 Agent 流水线 | 否 | 否 | 否 | **是** |
+| 最适合 | 创意生成 | 人工剪辑 | 渲染引擎 | **Agent 驱动生产** |
 
 ---
 
 ## 快速开始
+
+```bash
+git clone https://github.com/code2mp4/code2mp4.git
+cd code2mp4
+corepack enable
+pnpm install
+pnpm dev
+```
+
+打开 `http://localhost:7456`，选择视频类型，描述需求，发送。
 
 ### 前置条件
 
@@ -39,66 +78,123 @@ Code2MP4 融合了 [Open Design][od] 的 AI Agent 编排能力与 [HyperFrames][
   ```bash
   npm i -g @anthropic-ai/claude-code   # Claude Code（推荐）
   npm i -g opencode                     # OpenCode
-  npm i -g @google/gemini-cli          # Gemini CLI
   ```
 - **HyperFrames**（渲染必需）：`npm i -g hyperframes`
-- **FFmpeg**（视频编码）：`brew install ffmpeg`（macOS）或 `apt install ffmpeg`（Linux）
+- **FFmpeg**（视频编码）：`brew install ffmpeg`
 
-### 三条命令启动
+---
 
-```bash
-git clone https://github.com/code2mp4/code2mp4.git
-cd code2mp4
-pnpm install && pnpm dev
+## 工作原理
+
+### 流水线
+
+Code2MP4 编排了一个由 coding agent 驱动的多阶段流水线：
+
+1. **需求发现** — 交互式表单收集视频类型、时长、能量级、音频需求
+2. **导演 Agent** — 生成结构化分镜脚本（JSON，含场景、视觉、文本、动效）
+3. **场景 Agent** — 每个场景生成可编辑的动态源文件片段（HTML + CSS + GSAP）
+4. **组装** — 场景合并为完整的 HyperFrames 合成文件
+5. **渲染** — Puppeteer + FFmpeg 生成确定性 MP4
+
+### Prompt 堆栈（7 层）
+
+| 层 | 用途 |
+|---|---|
+| 1. 需求发现 | 首轮交互式表单的硬规则 |
+| 2. 身份契约 | 紧凑的制作人身份声明 |
+| 3. 动效系统 | 调色板、字体、缓动签名、转场规则 |
+| 4. 脚本系统 | 叙事弧线、节奏、钩子模式 |
+| 5. 视频技能 | 场景数量、动画模式、输出检查清单 |
+| 6. 项目元数据 | 用户选择的类型、时长、比例、能量级 |
+| 7. HyperFrames 合约 | 负载级合成规则（固定在末尾） |
+
+---
+
+## 功能特性
+
+| | |
+|---|---|
+| **Agent** | Claude Code · OpenCode · Codex CLI · Gemini CLI · Cursor Agent · Qwen Code — PATH 自动检测 |
+| **动效系统** | 5 套精选方向（编辑风 · 科技风 · 温暖风 · 电影风 · 实验风） |
+| **脚本系统** | 3 种叙事结构（技术演示 · 产品发布 · 品牌故事） |
+| **视频技能** | 6 个可组合工作流，含场景模板和输出检查清单 |
+| **多阶段流水线** | 导演 Agent → 分镜 → 场景 Agent → 组装 → 渲染 |
+| **确定性渲染** | 相同源文件 = 相同 MP4 输出 |
+| **双模式预览** | `<hyperframes-player>` 设计审查 + `<video>` 播放 |
+| **持久化** | SQLite + 文件系统，重启不丢数据 |
+| **SSE 流式传输** | 实时 Agent 输出：文本、工具调用、渲染进度 |
+
+---
+
+## 示例
+
+| 示例 | 描述 | 分镜 |
+|---|---|---|
+| [产品发布](examples/product-launch/) | 30 秒 SaaS 产品发布视频 | [storyboard.json](examples/product-launch/storyboard.json) |
+| [开源项目介绍](examples/oss-intro/) | Code2MP4 自我介绍视频 | [storyboard.json](examples/oss-intro/storyboard.json) |
+| [发布说明](examples/release-notes/) | 更新日志转视频 | [storyboard.json](examples/release-notes/storyboard.json) |
+
+---
+
+## 使用场景
+
+- SaaS 产品发布视频
+- 开源项目介绍视频
+- 发布说明 / 更新日志视频
+- 开发者文档讲解视频
+- 社交媒体动效卡片
+- CI/CD 自动化视频生成
+
+---
+
+## 文档
+
+| 文档 | 用途 |
+|---|---|
+| [愿景](docs/vision.md) | 为什么 Agent 需要视频作为输出格式 |
+| [对比](docs/comparison.md) | 与黑盒工具、Remotion、HyperFrames、Open Design 的区别 |
+| [架构](docs/architecture.md) | 完整流水线架构 |
+| [Agent 工作流](docs/agent-workflow.md) | Agent 使用 Code2MP4 的分步指南 |
+| [分镜模式](docs/storyboard-schema.md) | 结构化分镜 JSON Schema |
+| [模板](docs/templates.md) | 模板系统文档 |
+| [路线图](ROADMAP.md) | 开发阶段和里程碑 |
+
+---
+
+## 与 HyperFrames 和 Open Design 的关系
+
+- **[HyperFrames](https://github.com/heygen-com/hyperframes)** 是**渲染引擎**。它解决 HTML 到 MP4 的问题。Code2MP4 不重新实现渲染——它委托给 HyperFrames。
+- **[Open Design](https://github.com/nexu-io/open-design)** 开创了 Code2MP4 继承的 **Agent 编排架构**：多层 Prompt 堆叠、Agent 自动检测、交互式发现表单、SSE 流式传输、文件系统项目管理。
+
+```
+HyperFrames = 渲染引擎
+Open Design  = Agent 编排（设计）
+Code2MP4     = 面向 Agent 的视频生产流水线
 ```
 
-打开 `http://localhost:7456`，从侧边栏选择视频类型，描述你的需求，发送。
+---
+
+## 路线图
+
+- [x] v0.1 — 稳定的本地需求转 MP4 工作流
+- [x] v0.2 — Agent 适配器（6 个 CLI）
+- [x] v0.3 — 紧凑 Prompt 堆栈、动效系统、脚本系统
+- [x] v0.4 — 多阶段流水线（导演 → 场景 → 组装）
+- [ ] v0.5 — 模板库、转写流水线、背景去除、合成变量
+- [ ] v0.6 — CLI 优先工作流、4K 渲染、`code2mp4` npm 包
+- [ ] v0.7 — 云端渲染实验
+- [ ] v1.0 — 稳定版本，配套完整文档
 
 ---
 
-## 核心特性
+## 参与贡献
 
-| | 你得到什么 |
-|---|---|
-| **Agent 自动检测** | Claude Code · OpenCode · Codex CLI · Gemini CLI · Cursor Agent · Qwen Code — 自动扫描 PATH，一键切换 |
-| **动效设计系统** | 5 套精选方向（编辑风 · 科技风 · 温暖风 · 电影风 · 实验风）——每套包含确定性的调色板、字体栈、缓动签名、转场规则和反烂片检查清单 |
-| **视频技能** | 6 个可组合工作流（产品发布 · 社媒短片 · 教程 · 品牌片头 · 字幕短片 · 音频响应） |
-| **Prompt 编排** | 6 层堆叠：视频追问（7 题表单）→ 专家身份 → MOTION.md → SKILL.md → 项目元数据 → HF 合约（底部锁定） |
-| **渲染管线** | Agent 编写 HF HTML → `od media generate` → daemon → `npx hyperframes render` → SSE 进度 → MP4 |
-| **双模式预览** | `<hyperframes-player>` web component（GSAP 定位、时间轴拖动）+ `<video>` 标签播放 MP4 |
-| **文件工作区** | 自动轮询的文件浏览器，支持下载/预览，点文件过滤，类型图标 |
-| **持久化** | SQLite（项目·对话·消息，级联删除），文件系统为真实数据源 |
-| **多轮对话** | 对话标签、消息历史、Agent 工具调用展示 |
-| **CLI** | `od` Agent 调度器（media generate/wait/health）+ `ov-dev` 生命周期（start/stop/status） |
-| **CI** | GitHub Actions：push 自动 typecheck + build + test |
-| **测试** | 49 个单元测试（prompts、agents、db、motion-systems、skills、projects） |
-| **许可证** | Apache 2.0 |
+详见 [CONTRIBUTING.md](CONTRIBUTING.md)。提交 PR 前：
 
----
-
-## 致谢
-
-Code2MP4 能够存在，是因为以下项目的开创性工作：
-
-### Open Design
-**[nexu-io/open-design](https://github.com/nexu-io/open-design)** — Claude Design 的开源替代方案。Open Design 开创了 Code2MP4 继承的架构：**Prompt 编排**（discovery → identity → design system → skill → metadata 的分层组合模式）、**Agent 自动检测**（PATH 扫描 13 个编程 Agent CLI）、**交互式追问表单**（XML 块在前端解析为实时表单）、**`agents.ts` 模式**、**`runs.ts` SSE 管理器**以及**skill + design-system 加载器模式**。我们的 `video-discovery.ts` 是 `discovery.ts` 的概念适配，`composeVideoSystemPrompt` 镜像了 `composeSystemPrompt`。没有 Open Design 的 daemon-first、BYOK 架构，就不会有 Code2MP4。
-
-### HyperFrames  
-**[heygen-com/hyperframes](https://github.com/heygen-com/hyperframes)** — HTML-first 视频合成和渲染。HyperFrames 是让 Code2MP4 成为可能的渲染引擎：视频可以当作单个 HTML 文件来创作，用 `data-*` 属性控制时间轴，通过 Puppeteer + FFmpeg 帧精确渲染。我们使用 HF 的 CLI 命令、`<hyperframes-player>` web component、`visual-styles.md` 模式（启发了 `MOTION.md` 格式）以及 `registry.json` 区块生态。
-
-### GSAP
-**[GreenSock/GSAP](https://gsap.com)** — 驱动每个 HF 合成文件的动画引擎。Code2MP4 中所有视频运镜都通过 GSAP 时间轴运行。
-
-### 其他启发
-- **[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)** — 设计哲学（Junior-Designer 工作流、反 AI 烂片检查清单、5 维自我批评）
-- **[op7418/guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill)** — 幻灯片技能架构
-- **[VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)** — DESIGN.md 模式（我们的 MOTION.md 格式的模板）
-
----
+```bash
+pnpm typecheck && pnpm build && pnpm test
+```
 
 ## 许可证
 
-Apache 2.0 © 2026 Code2MP4 contributors。详见 [LICENSE](LICENSE)。
-
-[od]: https://github.com/nexu-io/open-design
-[hf]: https://github.com/heygen-com/hyperframes
+Apache 2.0 © Code2MP4 contributors. 详见 [LICENSE](LICENSE)。

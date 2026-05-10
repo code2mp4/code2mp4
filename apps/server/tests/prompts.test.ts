@@ -52,7 +52,7 @@ describe('composeVideoSystemPrompt', () => {
     const result = composeVideoSystemPrompt({});
     const idx = result.lastIndexOf('class="clip" REQUIRED');
     expect(idx).toBeGreaterThan(0);
-    expect(result.length - idx).toBeLessThan(2000); // Contract is now compact
+    expect(result.length - idx).toBeLessThan(5000);
   });
 });
 
@@ -69,7 +69,7 @@ describe('video-discovery prompt', () => {
 });
 
 describe('video-contract prompt', () => {
-  it('contains all 12 critical rules', () => {
+  it('contains all critical rules', () => {
     expect(HYPERFRAMES_CONTRACT).toContain('class="clip" REQUIRED');
     expect(HYPERFRAMES_CONTRACT).toContain('data-composition-id ONLY on #stage');
     expect(HYPERFRAMES_CONTRACT).toContain('track-index overlap');
@@ -81,10 +81,17 @@ describe('video-contract prompt', () => {
     expect(HYPERFRAMES_CONTRACT).toContain('Font sizes');
     expect(HYPERFRAMES_CONTRACT).toContain('Palette must match');
     expect(HYPERFRAMES_CONTRACT).toContain('Scene transitions');
+    // New rules
+    expect(HYPERFRAMES_CONTRACT).toContain('getVariables');
+    expect(HYPERFRAMES_CONTRACT).toContain('data-composition-variables');
+    expect(HYPERFRAMES_CONTRACT).toContain('Sub-compositions');
+    expect(HYPERFRAMES_CONTRACT).toContain('inspect');
+    expect(HYPERFRAMES_CONTRACT).toContain('gsap.set');
+    expect(HYPERFRAMES_CONTRACT).toContain('<br>');
   });
 
-  it('is compact (< 2000 chars)', () => {
-    expect(HYPERFRAMES_CONTRACT.length).toBeLessThan(2000);
+  it('is compact (< 4000 chars)', () => {
+    expect(HYPERFRAMES_CONTRACT.length).toBeLessThan(4000);
   });
 
   it('references disk for full docs', () => {

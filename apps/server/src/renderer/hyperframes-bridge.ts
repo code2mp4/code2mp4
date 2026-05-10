@@ -201,7 +201,7 @@ export async function renderComposition(
     'render',
     '--format', 'mp4',
     '--quality', options.quality ?? 'standard',
-    '--fps', String(options.fps ?? 24),
+    '--fps', String(options.fps ?? 30),
     '--output', options.outputPath,
   ];
 
@@ -258,6 +258,96 @@ export async function renderComposition(
   });
 }
 
+// ── Media generation (TTS, transcribe, remove-background) ─────────
+
+export interface TtsOptions {
+  prompt: string;
+  outputPath: string;
+  voice?: string;
+  speed?: number;
+}
+
+export async function generateTts(
+  options: TtsOptions,
+): Promise<{ outputPath: string; fileSize: number }> {
+  const { prompt, outputPath, voice, speed } = options;
+  const args = ['hyperframes', 'tts', '--output', outputPath];
+  if (voice) args.push('--voice', voice);
+  if (speed) args.push('--speed', String(speed));
+  args.push('--');
+  args.push(prompt);
+
+  return runHfCommand(args, outputPath);
+}
+
+export interface TranscribeOptions {
+  mediaPath: string;
+  outputPath: string;
+  model?: string;
+  language?: string;
+}
+
+export async function generateTranscribe(
+  options: TranscribeOptions,
+): Promise<{ outputPath: string; fileSize: number }> {
+  const { mediaPath, outputPath, model, language } = options;
+  const args = ['hyperframes', 'transcribe', mediaPath, '--output', outputPath];
+  if (model) args.push('--model', model);
+  if (language) args.push('--language', language);
+
+  return runHfCommand(args, outputPath);}
+
+export interface RemoveBackgroundOptions {
+  mediaPath: string;
+  outputPath: string;
+  format?: 'webm' | 'mov';
+  backgroundOutput?: string;
+}
+
+export async function generateRemoveBackground(
+  options: RemoveBackgroundOptions,
+): Promise<{ outputPath: string; fileSize: number }> {
+  const { mediaPath, outputPath, format, backgroundOutput } = options;
+  const args = ['hyperframes', 'remove-background', mediaPath, '-o', outputPath];
+  if (format) args.push('--format', format);
+  if (backgroundOutput) args.push('--background-output', backgroundOutput);
+
+  return runHfCommand(args, outputPath);}
+
+/** Shared executor for HF media commands that produce an output file. */
+async function runHfCommand(
+  args: string[],
+  outputPath: string,
+): Promise<{ outputPath: string; fileSize: number }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('npx', args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+
+    let stderr = '';
+
+    proc.stderr?.on('data', (d: Buffer) => { stderr += d.toString(); });
+
+    proc.on('close', async (code) => {
+      if (code === 0) {
+        try {
+          const stats = await fs.stat(outputPath);
+          resolve({ outputPath, fileSize: stats.size });
+        } catch {
+          reject(new Error('Command completed but output file not found'));
+        }
+      } else {
+        reject(new Error(`Command failed (exit ${code}): ${stderr.slice(0, 500)}`));
+      }
+    });
+
+    proc.on('error', (err) => {
+      reject(new Error(`Failed to spawn hyperframes: ${err.message}`));
+    });
+  });
+}
+
 /**
  * Quick check: is hyperframes CLI available?
  */
@@ -293,4 +383,73 @@ export async function checkSystemRequirements(): Promise<{
   ]);
 
   return { node: nodeOk, ffmpeg: ffmpegOk, hyperframes: hfOk };
+}
+
+// ── Project scaffolding ──────────────────────────────────────────────
+
+export interface InitOptions {
+  projectDir: string;
+  example?: string;
+  resolution?: string;
+}
+
+export async function initProject(options: InitOptions): Promise<void> {
+  const args = ['hyperframes', 'init', options.projectDir, '--non-interactive'];
+  if (options.example) args.push('--example', options.example);
+  if (options.resolution) args.push('--resolution', options.resolution);
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn('npx', args, { stdio: 'inherit' });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`hyperframes init failed with exit ${code}`));
+    });
+    proc.on('error', (err) => reject(err));
+  });
+}
+
+export async function previewProject(projectDir: string, port?: number): Promise<void> {
+  const args = ['hyperframes', 'dev', projectDir];
+  if (port) args.push('--port', String(port));
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn('npx', args, { stdio: 'inherit' });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`hyperframes dev failed with exit ${code}`));
+    });
+    proc.on('error', (err) => reject(err));
+  });
+}
+
+export interface DoctorResult {
+  passed: boolean;
+  checks: Record<string, boolean | string>;
+}
+
+export async function runDoctor(): Promise<DoctorResult> {
+  return new Promise((resolve) => {
+    const proc = spawn('npx', ['hyperframes', 'doctor', '--json'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout?.on('data', (d: Buffer) => { stdout += d.toString(); });
+    proc.stderr?.on('data', (d: Buffer) => { stderr += d.toString(); });
+
+    proc.on('close', (code) => {
+      try {
+        const result = JSON.parse(stdout);
+        resolve({ passed: code === 0, checks: result });
+      } catch {
+        resolve({ passed: false, checks: { error: stderr || 'doctor command failed' } });
+      }
+    });
+
+    proc.on('error', (err) => {
+      resolve({ passed: false, checks: { error: err.message } });
+    });
+  });
 }

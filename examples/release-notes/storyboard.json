@@ -1,0 +1,44 @@
+{
+  "title": "Code2MP4 v0.5 Release Notes",
+  "duration": 25,
+  "aspectRatio": "16:9",
+  "motionSystem": "tech",
+  "scenes": [
+    {
+      "id": "version",
+      "duration": 3,
+      "goal": "Display version number prominently with release date",
+      "visual": "Dark canvas (#0D1117). Giant version number 'v0.5.0' in accent blue (#58A6FF), centered. Release date in muted (#8B949E) below.",
+      "text": "v0.5.0\n\nMay 2026",
+      "motion": "Version number scales up from 0.5 to 1.0 with back.out(1.4). Date fades in after 0.5s delay.",
+      "audio": null
+    },
+    {
+      "id": "features",
+      "duration": 10,
+      "goal": "Highlight three new features with cards",
+      "visual": "Three cards in a row. Each card: icon at top, feature name, one-line description. Cards have subtle border (#30363D) and hover-scale effect.",
+      "text": "What's new\n\nTemplate Gallery — 10+ production-ready templates\nTranscribe Pipeline — Audio to timed captions\nComposition Variables — Parametrize and batch render",
+      "motion": "Cards slide up sequentially (0.3s stagger). Icons glow on entrance. Card borders brighten on focus.",
+      "audio": null
+    },
+    {
+      "id": "improvements",
+      "duration": 7,
+      "goal": "Summary of improvements and fixes",
+      "visual": "Left column: checkmark list of improvements. Right column: fix count with bug icon. Animation palette from motion system.",
+      "text": "Improvements\n\n✓ Faster scene rendering (40% speedup)\n✓ Better error messages in CLI\n✓ 12 new HyperFrames contract rules\n✓ FPS default corrected to 30\n\n🐛 8 bugs fixed",
+      "motion": "Checkmarks animate in with spring. Bug count counts up from 0 to 8.",
+      "audio": null
+    },
+    {
+      "id": "upgrade",
+      "duration": 5,
+      "goal": "Show upgrade command and link to full changelog",
+      "visual": "Terminal window with upgrade command. Below: 'Full changelog →' link. Warm amber accent for terminal text.",
+      "text": "Upgrade now\n\nnpm install -g code2mp4@latest\n\nFull changelog → github.com/code2mp4/code2mp4/blob/main/CHANGELOG.md",
+      "motion": "Terminal prompt appears with cursor blink. Command types out. Link fades in at bottom.",
+      "audio": null
+    }
+  ]
+}

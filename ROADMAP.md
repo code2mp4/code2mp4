@@ -31,16 +31,21 @@ Single-pass agent generates HyperFrames HTML → rendered MP4.
 ## v0.5 🔲 — Template gallery + ecosystem
 - [ ] More motion systems (minimal, vintage, neon)
 - [ ] More script systems (explainer, interview, unboxing)
-- [ ] Template gallery in frontend
+- [ ] Template gallery in frontend — curate from HyperFrames 50+ registry blocks (texture-mask-text, VFX: liquid-background, shatter, portal, magnetic, text-cursor, iphone-device)
 - [ ] Music library expansion (10+ tracks)
 - [ ] SFX library with pre-made effects
 - [ ] Examples directory
+- [ ] Transcribe pipeline (audio → transcript → captions via hyperframes transcribe)
+- [ ] Remove-background pipeline (presenter-overlay compositions via hyperframes remove-background)
+- [ ] Composition variables support (parametrized templates via data-composition-variables + getVariables())
 
 ## v0.6 🔲 — CLI-first workflow
-- [ ] `code2mp4 init` — project scaffolding
+- [ ] `code2mp4 init` — project scaffolding (delegates to `hyperframes init`)
 - [ ] `code2mp4 build` — render project to MP4
-- [ ] `code2mp4 dev` — start local server
+- [ ] `code2mp4 dev` — start local server (delegates to `hyperframes dev`)
 - [ ] `code2mp4 storyboard` — generate storyboard from prompt
+- [ ] `code2mp4 doctor` — health check (delegates to `hyperframes doctor`)
+- [ ] 4K rendering support (via `hyperframes render --resolution 4k`)
 - [ ] npm package: `code2mp4`
 
 ## v0.7 🔲 — Cloud & collaboration

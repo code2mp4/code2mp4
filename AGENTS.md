@@ -1,71 +1,157 @@
-# Code2MP4 — AI-driven video production
+# AGENTS.md — How to produce a video with Code2MP4
 
-Code2MP4 combines [Open Design][od]'s AI agent orchestration with [HyperFrames][hf]' HTML-first video rendering. The AI agent writes HyperFrames-compatible HTML compositions guided by video-specific prompt discovery, motion design systems, and composable video skills. The result is rendered to MP4 by HyperFrames.
+You are working inside a Code2MP4 project. Your job is to help users generate **editable motion source files** and **deterministic video output**.
 
-🏗 **Production-grade**: 4 agents auto-detected, 5 motion systems, 6 video skills,
-SSE streaming, agent run lifecycle management, HyperFrames render pipeline,
-SQLite persistence, `od` CLI dispatcher, 49 tests, CI.
+## What you are building
 
-[od]: https://github.com/nexu-io/open-design
-[hf]: https://github.com/heygen-com/hyperframes
-
-## Architecture
+You are NOT generating a black-box MP4. You are producing:
 
 ```
-Browser (Next.js 16 SPA)
-    │  POST /api/runs    GET /api/runs/:id/events (SSE)
-    ▼
-Express Server (port 7456)
-    │  spawn(agent, [prompt, ...], { OD_BIN, OD_PROJECT_ID, OD_PROJECT_DIR, OD_DAEMON_URL })
-    ├─ Agent detection (6 CLIs)
-    ├─ Prompt composer (7 layers: discovery → identity → MOTION.md → SCRIPT.md → SKILL.md → metadata → HF contract)
-    ├─ Run manager (create, stream SSE, cancel, auto-cleanup)
-    ├─ Media handler (/api/media/generate + /api/media/wait/:taskId → SSE progress)
-    └─ HyperFrames bridge (lint, validate, inspect, render)
-    │
-    ├─ Agent calls: node "$OD_BIN" media generate --model hyperframes-html ...
-    └─ Server runs: npx hyperframes render → Puppeteer + FFmpeg → MP4
+storyboard.json → motion source (HTML/CSS/GSAP) → deterministic MP4
 ```
 
-## Directory layout
+Every video you create has a structured storyboard, editable source files, and repeatable output. The user (or another agent) can inspect, edit, and re-render any video.
 
-- `apps/web/`            — Next.js 16 frontend (SPA)
-- `apps/server/`         — Express + SQLite backend
-  - `src/prompts/`       — Video prompt stack (6 layers)
-  - `src/renderer/`      — HyperFrames bridge
-  - `src/agents.ts`      — Agent detection (6 CLIs)
-  - `src/agent-runner.ts`— Agent spawner (sets OD_* env vars)
-  - `src/runs.ts`        — Run manager + SSE
-  - `src/db.ts`          — SQLite persistence
-  - `src/media.ts`       — Media render pipeline
-  - `src/projects.ts`    — File management
-  - `src/cli.ts`         — `od` CLI (agent-facing dispatcher)
-  - `src/motion-preview.ts` — Motion system preview HTML generator
-- `packages/contracts/`  — Shared types
-- `video-skills/`        — 6 video SKILL.md bundles
-- `motion-systems/`      — 5 MOTION.md motion design systems
-- `templates/`           — 2 HyperFrames blank scaffold templates
-- `tools/dev/`           — `ov-dev` CLI (start/stop/status/build)
-- `blocks/`              — (placeholder) Reusable HF blocks
+## Core principles
 
-## Key differences from Open Design
+1. **Storyboard first, always.** Never write motion source until the storyboard is agreed.
+2. **Motion source is editable.** Write readable HTML, CSS, and GSAP — not minified blobs.
+3. **Deterministic output.** No `Math.random()`, no `Date.now()`, no `repeat: -1` in GSAP timelines.
+4. **Check before render.** Run `hyperframes lint` and `hyperframes inspect` before calling render.
+5. **Keep text readable.** No forced `<br>` in body text. Use natural wrapping with `max-width`.
 
-1. **Video-first prompt stack**: Discovery asks videoType, duration, energy, audio.
-2. **MOTION.md instead of DESIGN.md**: Animation palettes, transition matrices, timing.
-3. **HyperFrames as primary output**: Agent generates HF HTML, not web pages.
-4. **Automatic render pipeline**: `od media generate` → server renders → MP4.
-5. **`od` CLI dispatcher**: Agent-accessible media generation via `node "$OD_BIN"`.
-6. **Dual preview**: Design mode (HTML iframe) + Playback mode (MP4 video).
+## Workflow
 
-## Common commands
+### Step 1: Discovery
+
+If the user hasn't specified these, ask:
+- **Video type** — product-launch, social-short, tutorial, brand-intro, caption-reel, audio-reactive
+- **Duration** — in seconds
+- **Aspect ratio** — 16:9 (landscape), 9:16 (portrait), 1:1 (square)
+- **Energy level** — calm, medium, high, dramatic
+- **Audio needs** — voiceover, background music, SFX
+
+### Step 2: Storyboard
+
+Create `storyboard.json` in the project directory:
+
+```json
+{
+  "title": "string",
+  "duration": 30,
+  "aspectRatio": "16:9",
+  "scenes": [
+    {
+      "id": "unique-scene-id",
+      "duration": 7,
+      "goal": "What this scene communicates",
+      "visual": "Visual description (background, layout, key elements)",
+      "text": "On-screen text",
+      "motion": "Animation description (entrance, emphasis, exit)",
+      "audio": "Audio cue (optional)"
+    }
+  ]
+}
+```
+
+Rules:
+- Scene durations must sum to total duration
+- Every scene must have an `id`
+- Scene count: 3-5 for short videos, 5-8 for longer ones
+
+Present the storyboard to the user for approval before proceeding.
+
+### Step 3: Motion source generation
+
+For each scene, produce an HTML/CSS/GSAP fragment that:
+
+1. Uses the active motion system's palette, fonts, and easing
+2. Follows the video skill's scene templates and animation rules
+3. Respects the HyperFrames contract (see below)
+
+Write each scene fragment to the project directory.
+
+### Step 4: Quality checks
+
+Before rendering:
 
 ```bash
-pnpm install          # Install all workspace deps
-pnpm dev              # Build + start server (ov-dev)
-pnpm start            # Build server + run
-pnpm status           # Check server health
-pnpm stop             # Stop server
-pnpm typecheck        # TypeScript check all packages
-pnpm build            # Build all packages
-pnpm --filter @code2mp4/server typecheck
+npx hyperframes lint --json                  # structural validation
+npx hyperframes inspect --json               # visual audit (overflow, clipping)
 ```
+
+Fix all errors. Warnings should be addressed unless intentionally suppressed with `data-layout-allow-overflow`.
+
+### Step 5: Render
+
+```bash
+node "$OD_BIN" media generate \
+  --surface video \
+  --model hyperframes-html \
+  --composition-dir <dir> \
+  --output output.mp4
+```
+
+The server will:
+1. Validate the composition directory
+2. Spawn `npx hyperframes render --format mp4 --fps 30`
+3. Stream progress back via SSE
+4. Return the MP4 path on completion
+
+### Step 6: Report
+
+Output the final paths:
+- Storyboard: `storyboard.json`
+- Motion source: the composition directory
+- Rendered MP4: `output.mp4`
+
+## HyperFrames contract (non-negotiable)
+
+These rules are load-bearing. Violating any of them produces broken video:
+
+1. **`class="clip"` REQUIRED** on every element with `data-start` + `data-duration`
+2. **`data-composition-id` ONLY on `#stage` div**, NOT on `<html>`
+3. **NO track-index overlap** — clips on same track must not overlap in time
+4. **NEVER `width=device-width`** in viewport meta — use fixed dimensions: `<meta name="viewport" content="width=1920,height=1080">`
+5. **`html,body { width:1920px; height:1080px; overflow:hidden }`** — match data-width/data-height
+6. **`window.__timelines["comp-id"] = gsap.timeline({ paused: true })`** — mandatory pattern
+7. **No `Math.random()`, `Date.now()`, `repeat:-1`** — must be deterministic
+8. **Animate visual properties only** — `opacity`, `x`, `y`, `scale`, `rotation`. Not `visibility`/`display`
+9. **Font sizes ≥ 20px body, ≥ 60px headlines**
+10. **Palette must match active MOTION.md tokens**
+11. **NEVER `gsap.set()` on elements not in DOM at page load** — use `tl.set()` at the clip's `data-start`
+12. **NEVER `<br>` in body text** — use `max-width` and natural wrapping
+13. **Scene transitions mandatory for multi-scene compositions** — crossfade, directional wipe, or shader
+14. **The transition IS the exit** — never animate elements out before transition fires
+
+## Project directory conventions
+
+```
+projects/<project-id>/
+  storybook.json          # approved storyboard
+  .hf-cache/              # agent writes composition HTML here
+    <timestamp>/
+      index.html          # full HyperFrames composition
+      scene-1.html        # scene fragments (optional)
+      scene-2.html
+  output.mp4              # rendered video
+```
+
+## Available resources
+
+The project ships with reference files on disk. Use your Read tool to access them:
+
+- `motion-systems/<name>/MOTION.md` — 5 curated motion systems with palettes, fonts, easing
+- `script-systems/<name>/SCRIPT.md` — 3 narrative structures with hook patterns
+- `video-skills/<name>/SKILL.md` — 6 composable video skills with scene templates
+- `templates/blank-landscape.html` — 1920×1080 scaffold
+- `templates/blank-portrait.html` — 1080×1920 scaffold
+
+## Never do
+
+- Never generate a video by calling an external API and downloading an MP4
+- Never skip the storyboard step
+- Never skip quality checks before rendering
+- Never write minified, unreadable motion source
+- Never use browser defaults (`#333`, `#3b82f6`, Roboto) — always define a palette
+- Never hardcode texts that should be parametrized — use `data-composition-variables`

@@ -1,0 +1,44 @@
+{
+  "title": "Introducing Code2MP4",
+  "duration": 30,
+  "aspectRatio": "16:9",
+  "motionSystem": "editorial",
+  "scenes": [
+    {
+      "id": "what",
+      "duration": 7,
+      "goal": "In one sentence — what Code2MP4 does",
+      "visual": "Warm off-white canvas (#F5F0EB). Serif headline (Playfair Display) in rust accent (#C44F34). Generous whitespace, no distractions.",
+      "text": "Code2MP4\n\nAgent-native video production pipeline.",
+      "motion": "Title fades in slowly (power2.out, 0.8s). Tagline slides up after 2s delay.",
+      "audio": null
+    },
+    {
+      "id": "why",
+      "duration": 7,
+      "goal": "Why it exists — agents need video output, not black boxes",
+      "visual": "Split layout. Left: flow diagram (Prompt → Storyboard → Source → MP4) with rust accent connecting arrows. Right: headline + body.",
+      "text": "Agents can write code.\nNow they can write videos.\n\nNot black-box generation.\nEditable, deterministic, Git-friendly video source.",
+      "motion": "Flow diagram draws in left-to-right. Text reveals line by line with 0.5s stagger.",
+      "audio": null
+    },
+    {
+      "id": "how",
+      "duration": 10,
+      "goal": "Architecture overview — the pipeline that makes it work",
+      "visual": "Three cards in sequence: 'Prompt Stack' (7 layers), 'Multi-Agent Pipeline' (Director → Scene → Assembly), 'Render Engine' (HyperFrames + FFmpeg). Cards on warm off-white with hairline borders.",
+      "text": "How it works\n\n1. Prompt stack — 7 layers of video-specific guidance\n2. Agent pipeline — Director plans, Scene agents execute\n3. Render engine — Deterministic HTML → MP4",
+      "motion": "Cards reveal sequentially from left (0.6s stagger). Card content fades in after reveal. Number indicators draw circles.",
+      "audio": null
+    },
+    {
+      "id": "get-started",
+      "duration": 6,
+      "goal": "Three commands to start — make it feel accessible",
+      "visual": "Terminal-style card on warm background. Monospace font for commands, amber accent for caret. Three lines with subtle glow.",
+      "text": "Get started\n\ngit clone https://github.com/code2mp4/code2mp4\npnpm install && pnpm dev\nOpen http://localhost:7456",
+      "motion": "Caret blinks at start. Lines type out sequentially (0.3s per line). Last line highlights with subtle glow.",
+      "audio": null
+    }
+  ]
+}

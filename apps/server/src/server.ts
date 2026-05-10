@@ -24,6 +24,12 @@ import {
   renderComposition,
   validateComposition,
   inspectComposition,
+  generateTts,
+  generateTranscribe,
+  generateRemoveBackground,
+  initProject,
+  previewProject,
+  runDoctor,
 } from './renderer/hyperframes-bridge.js';
 import { handleMediaGenerate, handleMediaWait, cleanupMediaTasks } from './media.js';
 import { listMusic, readMusicFile } from './music-library.js';
