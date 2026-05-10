@@ -185,11 +185,21 @@ The system prompt that drives the agent is carefully composed from seven layers:
 
 Three examples illustrate what Code2MP4 is built for:
 
-| Example | Description | Storyboard | Output |
+| Example | Description | Storyboard |
+|---|---|---|
+| [Product Launch](examples/product-launch/) | 30s SaaS product launch video — problem → promise → features → CTA | [storyboard.json](examples/product-launch/storyboard.json) |
+| [OSS Intro](examples/oss-intro/) | Code2MP4 self-intro video — what → why → how → get started | [storyboard.json](examples/oss-intro/storyboard.json) |
+| [Release Notes](examples/release-notes/) | Changelog-to-video — version → new features → improvements → upgrade | [storyboard.json](examples/release-notes/storyboard.json) |
+
+## Templates
+
+Each example is also available as a reusable template with discovery questions and CI/CD integration guides:
+
+| Template | Archetype | Motion | Questions |
 |---|---|---|---|
-| [Product Launch](examples/product-launch/) | 30s SaaS product launch video — problem → promise → features → CTA | [storyboard.json](examples/product-launch/storyboard.json) | MP4 |
-| [OSS Intro](examples/oss-intro/) | Code2MP4 self-intro video — what → why → how → get started | [storyboard.json](examples/oss-intro/storyboard.json) | MP4 |
-| [Release Notes](examples/release-notes/) | Changelog-to-video — version → new features → improvements → upgrade | [storyboard.json](examples/release-notes/storyboard.json) | MP4 |
+| [Product Launch](templates/product-launch/) | problem-solution-cta | tech | 7 (name, description, pain, features, CTA, duration, voiceover) |
+| [OSS Intro](templates/oss-intro/) | what-why-how-start | editorial | 6 (name, one-liner, problem, concepts, install, duration) |
+| [Release Notes](templates/release-notes/) | version-features-improvements-upgrade | tech | 7 (version, date, features, improvements, upgrade, changelog URL, CI mode) |
 
 ---
 
@@ -225,6 +235,7 @@ Three examples illustrate what Code2MP4 is built for:
 | **Guides** | |
 | [Agent Workflow](docs/agent-workflow.md) | Step-by-step guide for coding agents using Code2MP4 |
 | [Templates](docs/templates.md) | Template system documentation |
+| [Template Schema](templates/template.schema.json) | Formal JSON schema for template manifests |
 | [Roadmap](ROADMAP.md) | Development phases and milestones |
 
 ---
