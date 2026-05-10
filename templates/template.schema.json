@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Code2MP4 Template Manifest",
+  "type": "object",
+  "required": ["id", "type", "version", "storyboard", "motionSystem"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique template identifier (e.g., 'product-launch')"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["product-launch", "oss-intro", "release-notes", "tutorial-video", "social-short", "custom"],
+      "description": "Template type"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the template"
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable label (e.g., 'Product Launch Video')"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-paragraph description of what this template produces"
+    },
+    "storyboard": {
+      "type": "object",
+      "required": ["aspectRatio", "duration", "minScenes", "maxScenes", "archetype"],
+      "properties": {
+        "aspectRatio": { "type": "string", "enum": ["16:9", "9:16", "1:1", "4:5"] },
+        "duration": { "type": "number", "description": "Default duration in seconds" },
+        "minScenes": { "type": "number" },
+        "maxScenes": { "type": "number" },
+        "archetype": {
+          "type": "string",
+          "enum": ["problem-solution-cta", "what-why-how-start", "version-features-improvements-upgrade", "hook-explain-example-cta", "hook-context-detail-cta"],
+          "description": "Narrative archetype"
+        }
+      }
+    },
+    "motionSystem": {
+      "type": "string",
+      "enum": ["editorial", "tech", "warm-soft", "cinematic", "brutalist"],
+      "description": "Recommended motion system"
+    },
+    "motionSystemAlternatives": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Alternative motion systems that work well with this template"
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended video skills to apply"
+    },
+    "scriptSystem": {
+      "type": "string",
+      "description": "Recommended script system"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "type"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "type": { "type": "string", "enum": ["text", "select", "number", "toggle"] },
+          "required": { "type": "boolean" },
+          "placeholder": { "type": "string" },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "default": {}
+        }
+      },
+      "description": "Template-specific questions for the discovery form"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Path to the example directory" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Searchable tags"
+    }
+  }
+}

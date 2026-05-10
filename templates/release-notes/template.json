@@ -1,0 +1,70 @@
+{
+  "id": "release-notes",
+  "type": "release-notes",
+  "version": "0.1.0",
+  "label": "Release Notes Video",
+  "description": "Automatically generate a release notes video from a CHANGELOG or GitHub Release. Version → Features → Improvements → Upgrade. CI/CD-ready — integrate into your release workflow.",
+  "storyboard": {
+    "aspectRatio": "16:9",
+    "duration": 25,
+    "minScenes": 4,
+    "maxScenes": 6,
+    "archetype": "version-features-improvements-upgrade"
+  },
+  "motionSystem": "tech",
+  "motionSystemAlternatives": ["editorial", "cinematic"],
+  "skills": ["code2mp4-director"],
+  "scriptSystem": "tech-demo",
+  "questions": [
+    {
+      "id": "version",
+      "label": "Version number",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., v2.4.0"
+    },
+    {
+      "id": "release-date",
+      "label": "Release date",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., May 2026"
+    },
+    {
+      "id": "new-features",
+      "label": "New features (one per line)",
+      "type": "text",
+      "required": true,
+      "placeholder": "Feature 1: description\nFeature 2: description\nFeature 3: description"
+    },
+    {
+      "id": "improvements",
+      "label": "Improvements and fixes",
+      "type": "text",
+      "required": false,
+      "placeholder": "✓ Faster rendering\n✓ Better error messages\n🐛 8 bugs fixed"
+    },
+    {
+      "id": "upgrade-command",
+      "label": "Upgrade command",
+      "type": "text",
+      "required": true,
+      "placeholder": "npm install my-package@latest",
+      "default": "npm install <package>@latest"
+    },
+    {
+      "id": "changelog-url",
+      "label": "Full changelog URL",
+      "type": "text",
+      "required": false,
+      "placeholder": "github.com/user/repo/blob/main/CHANGELOG.md"
+    },
+    {
+      "id": "ci-mode",
+      "label": "CI/CD mode (skip interactive approval)",
+      "type": "toggle",
+      "default": false
+    }
+  ],
+  "tags": ["release", "changelog", "ci", "cd", "automation", "version", "github-release"]
+}

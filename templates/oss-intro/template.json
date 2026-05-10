@@ -1,0 +1,64 @@
+{
+  "id": "oss-intro",
+  "type": "oss-intro",
+  "version": "0.1.0",
+  "label": "Open Source Project Intro",
+  "description": "Turn a GitHub README into a 30-second project introduction video. What → Why → How → Get Started structure optimized for embedding in READMEs and project websites.",
+  "storyboard": {
+    "aspectRatio": "16:9",
+    "duration": 30,
+    "minScenes": 4,
+    "maxScenes": 6,
+    "archetype": "what-why-how-start"
+  },
+  "motionSystem": "editorial",
+  "motionSystemAlternatives": ["tech", "warm-soft"],
+  "skills": ["motion-brand-intro"],
+  "scriptSystem": "brand-story",
+  "questions": [
+    {
+      "id": "project-name",
+      "label": "Project name",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Code2MP4"
+    },
+    {
+      "id": "one-liner",
+      "label": "One-line description",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Agent-native video production pipeline"
+    },
+    {
+      "id": "problem-solved",
+      "label": "What problem does it solve?",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., AI agents can't generate editable, deterministic videos"
+    },
+    {
+      "id": "key-concepts",
+      "label": "Key concepts (comma-separated, 3 max)",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Storyboard, Motion Source, Deterministic MP4"
+    },
+    {
+      "id": "install-command",
+      "label": "Install command",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., npm install -g code2mp4",
+      "default": "git clone <repo> && pnpm install"
+    },
+    {
+      "id": "duration",
+      "label": "Duration",
+      "type": "select",
+      "options": ["15s", "30s", "60s"],
+      "default": "30s"
+    }
+  ],
+  "tags": ["oss", "open source", "intro", "github", "readme", "documentation"]
+}

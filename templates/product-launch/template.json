@@ -1,0 +1,70 @@
+{
+  "id": "product-launch",
+  "type": "product-launch",
+  "version": "0.1.0",
+  "label": "Product Launch Video",
+  "description": "Generate a professional product launch video with hook, problem statement, feature highlights, and CTA. Best for SaaS products, feature launches, and developer tools.",
+  "storyboard": {
+    "aspectRatio": "16:9",
+    "duration": 30,
+    "minScenes": 4,
+    "maxScenes": 8,
+    "archetype": "problem-solution-cta"
+  },
+  "motionSystem": "tech",
+  "motionSystemAlternatives": ["editorial", "warm-soft", "cinematic"],
+  "skills": ["product-launch-video"],
+  "scriptSystem": "product-launch",
+  "questions": [
+    {
+      "id": "product-name",
+      "label": "Product name",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., WidgetX"
+    },
+    {
+      "id": "product-description",
+      "label": "What does the product do? (one sentence)",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., One-click deployment for web apps"
+    },
+    {
+      "id": "problem",
+      "label": "What pain does it solve?",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Manual deploys take hours"
+    },
+    {
+      "id": "key-features",
+      "label": "Key features (comma-separated, 3 max)",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., One-click deploy, Instant rollback, Preview environments"
+    },
+    {
+      "id": "cta-text",
+      "label": "Call to action",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Start free trial → widgetx.io",
+      "default": "Try it free →"
+    },
+    {
+      "id": "duration",
+      "label": "Duration",
+      "type": "select",
+      "options": ["15s", "30s", "45s", "60s"],
+      "default": "30s"
+    },
+    {
+      "id": "include-voiceover",
+      "label": "Include voiceover?",
+      "type": "toggle",
+      "default": false
+    }
+  ],
+  "tags": ["product", "launch", "saas", "demo", "marketing", "features", "cta"]
+}
