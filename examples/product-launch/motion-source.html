@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<style>
+  :root {
+    --bg: #0D1117; --surface: #161B22; --fg: #E6EDF3; --accent: #58A6FF;
+    --accent2: #3FB950; --muted: #8B949E; --border: #30363D;
+    --font-display: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--font-body); }
+  #stage { position:relative; width:1920px; height:1080px; overflow:hidden; }
+  .scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; opacity:0; pointer-events:none; }
+  .scene:first-child { opacity:1; }
+  .scene-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; padding:120px 160px; gap:24px; }
+  .headline { font-family:var(--font-display); font-size:84px; font-weight:700; color:var(--accent); text-shadow:0 0 30px var(--accent); text-align:center; max-width:1000px; }
+  .subhead { font-size:32px; color:var(--fg); opacity:0.9; text-align:center; max-width:700px; }
+  .body-text { font-size:24px; color:var(--muted); text-align:center; max-width:600px; line-height:1.5; }
+  .feature-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:32px; width:400px; text-align:center; }
+  .card-icon { font-size:40px; margin-bottom:12px; }
+  .card-title { font-family:var(--font-display); font-size:28px; font-weight:600; color:var(--accent); margin-bottom:8px; }
+  .card-text { font-size:18px; color:var(--muted); line-height:1.4; }
+  .card-row { display:flex; gap:24px; }
+  .cta-button { background:var(--accent); color:var(--bg); font-family:var(--font-display); font-size:36px; font-weight:700; padding:20px 60px; border-radius:8px; text-shadow:none; box-shadow:0 0 30px rgba(88,166,255,0.4); }
+  .url-text { font-size:24px; color:var(--muted); margin-top:16px; }
+  .green-accent { color:var(--accent2); }
+  .stat-number { font-family:var(--font-display); font-size:64px; font-weight:700; color:var(--accent2); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</head>
+<body>
+<div id="stage" data-composition-id="product-launch" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+
+  <!-- Scene 1: Problem (0-5s) -->
+  <div class="scene" data-scene="1">
+    <div class="scene-content">
+      <div class="headline" id="problem-headline">Deploying should not take an afternoon.</div>
+      <div class="subhead" id="problem-sub">Manual deploys. SSH tunnels. Broken scripts.</div>
+    </div>
+  </div>
+
+  <!-- Scene 2: Promise (5-10s) -->
+  <div class="scene" data-scene="2">
+    <div class="scene-content">
+      <div class="headline" id="promise-headline">DeployBot ships your code in <span class="stat-number">60</span> seconds.</div>
+      <div class="subhead" id="promise-sub">One platform. Zero config. Pure speed.</div>
+    </div>
+  </div>
+
+  <!-- Scene 3: Features (10-25s) -->
+  <div class="scene" data-scene="3">
+    <div class="scene-content">
+      <div class="headline" id="features-headline" style="font-size:60px;">Everything you need to ship</div>
+      <div class="card-row" style="margin-top:40px;">
+        <div class="feature-card" id="card-1">
+          <div class="card-icon">🚀</div>
+          <div class="card-title">One-click Deploy</div>
+          <div class="card-text">Connect your repo, pick a branch, hit deploy. No YAML, no SSH.</div>
+        </div>
+        <div class="feature-card" id="card-2">
+          <div class="card-icon">↩️</div>
+          <div class="card-title">Instant Rollback</div>
+          <div class="card-text">Every deploy is atomic. Break something? One click to undo.</div>
+        </div>
+        <div class="feature-card" id="card-3">
+          <div class="card-icon">👁️</div>
+          <div class="card-title">Preview Environments</div>
+          <div class="card-text">Every PR gets a live URL. See changes before they merge.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 4: CTA (25-30s) -->
+  <div class="scene" data-scene="4">
+    <div class="scene-content">
+      <div class="headline" id="cta-headline" style="font-size:60px;">Start deploying in <span class="green-accent">60 seconds</span></div>
+      <div class="cta-button" id="cta-btn">Try DeployBot Free →</div>
+      <div class="url-text" id="cta-url">deploybot.io — no credit card required</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+
+// Scene 1: Problem (0-5s)
+tl.from("#problem-headline", { y:60, opacity:0, duration:0.7, ease:"power3.out" }, 0.3);
+tl.from("#problem-sub", { y:30, opacity:0, duration:0.5, ease:"power2.out" }, 1.0);
+
+// Transition 1→2 crossfade
+tl.to('[data-scene="2"]', { opacity:1, duration:0.5, ease:"power2.inOut" }, 4.5);
+tl.to('[data-scene="1"]', { opacity:0, duration:0.5, ease:"power2.inOut" }, 4.5);
+
+// Scene 2: Promise (5-10s)
+tl.from("#promise-headline", { scale:0.9, opacity:0, duration:0.6, ease:"back.out(1.4)" }, 5.2);
+tl.from("#promise-sub", { y:20, opacity:0, duration:0.4, ease:"power2.out" }, 5.5);
+
+// Transition 2→3 crossfade
+tl.to('[data-scene="3"]', { opacity:1, duration:0.5, ease:"power2.inOut" }, 9.5);
+tl.to('[data-scene="2"]', { opacity:0, duration:0.5, ease:"power2.inOut" }, 9.5);
+
+// Scene 3: Features (10-25s)
+tl.from("#features-headline", { y:40, opacity:0, duration:0.5, ease:"power3.out" }, 10.3);
+tl.from("#card-1", { y:50, opacity:0, duration:0.4, ease:"power3.out" }, 11.0);
+tl.from("#card-2", { y:50, opacity:0, duration:0.4, ease:"power3.out" }, 11.3);
+tl.from("#card-3", { y:50, opacity:0, duration:0.4, ease:"power3.out" }, 11.6);
+
+// Transition 3→4 crossfade
+tl.to('[data-scene="4"]', { opacity:1, duration:0.5, ease:"power2.inOut" }, 24.5);
+tl.to('[data-scene="3"]', { opacity:0, duration:0.5, ease:"power2.inOut" }, 24.5);
+
+// Scene 4: CTA (25-30s)
+tl.from("#cta-headline", { y:30, opacity:0, duration:0.5, ease:"power2.out" }, 25.2);
+tl.from("#cta-btn", { scale:0.8, opacity:0, duration:0.5, ease:"elastic.out(1,0.4)" }, 25.8);
+tl.from("#cta-url", { opacity:0, duration:0.4, ease:"power1.out" }, 26.5);
+
+window.__timelines["product-launch"] = tl;
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<style>
+  :root {
+    --bg: #F5F0EB; --fg: #2C3A42; --accent: #C44F34; --accent2: #2C3A42;
+    --muted: #8A817A; --surface: #FFFFFF; --border: #D4CFC4;
+    --font-display: 'Playfair Display', 'Georgia', serif;
+    --font-body: 'Source Serif 4', 'Georgia', serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--font-body); }
+  #stage { position:relative; width:1920px; height:1080px; overflow:hidden; }
+  .scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; opacity:0; pointer-events:none; }
+  .scene:first-child { opacity:1; }
+  .scene-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; padding:140px 180px; gap:28px; }
+  .label { font-size:18px; color:var(--accent); font-family:var(--font-body); text-transform:uppercase; letter-spacing:0.15em; }
+  .headline { font-family:var(--font-display); font-size:88px; font-weight:600; color:var(--accent2); text-align:center; max-width:900px; line-height:1.12; }
+  .subhead { font-size:28px; color:var(--muted); text-align:center; max-width:600px; line-height:1.5; }
+  .body-text { font-size:22px; color:var(--muted); text-align:center; max-width:550px; line-height:1.6; }
+  .divider { width:60px; height:1px; background:var(--accent); margin:12px 0; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:28px; width:320px; text-align:center; }
+  .card-num { font-family:var(--font-display); font-size:48px; color:var(--accent); }
+  .card-title { font-family:var(--font-display); font-size:24px; color:var(--accent2); margin:8px 0; }
+  .card-text { font-size:16px; color:var(--muted); line-height:1.4; }
+  .card-row { display:flex; gap:20px; }
+  .code-block { background:var(--accent2); color:#F5F0EB; font-family:monospace; font-size:22px; padding:20px 40px; border-radius:4px; text-align:center; }
+  .url-text { font-size:20px; color:var(--accent); margin-top:8px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</head>
+<body>
+<div id="stage" data-composition-id="oss-intro" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+
+  <!-- Scene 1: What (0-7s) -->
+  <div class="scene" data-scene="1">
+    <div class="scene-content">
+      <div class="label" id="s1-label">Open Source Project</div>
+      <div class="headline" id="s1-title">Code2MP4</div>
+      <div class="divider" id="s1-divider"></div>
+      <div class="subhead" id="s1-sub">Agent-native video production pipeline</div>
+    </div>
+  </div>
+
+  <!-- Scene 2: Why (7-14s) -->
+  <div class="scene" data-scene="2">
+    <div class="scene-content">
+      <div class="label" id="s2-label">Why it exists</div>
+      <div class="headline" id="s2-title" style="font-size:64px;">AI agents can write code. Now they can write videos.</div>
+      <div class="body-text" id="s2-body">Black-box text-to-video gives you an opaque MP4. Traditional editors require a human. Code2MP4 gives coding agents a structured, editable, deterministic video pipeline.</div>
+    </div>
+  </div>
+
+  <!-- Scene 3: How (14-24s) -->
+  <div class="scene" data-scene="3">
+    <div class="scene-content">
+      <div class="label" id="s3-label">How it works</div>
+      <div class="headline" id="s3-title" style="font-size:52px;">The workflow layer for agent-generated video</div>
+      <div class="card-row" style="margin-top:30px;">
+        <div class="card" id="card-w1">
+          <div class="card-num">1</div>
+          <div class="card-title">Storyboard</div>
+          <div class="card-text">Structured JSON — scenes, goals, visuals, motion specs</div>
+        </div>
+        <div class="card" id="card-w2">
+          <div class="card-num">2</div>
+          <div class="card-title">Motion Source</div>
+          <div class="card-text">Editable HTML/CSS/GSAP — the source code of your video</div>
+        </div>
+        <div class="card" id="card-w3">
+          <div class="card-num">3</div>
+          <div class="card-title">Quality Check</div>
+          <div class="card-text">7-dimension review — AI-phrase detection, platform fit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 4: Get Started (24-30s) -->
+  <div class="scene" data-scene="4">
+    <div class="scene-content">
+      <div class="label" id="s4-label">Get started</div>
+      <div class="headline" id="s4-title" style="font-size:56px;">Three commands to start</div>
+      <div class="code-block" id="s4-code" style="margin-top:24px;">git clone https://github.com/code2mp4/code2mp4<br>pnpm install && pnpm dev</div>
+      <div class="url-text" id="s4-url">github.com/code2mp4/code2mp4</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+
+// Scene 1: What
+tl.from("#s1-label", { opacity:0, y:20, duration:0.5, ease:"power2.out" }, 0.5);
+tl.from("#s1-title", { opacity:0, y:40, duration:0.7, ease:"power2.out" }, 1.0);
+tl.from("#s1-divider", { scaleX:0, duration:0.5, ease:"power2.out" }, 1.5);
+tl.from("#s1-sub", { opacity:0, y:20, duration:0.5, ease:"power2.out" }, 2.0);
+
+// Transition 1→2
+tl.to('[data-scene="2"]', { opacity:1, duration:0.6, ease:"power2.inOut" }, 6.4);
+tl.to('[data-scene="1"]', { opacity:0, duration:0.6, ease:"power2.inOut" }, 6.4);
+
+// Scene 2: Why
+tl.from("#s2-label", { opacity:0, y:15, duration:0.4, ease:"power2.out" }, 7.2);
+tl.from("#s2-title", { opacity:0, y:30, duration:0.6, ease:"power2.out" }, 7.6);
+tl.from("#s2-body", { opacity:0, duration:0.5, ease:"power1.out" }, 8.2);
+
+// Transition 2→3
+tl.to('[data-scene="3"]', { opacity:1, duration:0.6, ease:"power2.inOut" }, 13.4);
+tl.to('[data-scene="2"]', { opacity:0, duration:0.6, ease:"power2.inOut" }, 13.4);
+
+// Scene 3: How
+tl.from("#s3-label", { opacity:0, y:15, duration:0.4, ease:"power2.out" }, 14.2);
+tl.from("#s3-title", { opacity:0, y:25, duration:0.5, ease:"power2.out" }, 14.6);
+tl.from("#card-w1", { opacity:0, y:40, duration:0.4, ease:"power3.out" }, 15.5);
+tl.from("#card-w2", { opacity:0, y:40, duration:0.4, ease:"power3.out" }, 15.8);
+tl.from("#card-w3", { opacity:0, y:40, duration:0.4, ease:"power3.out" }, 16.1);
+
+// Transition 3→4
+tl.to('[data-scene="4"]', { opacity:1, duration:0.6, ease:"power2.inOut" }, 23.4);
+tl.to('[data-scene="3"]', { opacity:0, duration:0.6, ease:"power2.inOut" }, 23.4);
+
+// Scene 4: Get Started
+tl.from("#s4-label", { opacity:0, y:15, duration:0.4, ease:"power2.out" }, 24.2);
+tl.from("#s4-title", { opacity:0, y:25, duration:0.5, ease:"power2.out" }, 24.6);
+tl.from("#s4-code", { opacity:0, scale:0.95, duration:0.5, ease:"power2.out" }, 25.2);
+tl.from("#s4-url", { opacity:0, duration:0.4, ease:"power1.out" }, 25.8);
+
+window.__timelines["oss-intro"] = tl;
+</script>
+</body>
+</html>

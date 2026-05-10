@@ -181,6 +181,20 @@ The system prompt that drives the agent is carefully composed from seven layers:
 
 ---
 
+## Live Demos
+
+Rendered from the example storyboards using Code2MP4 + HyperFrames (1920×1080, 30fps):
+
+| Demo | Duration | Size | Motion System |
+|---|---|---|---|
+| **[Product Launch](docs/demos/demo-product-launch.mp4)** ← click to play | 30s | 1.3 MB | Tech |
+| **[OSS Intro](docs/demos/demo-oss-intro.mp4)** ← click to play | 30s | 956 KB | Editorial |
+| **[Release Notes](docs/demos/demo-release-notes.mp4)** ← click to play | 25s | 698 KB | Tech |
+
+> **Source → MP4**: Each demo has a [storyboard](examples/product-launch/storyboard.json) + editable HTML composition + [render config](docs/render-config.md). Same source = deterministic MP4 every time.
+
+---
+
 ## Examples
 
 Three examples illustrate what Code2MP4 is built for:
