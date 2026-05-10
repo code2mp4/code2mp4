@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://code2mp4.com/schemas/quality-report.json",
+  "title": "Code2MP4 Quality Report",
+  "description": "Structured quality report for a Code2MP4 video production. Output of code2mp4 check / code2mp4 review.",
+  "type": "object",
+  "required": ["videoId", "passed", "dimensions"],
+  "properties": {
+    "videoId": {
+      "type": "string",
+      "description": "Unique identifier for the video being reviewed"
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the video passes all required quality gates (errors = 0)"
+    },
+    "dimensions": {
+      "type": "object",
+      "required": ["hook", "script", "readability", "motion", "platform"],
+      "properties": {
+        "hook": { "$ref": "#/$defs/dimension" },
+        "script": { "$ref": "#/$defs/dimension" },
+        "readability": { "$ref": "#/$defs/dimension" },
+        "motion": { "$ref": "#/$defs/dimension" },
+        "platform": { "$ref": "#/$defs/dimension" },
+        "brand": { "$ref": "#/$defs/dimension" },
+        "render": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Errors that block render (hook missing, text overflow, lint failure)"
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Advisory warnings (pace could be tighter, transition variety low)"
+    },
+    "scores": {
+      "type": "object",
+      "required": ["overall"],
+      "properties": {
+        "overall": { "type": "number", "minimum": 0, "maximum": 100 },
+        "hook": { "type": "number", "minimum": 0, "maximum": 100 },
+        "engagement": { "type": "number", "minimum": 0, "maximum": 100 },
+        "clarity": { "type": "number", "minimum": 0, "maximum": 100 },
+        "platformFit": { "type": "number", "minimum": 0, "maximum": 100 },
+        "brandConsistency": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "object",
+      "required": ["passed", "checks"],
+      "properties": {
+        "passed": {
+          "type": "boolean",
+          "description": "Whether all checks in this dimension passed"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "passed"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Check identifier (e.g., 'hook-exists', 'text-per-screen')"
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable check description"
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Additional detail about the check result"
+              }
+            }
+          }
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["check", "severity", "message"],
+      "properties": {
+        "check": {
+          "type": "string",
+          "description": "The check ID that triggered this finding"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning"],
+          "description": "error blocks render, warning is advisory"
+        },
+        "message": {
+          "type": "string",
+          "description": "What was found"
+        },
+        "fix": {
+          "type": "string",
+          "description": "Concrete, actionable suggestion for how to fix"
+        }
+      }
+    }
+  }
+}
