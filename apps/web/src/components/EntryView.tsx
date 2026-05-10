@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { VideoProjectConfig } from '@code2mp4/contracts';
+import { useT } from '../i18n/context';
 import { AgentPicker } from './AgentPicker';
 
 interface ProjectItem {
@@ -67,6 +68,7 @@ export function EntryView({
   const [healthError, setHealthError] = useState<string | null>(null);
   const [agentCount, setAgentCount] = useState(0);
   const [system, setSystem] = useState<{ node?: boolean; ffmpeg?: boolean; hyperframes?: boolean }>({});
+  const { t } = useT();
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [search, setSearch] = useState('');
@@ -142,7 +144,7 @@ export function EntryView({
         </div>
 
         <section style={S.createPanel}>
-          <div style={S.sectionKicker}>New production</div>
+          <div style={S.sectionKicker}>{t('entry.newProduction')}</div>
           <input
             value={projectName}
             onChange={e => setProjectName(e.target.value)}
@@ -159,14 +161,14 @@ export function EntryView({
 
           <div style={S.fieldGrid}>
             <label style={S.fieldLabel}>
-              Type
+              {t('entry.type')}
               <select value={videoType} onChange={e => setVideoType(e.target.value)} style={S.select}>
                 {VIDEO_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                 <option value="custom">Custom</option>
               </select>
             </label>
             <label style={S.fieldLabel}>
-              Ratio
+              {t('entry.ratio')}
               <select value={orientation} onChange={e => setOrientation(e.target.value as '16:9' | '9:16' | '1:1')} style={S.select}>
                 <option value="16:9">16:9</option>
                 <option value="9:16">9:16</option>
@@ -174,7 +176,7 @@ export function EntryView({
               </select>
             </label>
             <label style={S.fieldLabel}>
-              Duration
+              {t('entry.duration')}
               <select value={duration} onChange={e => setDuration(Number(e.target.value))} style={S.select}>
                 {[5, 10, 15, 30, 60].map(v => <option key={v} value={v}>{v}s</option>)}
               </select>
@@ -198,7 +200,7 @@ export function EntryView({
           </div>
 
           <button onClick={() => createVideo()} disabled={!prompt.trim()} style={{ ...S.primaryBtn, opacity: prompt.trim() ? 1 : 0.45 }}>
-            Start production
+            {t('entry.startProduction')}
           </button>
         </section>
 
