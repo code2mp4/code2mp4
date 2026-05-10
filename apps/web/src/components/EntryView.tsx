@@ -69,6 +69,51 @@ export function EntryView({
   const [agentCount, setAgentCount] = useState(0);
   const [system, setSystem] = useState<{ node?: boolean; ffmpeg?: boolean; hyperframes?: boolean }>({});
   const { t } = useT();
+  const tl = useMemo(() => ({
+    // Form labels
+    newProduction: t('entry.newProduction'),
+    type: t('entry.type'), custom: t('entry.custom'), ratio: t('entry.ratio'),
+    duration: t('entry.duration'), motion: t('entry.motion'), energy: t('entry.motion'),
+    start: t('entry.startProduction'), projectName: t('entry.projectName'),
+    describe: t('entry.describePlaceholder'),
+    // Energy
+    calm: t('entry.energy.calm'), medium: t('entry.energy.medium'),
+    high: t('entry.energy.high'), dramatic: t('entry.energy.dramatic'),
+    // Video types
+    'product-launch': t('entry.videoType.productLaunch'),
+    'social-short': t('entry.videoType.socialShort'),
+    tutorial: t('entry.videoType.tutorial'),
+    'brand-intro': t('entry.videoType.brandIntro'),
+    'caption-reel': t('entry.videoType.captionReel'),
+    // Templates
+    launchTeaser: t('entry.template.launchTeaser'),
+    founderReel: t('entry.template.founderReel'),
+    releaseNotes: t('entry.template.releaseNotes'),
+    logoSting: t('entry.template.logoSting'),
+    // Library
+    tabs: t('entry.library.tabs'), drafts: t('entry.library.drafts'),
+    rendered: t('entry.library.rendered'), libraryTemplates: t('entry.library.templates'),
+    search: t('entry.library.searchPlaceholder'), grid: t('entry.library.grid'),
+    list: t('entry.library.list'), emptyTitle: t('entry.library.empty.title'),
+    emptyDesc: t('entry.library.empty.desc'),
+    heroKicker: t('entry.library.heroKicker'), heroTitle: t('entry.library.heroTitle'),
+    library: t('entry.library.videoLibrary'), libraryDesc: t('entry.library.videoLibraryDesc'),
+    projects: t('entry.library.projects'), agents: t('entry.library.agents'),
+    runtime: t('entry.library.runtime'), ready: t('entry.ready'),
+    checking: t('entry.checkingRuntime'), missing: t('entry.missing'),
+    // Readiness
+    readiness: t('entry.readiness'), node: t('entry.readiness.node'),
+    ffmpeg: t('entry.readiness.ffmpeg'), hf: t('entry.readiness.hyperframes'),
+    agentCli: t('entry.readiness.agentCli'), whatOwns: t('entry.readiness.whatOwns'),
+    own1: t('entry.readiness.own1'), own2: t('entry.readiness.own2'),
+    own3: t('entry.readiness.own3'), own4: t('entry.readiness.own4'),
+    motionSystems: t('entry.readiness.motionSystems'), motionDesc: t('entry.readiness.motionDesc'),
+    serverOffline: t('entry.serverOffline'),
+    // Misc
+    draft: t('entry.library.draft'), durationOpen: t('entry.library.durationOpen'),
+    unbound: t('entry.library.unbound'), runtimeReady: t('entry.library.runtimeReady'),
+    runtimeCheck: t('entry.library.runtimeCheck'), templates: t('entry.templates'),
+  } as Record<string,string>), [t]);
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [search, setSearch] = useState('');
@@ -139,7 +184,7 @@ export function EntryView({
         <div style={S.agentBlock}>
           <AgentPicker selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
           <div style={S.agentHint}>
-            {loading ? 'Checking runtime...' : healthError ? healthError : `${agentCount} agents · HyperFrames ${system.hyperframes ? 'ready' : 'missing'}`}
+            {loading ? tl.checking : healthError ? healthError : `${agentCount} agents · HyperFrames ${system.hyperframes ? tl.ready : tl.missing}`}
           </div>
         </div>
 
@@ -205,7 +250,7 @@ export function EntryView({
         </section>
 
         <section style={S.templateStack}>
-          <div style={S.sectionKicker}>Production templates</div>
+          <div style={S.sectionKicker}>{tl.templates}</div>
           {TEMPLATES.map(t => (
             <button key={t.label} style={S.templateBtn} onClick={() => createVideo(t)}>
               <span style={S.templateTitle}>{t.label}</span>
@@ -229,15 +274,15 @@ export function EntryView({
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search videos, formats, motion systems..." style={S.searchInput} />
           </div>
           <div style={S.viewToggle}>
-            <button onClick={() => setViewMode('grid')} style={{ ...S.iconBtn, ...(viewMode === 'grid' ? S.iconBtnActive : {}) }}>Grid</button>
-            <button onClick={() => setViewMode('list')} style={{ ...S.iconBtn, ...(viewMode === 'list' ? S.iconBtnActive : {}) }}>List</button>
+            <button onClick={() => setViewMode('grid')} style={{ ...S.iconBtn, ...(viewMode === 'grid' ? S.iconBtnActive : {}) }}>{tl.grid}</button>
+            <button onClick={() => setViewMode('list')} style={{ ...S.iconBtn, ...(viewMode === 'list' ? S.iconBtnActive : {}) }}>{tl.list}</button>
           </div>
         </header>
 
         <section style={S.heroBand}>
           <div>
-            <div style={S.heroKicker}>Agent-native video pipeline</div>
-            <h1 style={S.heroTitle}>Build editable motion source and deterministic MP4 output.</h1>
+            <div style={S.heroKicker}>{tl.heroKicker}</div>
+            <h1 style={S.heroTitle}>{tl.heroTitle}</h1>
           </div>
           <div style={S.metrics}>
             <Metric label="Projects" value={String(projects.length)} />
@@ -249,7 +294,7 @@ export function EntryView({
         <section style={S.libraryHeader}>
           <div>
             <h2 style={S.heading}>{libraryTab === 'templates' ? 'Templates' : 'Video library'}</h2>
-            <p style={S.subtle}>Briefs, storyboards, HyperFrames source, renders, and validation artifacts.</p>
+            <p style={S.subtle}>{tl.libraryDesc}</p>
           </div>
           <div style={S.pipelinePills}>
             {['Brief', 'Storyboard', 'Source', 'Checks', 'Render'].map(step => <span key={step} style={S.pipelinePill}>{step}</span>)}
@@ -263,8 +308,8 @@ export function EntryView({
         ) : filteredProjects.length === 0 ? (
           <div style={S.emptyState}>
             <div style={S.emptyMark}>MP4</div>
-            <h3 style={S.emptyTitle}>No matching productions yet</h3>
-            <p style={S.emptyCopy}>Create one from the brief panel or start with a production template.</p>
+            <h3 style={S.emptyTitle}>{tl.emptyTitle}</h3>
+            <p style={S.emptyCopy}>{tl.emptyDesc}</p>
           </div>
         ) : (
           <div style={viewMode === 'grid' ? S.projectGrid : S.projectList}>
@@ -283,15 +328,15 @@ export function EntryView({
 
       <aside style={S.rightRail}>
         <section style={S.railCard}>
-          <div style={S.railTitle}>Production readiness</div>
-          <StatusRow label="Node" ok={system.node} />
-          <StatusRow label="FFmpeg" ok={system.ffmpeg} />
-          <StatusRow label="HyperFrames" ok={system.hyperframes} />
-          <StatusRow label="Agent CLI" ok={agentCount > 0} />
+          <div style={S.railTitle}>{tl.readiness}</div>
+          <StatusRow label={tl.node} ok={system.node} />
+          <StatusRow label={tl.ffmpeg} ok={system.ffmpeg} />
+          <StatusRow label={tl.hf} ok={system.hyperframes} />
+          <StatusRow label={tl.agentCli} ok={agentCount > 0} />
         </section>
 
         <section style={S.railCard}>
-          <div style={S.railTitle}>What Code2MP4 owns</div>
+          <div style={S.railTitle}>{tl.whatOwns}</div>
           {[
             'Structured storyboard before motion source',
             'Editable HTML/CSS/GSAP compositions',
@@ -301,7 +346,7 @@ export function EntryView({
         </section>
 
         <section style={S.railCard}>
-          <div style={S.railTitle}>Motion systems</div>
+          <div style={S.railTitle}>{tl.motionSystems}</div>
           <div style={S.swatches}>
             {['#58A6FF', '#C44F34', '#F2C94C', '#3FB950', '#B388FF', '#FF6B6B'].map(c => <span key={c} style={{ ...S.swatch, background: c }} />)}
           </div>

@@ -4,6 +4,7 @@ import { FileWorkspace } from './FileWorkspace';
 import { AgentPicker } from './AgentPicker';
 import { AssistantMessage } from './AssistantMessage';
 import { ChatComposer } from './ChatComposer';
+import { useT } from '../i18n/context';
 
 interface Message {
   id: string; role: 'user' | 'assistant' | 'system'; content: string;
@@ -45,6 +46,7 @@ const HINT_PROMPTS = [
 export function ProjectView({
   projectId, onBack, selectedAgentId, onSelectAgent, initialPrompt, onInitialPromptConsumed,
 }: Props) {
+  const { t } = useT();
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [working, setWorking] = useState(false);
