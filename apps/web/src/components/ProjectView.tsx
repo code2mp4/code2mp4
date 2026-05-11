@@ -5,6 +5,7 @@ import { AgentPicker } from './AgentPicker';
 import { AssistantMessage } from './AssistantMessage';
 import { ChatComposer } from './ChatComposer';
 import { useViewportWidth } from '../hooks/useViewportWidth';
+import { useT } from '../i18n/context';
 
 interface Message {
   id: string; role: 'user' | 'assistant' | 'system'; content: string;
@@ -64,17 +65,13 @@ interface Props {
   onInitialPromptConsumed?: () => void;
 }
 
-const HINT_PROMPTS = [
-  'Product launch video — 15s, 16:9, tech style',
-  'Social media reel — 8s, 9:16 vertical, fast cuts',
-  'Brand intro animation — 5s, logo reveal, dark canvas',
-  'Tutorial explainer — 60s, step-by-step, code blocks',
-];
+const HINT_PROMPT_KEYS = ['hint.productLaunch', 'hint.socialReel', 'hint.brandIntro', 'hint.tutorial'];
 
 export function ProjectView({
   projectId, onBack, selectedAgentId, onSelectAgent, initialPrompt, onInitialPromptConsumed,
 }: Props) {
   const viewportWidth = useViewportWidth();
+  const { t } = useT();
   const isNarrow = viewportWidth < 1180;
   const isMobile = viewportWidth < 760;
   const [msgs, setMsgs] = useState<Message[]>([]);
@@ -415,34 +412,34 @@ export function ProjectView({
   const videoFiles = files.filter(f => f.kind === 'video');
   const htmlFiles = files.filter(f => f.kind === 'html');
   const storyboardFiles = files.filter(f => f.name.toLowerCase().includes('storyboard'));
-  const activeOutput = mp4 || pipeline?.status === 'done' ? 'Rendered MP4' : html || pipeline?.status === 'ready_to_render' ? 'Motion source' : working || pipeline?.status === 'rendering_scenes' || pipeline?.status === 'scripting' ? 'Agent running' : pipeline?.status === 'checking' ? 'Checking source' : 'Awaiting source';
+  const activeOutput = mp4 || pipeline?.status === 'done' ? t('project.output.renderedMp4') : html || pipeline?.status === 'ready_to_render' ? t('project.output.motionSource') : working || pipeline?.status === 'rendering_scenes' || pipeline?.status === 'scripting' ? t('project.output.agentRunning') : pipeline?.status === 'checking' ? t('project.output.checkingSource') : t('project.output.awaitingSource');
   const pipelineSteps = [
-    { label: 'Brief', done: Boolean(pipeline) || msgs.some(m => m.role === 'user') || Boolean(cfg.copy) },
-    { label: 'Storyboard', done: Boolean(pipeline?.script) || storyboardFiles.length > 0 || /storyboard/i.test(msgs.map(m => m.content).join(' ')) },
-    { label: 'Source', done: (pipeline?.scenesCompleted ?? 0) > 0 || htmlFiles.length > 0 || Boolean(html) },
-    { label: 'Checks', done: pipeline?.check?.status === 'passed' || pipeline?.status === 'ready_to_render' || pipeline?.status === 'assembling' || pipeline?.status === 'done' || /lint|inspect|validate/i.test(msgs.map(m => m.content).join(' ')) },
-    { label: 'Render', done: pipeline?.status === 'done' || videoFiles.length > 0 || Boolean(mp4) },
+    { label: t('project.step.brief'), done: Boolean(pipeline) || msgs.some(m => m.role === 'user') || Boolean(cfg.copy) },
+    { label: t('project.step.storyboard'), done: Boolean(pipeline?.script) || storyboardFiles.length > 0 || /storyboard/i.test(msgs.map(m => m.content).join(' ')) },
+    { label: t('project.step.source'), done: (pipeline?.scenesCompleted ?? 0) > 0 || htmlFiles.length > 0 || Boolean(html) },
+    { label: t('project.step.checks'), done: pipeline?.check?.status === 'passed' || pipeline?.status === 'ready_to_render' || pipeline?.status === 'assembling' || pipeline?.status === 'done' || /lint|inspect|validate/i.test(msgs.map(m => m.content).join(' ')) },
+    { label: t('project.step.render'), done: pipeline?.status === 'done' || videoFiles.length > 0 || Boolean(mp4) },
   ];
 
   return (
-    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label="Video production cockpit">
+    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label={t('project.cockpit')}>
       <header style={{ ...S.header, ...(isNarrow ? S.headerNarrow : {}) }} role="banner">
-        <button onClick={onBack} style={S.backBtn} aria-label="Back to studio">← Studio</button>
+        <button onClick={onBack} style={S.backBtn} aria-label={t('project.backToStudio')}>{t('project.backToStudio')}</button>
         <div style={S.projectIdentity}>
-          <div style={S.projectEyebrow}>Production cockpit</div>
+          <div style={S.projectEyebrow}>{t('project.productionCockpit')}</div>
           <div style={S.projectTitle}>{project?.name || projectId.slice(0, 8)}</div>
         </div>
         <div style={{ ...S.headerMeta, ...(isMobile ? S.headerMetaMobile : {}) }}>
           <span style={S.metaPill}>{String(cfg.videoType ?? 'custom')}</span>
           <span style={S.metaPill}>{String(cfg.orientation ?? '16:9')}</span>
-          <span style={S.metaPill}>{typeof cfg.duration === 'number' ? `${cfg.duration}s` : 'duration open'}</span>
+          <span style={S.metaPill}>{typeof cfg.duration === 'number' ? `${cfg.duration}s` : t('project.durationOpen')}</span>
           <span style={S.metaPill}>{activeOutput}</span>
         </div>
         <div style={{ flex: 1 }} />
         <AgentPicker selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
         <div style={{ position: 'relative' }}>
           <button onClick={() => setConvMenuOpen(!convMenuOpen)} style={S.convBtn} aria-haspopup="listbox">
-            {convs.find(c => c.id === convId)?.title || 'Chat'} ▾
+            {convs.find(c => c.id === convId)?.title || t('project.chat')} ▾
           </button>
           {convMenuOpen && (
             <>
@@ -450,47 +447,50 @@ export function ProjectView({
               <div style={S.convMenu} role="listbox">
                 {convs.map(c => (
                   <button key={c.id} onClick={() => switchConv(c.id)} style={{ ...S.convItem, ...(c.id === convId ? { background: 'var(--accent-dim)' } : {}) }}>
-                    {c.title || 'Untitled'} <span style={S.convDate}>{new Date().toLocaleDateString()}</span>
+                    {c.title || t('project.untitled')} <span style={S.convDate}>{new Date().toLocaleDateString()}</span>
                   </button>
                 ))}
                 <div style={S.menuRule} />
-                <button onClick={newConv} style={S.convItem}>+ New conversation</button>
+                <button onClick={newConv} style={S.convItem}>{t('project.newConversation')}</button>
               </div>
             </>
           )}
         </div>
-        {working && <button onClick={cancelRun} style={S.cancelBtn}>Stop run</button>}
+        {working && <button onClick={cancelRun} style={S.cancelBtn}>{t('project.stopRun')}</button>}
       </header>
 
-      {error && <div style={S.errorBanner} role="alert"><span>{error}</span><button onClick={() => setError(null)} style={S.errDismiss}>Dismiss</button></div>}
+      {error && <div style={S.errorBanner} role="alert"><span>{error}</span><button onClick={() => setError(null)} style={S.errDismiss}>{t('project.dismiss')}</button></div>}
       {statusLine && <div style={S.statusLine} aria-live="polite"><span className="spinner" style={S.statusSpinner} />{statusLine}</div>}
 
       <div style={{ ...S.body, ...(isNarrow ? S.bodyNarrow : {}) }}>
         <aside style={{ ...S.directorPanel, ...(isNarrow ? S.directorPanelNarrow : {}) }}>
           <div style={S.panelHeader}>
             <div>
-              <div style={S.panelKicker}>Director</div>
-              <h2 style={S.panelTitle}>Brief and decisions</h2>
+              <div style={S.panelKicker}>{t('project.director')}</div>
+              <h2 style={S.panelTitle}>{t('project.briefAndDecisions')}</h2>
             </div>
-            <span style={S.runState}>{working ? 'Running' : 'Ready'}</span>
+            <span style={S.runState}>{working ? t('project.running') : t('project.ready')}</span>
           </div>
 
           <div style={S.messages} role="log" ref={messagesRef}>
             {msgs.length === 0 && !working && (
               <div style={S.emptyDirector}>
                 <div style={S.emptyMark}>D</div>
-                <h3 style={S.emptyHeading}>Start with a production brief</h3>
-                <p style={S.emptyCopy}>The agent will ask only for missing choices, then draft storyboard, motion source, checks, and render.</p>
+                <h3 style={S.emptyHeading}>{t('project.emptyState.heading')}</h3>
+                <p style={S.emptyCopy}>{t('project.emptyState.copy')}</p>
                 <div style={S.hints}>
-                  {HINT_PROMPTS.map(hint => (
-                    <button key={hint} onClick={() => setInput(hint)} style={S.hintBtn}>{hint}</button>
-                  ))}
+                  {HINT_PROMPT_KEYS.map(key => {
+                    const hint = t(key);
+                    return (
+                      <button key={key} onClick={() => setInput(hint)} style={S.hintBtn}>{hint}</button>
+                    );
+                  })}
                 </div>
               </div>
             )}
             {msgs.map(m => (
               m.role === 'user' ? (
-                <UserMessage key={m.id} content={m.content} />
+                <UserMessage key={m.id} content={m.content} t={t} />
               ) : m.role === 'assistant' ? (
                 <AssistantMessage
                   key={m.id}
@@ -516,12 +516,12 @@ export function ProjectView({
         <main style={{ ...S.stageColumn, ...(isNarrow ? S.stageColumnNarrow : {}) }}>
           <section style={S.stageHeader}>
             <div>
-              <div style={S.panelKicker}>Stage</div>
-              <h2 style={S.stageTitle}>{mp4 ? 'Rendered output' : html ? 'Motion source preview' : 'Preview area'}</h2>
+              <div style={S.panelKicker}>{t('project.stage')}</div>
+              <h2 style={S.stageTitle}>{mp4 ? t('project.stage.renderedOutput') : html ? t('project.stage.motionSource') : t('project.stage.fallback')}</h2>
             </div>
             <div style={S.stageActions}>
               <button onClick={() => setShowFiles(v => !v)} style={{ ...S.softBtn, ...(showFiles ? S.softBtnActive : {}) }}>
-                {showFiles ? 'Hide artifacts' : 'Show artifacts'}
+                {showFiles ? t('project.hideArtifacts') : t('project.showArtifacts')}
               </button>
             </div>
           </section>
@@ -533,8 +533,8 @@ export function ProjectView({
           <section style={S.timeline}>
             <div style={S.timelineHeader}>
               <div>
-                <div style={S.panelKicker}>Pipeline</div>
-                <h3 style={S.timelineTitle}>Production state</h3>
+                <div style={S.panelKicker}>{t('project.pipeline')}</div>
+                <h3 style={S.timelineTitle}>{t('project.pipelineState')}</h3>
               </div>
               <span style={S.timelineMeta}>{files.length} files · {convs.length} chats</span>
             </div>
@@ -559,29 +559,30 @@ export function ProjectView({
             onRender={renderPipeline}
             onRetryScene={retryScene}
             onCancel={cancelPipeline}
+            t={t}
           />
 
           <section style={S.inspectorCard}>
-            <div style={S.railTitle}>Production brief</div>
-            <InfoRow label="Project" value={project?.name || projectId.slice(0, 8)} />
-            <InfoRow label="Type" value={String(cfg.videoType ?? 'custom')} />
-            <InfoRow label="Ratio" value={String(cfg.orientation ?? '16:9')} />
-            <InfoRow label="Motion" value={String(cfg.motionSystemId ?? 'unbound')} />
+            <div style={S.railTitle}>{t('project.productionBrief')}</div>
+            <InfoRow label={t('project.info.project')} value={project?.name || projectId.slice(0, 8)} />
+            <InfoRow label={t('project.info.type')} value={String(cfg.videoType ?? 'custom')} />
+            <InfoRow label={t('project.info.ratio')} value={String(cfg.orientation ?? '16:9')} />
+            <InfoRow label={t('project.info.motion')} value={String(cfg.motionSystemId ?? 'unbound')} />
           </section>
 
           <section style={S.inspectorCard}>
-            <div style={S.railTitle}>Artifacts</div>
+            <div style={S.railTitle}>{t('project.artifacts')}</div>
             <div style={S.artifactStats}>
-              <ArtifactStat label="Storyboards" value={storyboardFiles.length} />
-              <ArtifactStat label="HTML" value={htmlFiles.length} />
-              <ArtifactStat label="Videos" value={videoFiles.length} />
+              <ArtifactStat label={t('project.artifacts.storyboards')} value={storyboardFiles.length} />
+              <ArtifactStat label={t('project.artifacts.html')} value={htmlFiles.length} />
+              <ArtifactStat label={t('project.artifacts.videos')} value={videoFiles.length} />
             </div>
             {showFiles ? (
               <div style={S.filePane}>
                 <FileWorkspace key={filesVer} projectId={projectId} onSelectFile={handleFileSelect as (f: { path: string; kind: string; mime: string }) => void} />
               </div>
             ) : (
-              <div style={S.artifactsCollapsed}>Artifacts are hidden from the stage controls.</div>
+              <div style={S.artifactsCollapsed}>{t('project.artifactsHidden')}</div>
             )}
           </section>
         </aside>
@@ -590,21 +591,21 @@ export function ProjectView({
   );
 }
 
-function UserMessage({ content }: { content: string }) {
+function UserMessage({ content, t }: { content: string; t: (key: string) => string }) {
   const [expanded, setExpanded] = useState(false);
   const machineBrief = isMachineBrief(content);
   const shouldCollapse = machineBrief || content.length > 720 || content.split('\n').length > 10;
-  const preview = summarizeUserMessage(content, machineBrief);
+  const preview = summarizeUserMessage(content, machineBrief, t);
 
   return (
     <div style={{ ...S.msg, alignSelf: 'flex-end' }}>
-      <div style={S.msgMeta}>{machineBrief ? 'Production brief' : 'You'}</div>
+      <div style={S.msgMeta}>{machineBrief ? t('project.productionBrief') : t('project.brief.you')}</div>
       <div style={{ ...S.userBubble, ...(machineBrief ? S.briefBubble : {}) }}>
         {shouldCollapse && !expanded ? (
           <>
             <div style={S.briefSummary}>{preview}</div>
             <button type="button" onClick={() => setExpanded(true)} style={S.expandBtn}>
-              Review full brief
+              {t('project.brief.reviewFull')}
             </button>
           </>
         ) : (
@@ -612,7 +613,7 @@ function UserMessage({ content }: { content: string }) {
             <pre style={S.pre}>{content}</pre>
             {shouldCollapse && (
               <button type="button" onClick={() => setExpanded(false)} style={S.expandBtn}>
-                Collapse brief
+                {t('project.brief.collapse')}
               </button>
             )}
           </>
@@ -623,7 +624,7 @@ function UserMessage({ content }: { content: string }) {
 }
 
 function PipelinePanel({
-  job, busy, error, onStart, onApprove, onRender, onRetryScene, onCancel,
+  job, busy, error, onStart, onApprove, onRender, onRetryScene, onCancel, t,
 }: {
   job: PipelineJob | null;
   busy: boolean;
@@ -633,8 +634,9 @@ function PipelinePanel({
   onRender: () => void;
   onRetryScene: (sceneNumber: number) => void;
   onCancel: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
-  const statusLabel = job ? pipelineStatusLabel(job.status) : 'Not started';
+  const statusLabel = job ? pipelineStatusLabel(job.status, t) : t('project.pipeline.notStarted');
   const renderPct = job?.render?.frame && job.render.totalFrames
     ? Math.min(100, Math.round((job.render.frame / job.render.totalFrames) * 100))
     : job?.status === 'done'
@@ -645,8 +647,8 @@ function PipelinePanel({
     <section style={S.inspectorCard}>
       <div style={S.pipelinePanelTop}>
         <div>
-          <div style={S.panelKicker}>Pipeline</div>
-          <div style={S.railTitle}>Storyboard to MP4</div>
+          <div style={S.panelKicker}>{t('project.pipeline')}</div>
+          <div style={S.railTitle}>{t('project.pipeline.storyboardToMp4')}</div>
         </div>
         <span style={S.pipelineStatus}>{statusLabel}</span>
       </div>
@@ -655,23 +657,23 @@ function PipelinePanel({
 
       {!job ? (
         <div style={S.pipelineEmpty}>
-          <p style={S.pipelineCopy}>Start a durable production job with an explicit storyboard approval gate.</p>
+          <p style={S.pipelineCopy}>{t('project.pipeline.empty')}</p>
           <button disabled={busy} onClick={onStart} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
-            Start storyboard
+            {t('project.pipeline.startStoryboard')}
           </button>
         </div>
       ) : (
         <>
           <div style={S.pipelineProgressGrid}>
-            <PipelineStat label="Scenes" value={`${job.scenesCompleted}/${job.totalScenes || '-'}`} />
-            <PipelineStat label="Duration" value={job.script ? `${job.script.duration}s` : '-'} />
-            <PipelineStat label="Checks" value={job.check?.status ?? '-'} />
+            <PipelineStat label={t('project.pipeline.scenes')} value={`${job.scenesCompleted}/${job.totalScenes || '-'}`} />
+            <PipelineStat label={t('project.pipeline.duration')} value={job.script ? `${job.script.duration}s` : '-'} />
+            <PipelineStat label={t('project.pipeline.checks')} value={job.check?.status ?? '-'} />
           </div>
 
           {job.script && (
             <div style={S.storyboardBox}>
               <div style={S.storyboardTitle}>{job.script.title}</div>
-              <div style={S.storyboardMeta}>{job.script.aspectRatio || '16:9'} · {job.script.duration}s · {job.script.scenes.length} scenes</div>
+              <div style={S.storyboardMeta}>{job.script.aspectRatio || '16:9'} · {job.script.duration}s · {t('project.pipeline.sceneCount', { count: job.script.scenes.length })}</div>
               <div style={S.sceneList}>
                 {job.script.scenes.map(scene => {
                   const sceneState = job.scenes.find(s => s.number === scene.number);
@@ -680,11 +682,11 @@ function PipelinePanel({
                       <span style={S.sceneNum}>{scene.number}</span>
                       <div style={S.sceneBody}>
                         <div style={S.sceneTitle}>{scene.text || scene.goal}</div>
-                        <div style={S.sceneMeta}>{scene.duration}s · {sceneState?.status ?? 'planned'}</div>
+                        <div style={S.sceneMeta}>{scene.duration}s · {sceneState?.status ? pipelineStatusLabel(sceneState.status, t) : t('project.pipeline.planned')}</div>
                         {sceneState?.error && <div style={S.sceneError}>{sceneState.error}</div>}
                       </div>
                       {sceneState?.status === 'failed' && (
-                        <button disabled={busy} onClick={() => onRetryScene(scene.number)} style={S.sceneRetry}>Retry</button>
+                        <button disabled={busy} onClick={() => onRetryScene(scene.number)} style={S.sceneRetry}>{t('files.retry')}</button>
                       )}
                     </div>
                   );
@@ -693,53 +695,53 @@ function PipelinePanel({
             </div>
           )}
 
-          {job.status === 'scripting' && <div style={S.pipelineCopy}>Director agent is drafting the storyboard.</div>}
+          {job.status === 'scripting' && <div style={S.pipelineCopy}>{t('project.pipeline.scriptingCopy')}</div>}
           {job.status === 'awaiting_approval' && (
             <button disabled={busy} onClick={onApprove} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
-              Approve storyboard and build scenes
+              {t('project.pipeline.approveStoryboard')}
             </button>
           )}
           {job.status === 'rendering_scenes' && (
-            <div style={S.pipelineCopy}>Scene agents are generating editable HTML fragments. Failed scenes can be retried individually.</div>
+            <div style={S.pipelineCopy}>{t('project.pipeline.renderingScenesCopy')}</div>
           )}
           {(job.status === 'checking' || job.check) && (
             <div style={S.checkBox}>
-              <CheckRow label="Lint" status={job.check?.lint?.passed} detail={checkDetail(job.check?.lint)} />
-              <CheckRow label="Validate" status={job.check?.validate?.passed} detail={checkDetail(job.check?.validate)} />
-              <CheckRow label="Inspect" status={job.check?.inspect?.passed} detail={inspectDetail(job.check?.inspect)} />
+              <CheckRow label="Lint" status={job.check?.lint?.passed} detail={checkDetail(job.check?.lint, t)} t={t} />
+              <CheckRow label="Validate" status={job.check?.validate?.passed} detail={checkDetail(job.check?.validate, t)} t={t} />
+              <CheckRow label="Inspect" status={job.check?.inspect?.passed} detail={inspectDetail(job.check?.inspect, t)} t={t} />
             </div>
           )}
           {job.status === 'ready_to_render' && (
             <button disabled={busy} onClick={onRender} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
-              Run checks and render MP4
+              {t('project.pipeline.runChecksRender')}
             </button>
           )}
           {job.status === 'assembling' && (
             <div style={S.renderProgress}>
               <div style={S.renderBar}><span style={{ ...S.renderBarFill, width: `${renderPct}%` }} /></div>
-              <span>{renderPct ? `${renderPct}%` : 'Preparing render...'}</span>
+              <span>{renderPct ? `${renderPct}%` : t('project.pipeline.preparingRender')}</span>
             </div>
           )}
-          {job.status === 'done' && <div style={S.pipelineDone}>Rendered MP4 is ready in artifacts.</div>}
+          {job.status === 'done' && <div style={S.pipelineDone}>{t('project.pipeline.doneCopy')}</div>}
           {job.status === 'failed' && (
             <>
-              <div style={S.pipelineError}>{job.error || job.check?.error || job.render?.error || 'Pipeline failed'}</div>
+              <div style={S.pipelineError}>{job.error || job.check?.error || job.render?.error || t('project.pipeline.failed')}</div>
               {job.totalScenes > 0 && job.scenesCompleted === job.totalScenes && (
                 <button disabled={busy} onClick={onRender} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
-                  Retry checks and render
+                  {t('project.pipeline.retryChecksRender')}
                 </button>
               )}
               {job.scenesCompleted === 0 && (
                 <button disabled={busy} onClick={onStart} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
-                  Start a new storyboard
+                  {t('project.pipeline.startNewStoryboard')}
                 </button>
               )}
             </>
           )}
-          {job.status === 'cancelled' && <div style={S.pipelineError}>Pipeline was cancelled.</div>}
+          {job.status === 'cancelled' && <div style={S.pipelineError}>{t('project.pipeline.cancelledCopy')}</div>}
           {!['done', 'failed', 'cancelled'].includes(job.status) && (
             <button disabled={busy} onClick={onCancel} style={{ ...S.pipelineSecondary, opacity: busy ? 0.5 : 1 }}>
-              Cancel pipeline
+              {t('project.pipeline.cancel')}
             </button>
           )}
         </>
@@ -748,26 +750,26 @@ function PipelinePanel({
   );
 }
 
-function CheckRow({ label, status, detail }: { label: string; status?: boolean; detail: string }) {
+function CheckRow({ label, status, detail, t }: { label: string; status?: boolean; detail: string; t: (key: string) => string }) {
   const state = status === undefined ? 'pending' : status ? 'passed' : 'failed';
   return (
     <div style={S.checkRow}>
       <span style={{ ...S.checkDotSmall, background: status === undefined ? 'var(--muted)' : status ? 'var(--success)' : 'var(--danger)' }} />
       <span style={S.checkName}>{label}</span>
-      <span style={S.checkState}>{state}</span>
+      <span style={S.checkState}>{t(`project.pipeline.checkState.${state}`)}</span>
       <span style={S.checkDetail}>{detail}</span>
     </div>
   );
 }
 
-function checkDetail(result?: { errors: string[]; warnings: string[] }): string {
-  if (!result) return 'waiting';
-  return `${result.errors.length} errors · ${result.warnings.length} warnings`;
+function checkDetail(result: { errors: string[]; warnings: string[] } | undefined, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  if (!result) return t('project.pipeline.waiting');
+  return t('project.pipeline.checkCounts', { errors: result.errors.length, warnings: result.warnings.length });
 }
 
-function inspectDetail(result?: { findings: unknown[] }): string {
-  if (!result) return 'waiting';
-  return `${result.findings.length} findings`;
+function inspectDetail(result: { findings: unknown[] } | undefined, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  if (!result) return t('project.pipeline.waiting');
+  return t('project.pipeline.findingCounts', { count: result.findings.length });
 }
 
 function PipelineStat({ label, value }: { label: string; value: string }) {
@@ -779,26 +781,16 @@ function PipelineStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function pipelineStatusLabel(status: PipelineStatus): string {
-  const labels: Record<PipelineStatus, string> = {
-    scripting: 'Drafting',
-    awaiting_approval: 'Needs approval',
-    rendering_scenes: 'Building scenes',
-    checking: 'Checking',
-    ready_to_render: 'Ready to render',
-    assembling: 'Rendering',
-    done: 'Done',
-    failed: 'Failed',
-    cancelled: 'Cancelled',
-  };
-  return labels[status];
+function pipelineStatusLabel(status: string, t: (key: string) => string): string {
+  const label = t(`project.pipeline.status.${status}`);
+  return label.startsWith('project.pipeline.status.') ? status : label;
 }
 
 function isMachineBrief(content: string): boolean {
   return /NARRATIVE STRUCTURE|Return ONLY|VISUAL DIRECTION|VIDEO REQUEST|Production|video director|structured storyboard|BRIEF:/i.test(content);
 }
 
-function summarizeUserMessage(content: string, machineBrief: boolean): string {
+function summarizeUserMessage(content: string, machineBrief: boolean, t: (key: string) => string): string {
   const firstMeaningful = content
     .split('\n')
     .map(line => line.replace(/^[-*#\s]+/, '').trim())
@@ -816,7 +808,7 @@ function summarizeUserMessage(content: string, machineBrief: boolean): string {
     style ? `Style ${style}` : null,
   ].filter(Boolean);
 
-  return pieces.join(' · ') || 'Structured production instructions were sent to the agent.';
+  return pieces.join(' · ') || t('project.brief.fallback');
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

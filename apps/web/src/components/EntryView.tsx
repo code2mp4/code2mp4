@@ -81,6 +81,7 @@ export function EntryView({
   const [system, setSystem] = useState<{ node?: boolean; ffmpeg?: boolean; hyperframes?: boolean }>({});
   const { t } = useT();
   const tl = useMemo(() => ({
+    studio: t('entry.studio'), tagline: t('entry.tagline'),
     // Form labels
     newProduction: t('entry.newProduction'),
     type: t('entry.type'), custom: t('entry.custom'), ratio: t('entry.ratio'),
@@ -98,9 +99,13 @@ export function EntryView({
     'caption-reel': t('entry.videoType.captionReel'),
     // Templates
     launchTeaser: t('entry.template.launchTeaser'),
+    launchTeaserPrompt: t('entry.template.launchTeaser.prompt'),
     founderReel: t('entry.template.founderReel'),
+    founderReelPrompt: t('entry.template.founderReel.prompt'),
     releaseNotes: t('entry.template.releaseNotes'),
+    releaseNotesPrompt: t('entry.template.releaseNotes.prompt'),
     logoSting: t('entry.template.logoSting'),
+    logoStingPrompt: t('entry.template.logoSting.prompt'),
     // Library
     tabs: t('entry.library.tabs'), drafts: t('entry.library.drafts'),
     rendered: t('entry.library.rendered'), libraryTemplates: t('entry.library.templates'),
@@ -124,6 +129,12 @@ export function EntryView({
     draft: t('entry.library.draft'), durationOpen: t('entry.library.durationOpen'),
     unbound: t('entry.library.unbound'), runtimeReady: t('entry.library.runtimeReady'),
     runtimeCheck: t('entry.library.runtimeCheck'), templates: t('entry.templates'),
+    brief: t('entry.library.brief'), storyboard: t('entry.library.storyboard'),
+    source: t('entry.library.source'), checks: t('entry.library.checks'),
+    render: t('entry.library.render'),
+    useLaunchTemplate: t('entry.library.useLaunchTemplate'),
+    browseTemplates: t('entry.library.browseTemplates'),
+    openProduction: t('entry.library.openProduction'),
   } as Record<string,string>), [t]);
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -144,7 +155,7 @@ export function EntryView({
         setSystem(d.system ?? {});
         setHealthError(null);
       })
-      .catch(() => setHealthError('Server offline'))
+      .catch(() => setHealthError(t('entry.serverOffline')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -172,7 +183,7 @@ export function EntryView({
     const aspect = (override?.orientation ?? orientation) as VideoProjectConfig['orientation'];
     const length = override?.duration ?? duration;
     const name = (override?.label || projectName.trim() || sourcePrompt.slice(0, 56)).replace(/\s+/g, ' ').trim();
-    onCreateProject(name || 'Untitled video', {
+    onCreateProject(name || t('app.untitled'), {
       videoType: type,
       orientation: aspect,
       duration: length,
@@ -183,13 +194,13 @@ export function EntryView({
   };
 
   return (
-    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label="Code2MP4 Studio">
+    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label={tl.studio}>
       <aside style={{ ...S.leftRail, ...(isNarrow ? S.leftRailNarrow : {}) }}>
         <div style={S.brandRow}>
           <div style={S.logoMark}>C2</div>
           <div>
             <div style={S.brandTitle}>Code2MP4</div>
-            <div style={S.brandSub}>Storyboard → source → MP4</div>
+            <div style={S.brandSub}>{tl.tagline}</div>
           </div>
         </div>
 
@@ -205,13 +216,13 @@ export function EntryView({
           <input
             value={projectName}
             onChange={e => setProjectName(e.target.value)}
-            placeholder="Project name"
+            placeholder={tl.projectName}
             style={S.input}
           />
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
-            placeholder="Describe the video: audience, message, product, scenes, CTA..."
+            placeholder={tl.describe}
             rows={6}
             style={S.briefInput}
           />
@@ -220,8 +231,8 @@ export function EntryView({
             <label style={S.fieldLabel}>
               {t('entry.type')}
               <select value={videoType} onChange={e => setVideoType(e.target.value)} style={S.select}>
-                {VIDEO_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                <option value="custom">Custom</option>
+                {VIDEO_TYPES.map(v => <option key={v.id} value={v.id}>{tl[v.id]}</option>)}
+                <option value="custom">{tl.custom}</option>
               </select>
             </label>
             <label style={S.fieldLabel}>
@@ -239,7 +250,7 @@ export function EntryView({
               </select>
             </label>
             <label style={S.fieldLabel}>
-              Motion
+              {tl.motion}
               <select value={motionSystem} onChange={e => setMotionSystem(e.target.value)} style={S.select}>
                 {['tech', 'editorial', 'warm-soft', 'cinematic', 'brutalist', 'neon', 'orbital', 'organic'].map(v => (
                   <option key={v} value={v}>{v}</option>
@@ -251,7 +262,7 @@ export function EntryView({
           <div style={S.segmented}>
             {['calm', 'medium', 'high', 'dramatic'].map(v => (
               <button key={v} onClick={() => setEnergy(v)} style={{ ...S.segmentBtn, ...(energy === v ? S.segmentBtnActive : {}) }}>
-                {v}
+                {tl[v] || v}
               </button>
             ))}
           </div>
@@ -265,7 +276,7 @@ export function EntryView({
           <div style={S.sectionKicker}>{tl.templates}</div>
           {TEMPLATES.map(t => (
             <button key={t.label} style={S.templateBtn} onClick={() => createVideo(t)}>
-              <span style={S.templateTitle}>{t.label}</span>
+              <span style={S.templateTitle}>{templateLabel(t.label, tl)}</span>
               <span style={S.templateMeta}>{t.type} · {t.duration}s · {t.orientation}</span>
             </button>
           ))}
@@ -274,16 +285,16 @@ export function EntryView({
 
       <main style={{ ...S.main, ...(isNarrow ? S.mainNarrow : {}) }}>
         <header style={{ ...S.topBar, ...(isMobile ? S.topBarMobile : {}) }}>
-          <nav style={S.topTabs} aria-label="Studio sections">
+          <nav style={S.topTabs} aria-label={tl.studio}>
             {(['all', 'drafts', 'rendered', 'templates'] as LibraryTab[]).map(tab => (
               <button key={tab} onClick={() => setLibraryTab(tab)} style={{ ...S.topTab, ...(libraryTab === tab ? S.topTabActive : {}) }}>
-                {tab === 'all' ? 'Videos' : tab[0].toUpperCase() + tab.slice(1)}
+                {tabLabel(tab, tl)}
               </button>
             ))}
           </nav>
           <div style={{ ...S.searchWrap, ...(isMobile ? S.searchWrapMobile : {}) }}>
             <span style={S.searchIcon}>⌕</span>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search videos, formats, motion systems..." style={S.searchInput} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={tl.search} style={S.searchInput} />
           </div>
           <div style={S.viewToggle}>
             <button onClick={() => setViewMode('grid')} style={{ ...S.iconBtn, ...(viewMode === 'grid' ? S.iconBtnActive : {}) }}>{tl.grid}</button>
@@ -297,25 +308,25 @@ export function EntryView({
             <h1 style={S.heroTitle}>{tl.heroTitle}</h1>
           </div>
           <div style={{ ...S.metrics, ...(isMobile ? S.metricsMobile : {}) }}>
-            <Metric label="Projects" value={String(projects.length)} />
-            <Metric label="Agents" value={String(agentCount)} />
-            <Metric label="Runtime" value={system.hyperframes ? 'Ready' : 'Check'} />
+            <Metric label={tl.projects} value={String(projects.length)} />
+            <Metric label={tl.agents} value={String(agentCount)} />
+            <Metric label={tl.runtime} value={system.hyperframes ? tl.runtimeReady : tl.runtimeCheck} />
           </div>
         </section>
 
         <section style={{ ...S.libraryHeader, ...(isMobile ? S.libraryHeaderMobile : {}) }}>
           <div>
-            <h2 style={S.heading}>{libraryTab === 'templates' ? 'Templates' : 'Video library'}</h2>
+            <h2 style={S.heading}>{libraryTab === 'templates' ? tl.libraryTemplates : tl.library}</h2>
             <p style={S.subtle}>{tl.libraryDesc}</p>
           </div>
           <div style={S.pipelinePills}>
-            {['Brief', 'Storyboard', 'Source', 'Checks', 'Render'].map(step => <span key={step} style={S.pipelinePill}>{step}</span>)}
+            {[tl.brief, tl.storyboard, tl.source, tl.checks, tl.render].map(step => <span key={step} style={S.pipelinePill}>{step}</span>)}
           </div>
         </section>
 
         {libraryTab === 'templates' ? (
           <div style={S.templateGrid}>
-            {TEMPLATES.map(t => <TemplateCard key={t.label} template={t} onUse={() => createVideo(t)} />)}
+            {TEMPLATES.map(t => <TemplateCard key={t.label} template={t} onUse={() => createVideo(t)} tl={tl} />)}
           </div>
         ) : filteredProjects.length === 0 ? (
           <div style={S.emptyState}>
@@ -323,8 +334,8 @@ export function EntryView({
             <h3 style={S.emptyTitle}>{tl.emptyTitle}</h3>
             <p style={S.emptyCopy}>{tl.emptyDesc}</p>
             <div style={S.emptyActions}>
-              <button style={S.emptyPrimary} onClick={() => createVideo(TEMPLATES[0])}>Use launch template</button>
-              <button style={S.emptySecondary} onClick={() => setLibraryTab('templates')}>Browse templates</button>
+              <button style={S.emptyPrimary} onClick={() => createVideo(TEMPLATES[0])}>{tl.useLaunchTemplate}</button>
+              <button style={S.emptySecondary} onClick={() => setLibraryTab('templates')}>{tl.browseTemplates}</button>
             </div>
           </div>
         ) : (
@@ -336,6 +347,8 @@ export function EntryView({
                 viewMode={viewMode}
                 onOpen={() => onOpenProject(p.id)}
                 onDelete={() => onDeleteProject(p.id)}
+                t={t}
+                tl={tl}
               />
             ))}
           </div>
@@ -345,19 +358,19 @@ export function EntryView({
       <aside style={{ ...S.rightRail, ...(isNarrow ? S.rightRailNarrow : {}) }}>
         <section style={S.railCard}>
           <div style={S.railTitle}>{tl.readiness}</div>
-          <StatusRow label={tl.node} ok={system.node} />
-          <StatusRow label={tl.ffmpeg} ok={system.ffmpeg} />
-          <StatusRow label={tl.hf} ok={system.hyperframes} />
-          <StatusRow label={tl.agentCli} ok={agentCount > 0} />
+          <StatusRow label={tl.node} ok={system.node} ready={tl.ready} missing={tl.missing} />
+          <StatusRow label={tl.ffmpeg} ok={system.ffmpeg} ready={tl.ready} missing={tl.missing} />
+          <StatusRow label={tl.hf} ok={system.hyperframes} ready={tl.ready} missing={tl.missing} />
+          <StatusRow label={tl.agentCli} ok={agentCount > 0} ready={tl.ready} missing={tl.missing} />
         </section>
 
         <section style={S.railCard}>
           <div style={S.railTitle}>{tl.whatOwns}</div>
           {[
-            'Structured storyboard before motion source',
-            'Editable HTML/CSS/GSAP compositions',
-            'Lint and inspect gates before render',
-            'Deterministic MP4 output path',
+            tl.own1,
+            tl.own2,
+            tl.own3,
+            tl.own4,
           ].map(item => <div key={item} style={S.checkItem}><span style={S.checkDot} />{item}</div>)}
         </section>
 
@@ -366,11 +379,18 @@ export function EntryView({
           <div style={S.swatches}>
             {['#58A6FF', '#C44F34', '#F2C94C', '#3FB950', '#B388FF', '#FF6B6B'].map(c => <span key={c} style={{ ...S.swatch, background: c }} />)}
           </div>
-          <p style={S.railCopy}>Bind palette, typography, pacing, transitions, and render constraints into every composition.</p>
+          <p style={S.railCopy}>{tl.motionDesc}</p>
         </section>
       </aside>
     </div>
   );
+}
+
+function tabLabel(tab: LibraryTab, tl: Record<string, string>): string {
+  if (tab === 'all') return tl.tabs;
+  if (tab === 'drafts') return tl.drafts;
+  if (tab === 'rendered') return tl.rendered;
+  return tl.libraryTemplates;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -382,23 +402,25 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusRow({ label, ok }: { label: string; ok?: boolean }) {
+function StatusRow({ label, ok, ready, missing }: { label: string; ok?: boolean; ready: string; missing: string }) {
   return (
     <div style={S.statusRow}>
       <span style={{ ...S.statusDot, background: ok ? 'var(--success)' : 'var(--warning)' }} />
       <span>{label}</span>
-      <span style={S.statusValue}>{ok ? 'Ready' : 'Missing'}</span>
+      <span style={S.statusValue}>{ok ? ready : missing}</span>
     </div>
   );
 }
 
 function ProjectCard({
-  project, viewMode, onOpen, onDelete,
+  project, viewMode, onOpen, onDelete, t, tl,
 }: {
   project: ProjectItem;
   viewMode: ViewMode;
   onOpen: () => void;
   onDelete: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  tl: Record<string, string>;
 }) {
   const cfg = project.config ?? {};
   const videoType = String(cfg.videoType ?? 'custom');
@@ -408,8 +430,8 @@ function ProjectCard({
   const state = project.pipeline?.status ?? 'draft';
   const rendered = state === 'done';
   const sceneCount = project.pipeline?.totalScenes
-    ? `${project.pipeline.scenesCompleted ?? 0}/${project.pipeline.totalScenes} scenes`
-    : 'no pipeline';
+    ? t('entry.pipeline.scenes', { done: project.pipeline.scenesCompleted ?? 0, total: project.pipeline.totalScenes })
+    : t('entry.pipeline.noPipeline');
 
   return (
     <article
@@ -426,11 +448,11 @@ function ProjectCard({
       <div style={S.projectBody}>
         <div style={S.projectTopLine}>
           <h3 style={S.projectTitle}>{project.name}</h3>
-          <span style={{ ...S.statePill, ...(rendered ? S.statePillDone : {}) }}>{pipelineStateLabel(state)}</span>
+          <span style={{ ...S.statePill, ...(rendered ? S.statePillDone : {}) }}>{pipelineStateLabel(state, t)}</span>
         </div>
         <p style={S.projectMeta}>{videoType} · {duration} · {motion}</p>
         <div style={S.cardSteps}>
-          {['brief', 'storyboard', 'source', 'checks', 'render'].map((step, i) => (
+          {[tl.brief, tl.storyboard, tl.source, tl.checks, tl.render].map((step, i) => (
             <span key={step} style={{ ...S.stepChip, opacity: stepDone(state, i) ? 1 : 0.48 }}>{step}</span>
           ))}
         </div>
@@ -442,7 +464,7 @@ function ProjectCard({
             onOpen();
           }}
         >
-          Open production
+          {tl.openProduction}
         </button>
       </div>
       <button
@@ -451,7 +473,7 @@ function ProjectCard({
           e.stopPropagation();
           onDelete();
         }}
-        aria-label={`Delete ${project.name}`}
+        aria-label={t('entry.library.deleteProject', { name: project.name })}
       >
         ×
       </button>
@@ -459,20 +481,9 @@ function ProjectCard({
   );
 }
 
-function pipelineStateLabel(status: string): string {
-  const labels: Record<string, string> = {
-    draft: 'Draft',
-    scripting: 'Drafting',
-    awaiting_approval: 'Needs approval',
-    rendering_scenes: 'Building scenes',
-    checking: 'Checking',
-    ready_to_render: 'Ready to render',
-    assembling: 'Rendering',
-    done: 'Rendered',
-    failed: 'Failed',
-    cancelled: 'Cancelled',
-  };
-  return labels[status] ?? status;
+function pipelineStateLabel(status: string, t: (key: string) => string): string {
+  const label = t(`entry.pipeline.state.${status}`);
+  return label.startsWith('entry.pipeline.state.') ? status : label;
 }
 
 function stepDone(status: string, index: number): boolean {
@@ -491,17 +502,33 @@ function stepDone(status: string, index: number): boolean {
   return (rank[status] ?? 0) > index;
 }
 
-function TemplateCard({ template, onUse }: { template: typeof TEMPLATES[number]; onUse: () => void }) {
+function TemplateCard({ template, onUse, tl }: { template: typeof TEMPLATES[number]; onUse: () => void; tl: Record<string, string> }) {
   return (
     <button style={S.templateCard} onClick={onUse}>
       <div style={S.templatePreview}>
         <span>{template.orientation}</span>
       </div>
-      <div style={S.templateCardTitle}>{template.label}</div>
+      <div style={S.templateCardTitle}>{templateLabel(template.label, tl)}</div>
       <div style={S.templateCardMeta}>{template.type} · {template.duration}s</div>
-      <p style={S.templateCardCopy}>{template.prompt}</p>
+      <p style={S.templateCardCopy}>{templatePrompt(template.label, template.prompt, tl)}</p>
     </button>
   );
+}
+
+function templateLabel(label: string, tl: Record<string, string>): string {
+  if (label === 'Launch teaser') return tl.launchTeaser;
+  if (label === 'Founder reel') return tl.founderReel;
+  if (label === 'Release notes') return tl.releaseNotes;
+  if (label === 'Logo sting') return tl.logoSting;
+  return label;
+}
+
+function templatePrompt(label: string, fallback: string, tl: Record<string, string>): string {
+  if (label === 'Launch teaser') return tl.launchTeaserPrompt;
+  if (label === 'Founder reel') return tl.founderReelPrompt;
+  if (label === 'Release notes') return tl.releaseNotesPrompt;
+  if (label === 'Logo sting') return tl.logoStingPrompt;
+  return fallback;
 }
 
 const S: Record<string, React.CSSProperties> = {
@@ -537,9 +564,9 @@ const S: Record<string, React.CSSProperties> = {
   mainNarrow: { overflow: 'visible' },
   topBar: { minHeight: 70, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 18, padding: '0 28px', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 5 },
   topBarMobile: { alignItems: 'stretch', flexDirection: 'column', gap: 10, padding: '14px 22px' },
-  topTabs: { display: 'flex', alignItems: 'center', gap: 22 },
-  topTab: { border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: '24px 0 20px', borderBottom: '3px solid transparent' },
-  topTabActive: { color: 'var(--fg)', borderBottomColor: 'var(--fg)' },
+  topTabs: { display: 'flex', alignItems: 'center', gap: 4, padding: 4, border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 999, flexShrink: 0 },
+  topTab: { border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: 13, fontWeight: 800, cursor: 'pointer', padding: '8px 14px', borderRadius: 999, textDecoration: 'none', whiteSpace: 'nowrap', lineHeight: 1 },
+  topTabActive: { color: 'var(--bg)', background: 'var(--fg)', boxShadow: 'var(--shadow-sm)' },
   searchWrap: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, width: 360, height: 42, border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: '0 12px' },
   searchWrapMobile: { width: '100%', marginLeft: 0 },
   searchIcon: { color: 'var(--muted)', fontSize: 16 },

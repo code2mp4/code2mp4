@@ -21,6 +21,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     import(`./locales/${locale}.ts`).then((m) => setMessages(m.default || m));
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
   }, [locale]);
 
   const setLocale = useCallback((l: Locale) => {
