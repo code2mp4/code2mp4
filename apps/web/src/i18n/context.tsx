@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import en from './locales/en';
+import zh from './locales/zh';
 
 export type Locale = 'en' | 'zh';
 
@@ -11,16 +13,17 @@ interface I18nContextValue {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 const LOCAL_STORAGE_KEY = 'code2mp4-locale';
+const DICTIONARIES: Record<Locale, Record<string, string>> = { en, zh };
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(LOCAL_STORAGE_KEY) : null;
-    return stored === 'zh' ? 'zh' : 'en';
-  });
-  const [messages, setMessages] = useState<Record<string, string>>({});
+  const [locale, setLocaleState] = useState<Locale>('en');
 
   useEffect(() => {
-    import(`./locales/${locale}.ts`).then((m) => setMessages(m.default || m));
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored === 'zh' || stored === 'en') setLocaleState(stored);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
   }, [locale]);
 
@@ -32,6 +35,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
+      const messages = DICTIONARIES[locale];
       let msg = messages[key] ?? key;
       if (vars) {
         for (const [k, v] of Object.entries(vars)) {
@@ -40,7 +44,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       }
       return msg;
     },
-    [messages],
+    [locale],
   );
 
   return (

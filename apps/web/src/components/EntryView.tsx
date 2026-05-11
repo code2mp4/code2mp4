@@ -297,8 +297,20 @@ export function EntryView({
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder={tl.search} style={S.searchInput} />
           </div>
           <div style={S.viewToggle}>
-            <button onClick={() => setViewMode('grid')} style={{ ...S.iconBtn, ...(viewMode === 'grid' ? S.iconBtnActive : {}) }}>{tl.grid}</button>
-            <button onClick={() => setViewMode('list')} style={{ ...S.iconBtn, ...(viewMode === 'list' ? S.iconBtnActive : {}) }}>{tl.list}</button>
+            <button
+              onClick={() => setViewMode('grid')}
+              aria-pressed={viewMode === 'grid'}
+              style={{ ...S.iconBtn, ...(viewMode === 'grid' ? S.iconBtnActive : {}) }}
+            >
+              <span aria-hidden="true">▦</span>{tl.grid}
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              aria-pressed={viewMode === 'list'}
+              style={{ ...S.iconBtn, ...(viewMode === 'list' ? S.iconBtnActive : {}) }}
+            >
+              <span aria-hidden="true">☰</span>{tl.list}
+            </button>
           </div>
         </header>
 
@@ -562,17 +574,17 @@ const S: Record<string, React.CSSProperties> = {
   templateMeta: { color: 'var(--muted)', fontSize: 11 },
   main: { minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'auto', background: 'var(--bg)' },
   mainNarrow: { overflow: 'visible' },
-  topBar: { minHeight: 70, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 18, padding: '0 28px', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 5 },
-  topBarMobile: { alignItems: 'stretch', flexDirection: 'column', gap: 10, padding: '14px 22px' },
+  topBar: { minHeight: 70, borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'auto minmax(180px, 1fr) auto', alignItems: 'center', gap: 14, padding: '0 28px', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 5 },
+  topBarMobile: { display: 'flex', alignItems: 'stretch', flexDirection: 'column', gap: 10, padding: '14px 22px' },
   topTabs: { display: 'flex', alignItems: 'center', gap: 4, padding: 4, border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 999, flexShrink: 0 },
   topTab: { border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: 13, fontWeight: 800, cursor: 'pointer', padding: '8px 14px', borderRadius: 999, textDecoration: 'none', whiteSpace: 'nowrap', lineHeight: 1 },
   topTabActive: { color: 'var(--bg)', background: 'var(--fg)', boxShadow: 'var(--shadow-sm)' },
-  searchWrap: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, width: 360, height: 42, border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: '0 12px' },
+  searchWrap: { display: 'flex', alignItems: 'center', gap: 8, width: '100%', minWidth: 0, height: 42, border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: '0 12px' },
   searchWrapMobile: { width: '100%', marginLeft: 0 },
   searchIcon: { color: 'var(--muted)', fontSize: 16 },
   searchInput: { flex: 1, border: 'none', background: 'transparent', outline: 'none', color: 'var(--fg)', fontSize: 14 },
-  viewToggle: { display: 'flex', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 999, padding: 3 },
-  iconBtn: { border: 'none', background: 'transparent', color: 'var(--muted)', borderRadius: 999, padding: '7px 11px', cursor: 'pointer', fontWeight: 700, fontSize: 12 },
+  viewToggle: { display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 999, padding: 3, justifySelf: 'end', flexShrink: 0 },
+  iconBtn: { minWidth: 68, border: 'none', background: 'transparent', color: 'var(--muted)', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', fontWeight: 800, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, whiteSpace: 'nowrap', lineHeight: 1 },
   iconBtnActive: { background: 'var(--fg)', color: 'var(--bg)' },
   heroBand: { margin: 28, marginBottom: 18, padding: 24, border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, background: 'var(--surface)' },
   heroBandMobile: { margin: 22, flexDirection: 'column', alignItems: 'stretch', padding: 20 },
