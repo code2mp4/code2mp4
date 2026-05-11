@@ -5,9 +5,8 @@
  * for metadata catalog. Each track can be embedded as an <audio>
  * element in HyperFrames compositions.
  */
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import fs from 'node:fs';
 
 export interface MusicTrack {
   id: string;

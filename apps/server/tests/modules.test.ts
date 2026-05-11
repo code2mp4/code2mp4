@@ -155,21 +155,22 @@ describe('projects (file management)', () => {
     expect(content).toBeNull();
   });
 
-  it('hides dot-prefixed directories from listing', async () => {
+  it('lists HyperFrames cache files but hides unrelated dot-prefixed directories', async () => {
     await ensureProjectDir(tmpDir, projectId);
     await writeProjectFile(tmpDir, projectId, '.hf-cache/comp-1/index.html', 'cache');
+    await writeProjectFile(tmpDir, projectId, '.secret/token.txt', 'secret');
     await writeProjectFile(tmpDir, projectId, 'visible.txt', 'visible');
 
     const files = await listProjectFiles(tmpDir, projectId);
-    const visible = files.filter(f => !f.path.includes('.hf-cache'));
-    // .hf-cache files should be hidden
-    expect(files.find(f => f.path.includes('.hf-cache'))).toBeUndefined();
-    // But visible files should be there
-    expect(visible.find(f => f.name === 'visible.txt')).toBeTruthy();
+    expect(files.find(f => f.path === '.hf-cache/comp-1/index.html')).toBeTruthy();
+    expect(files.find(f => f.path.includes('.secret'))).toBeUndefined();
+    expect(files.find(f => f.name === 'visible.txt')).toBeTruthy();
   });
 
-  it('throws on path traversal attempts', () => {
-    expect(() => writeProjectFile(tmpDir, projectId, '../../../etc/passwd', 'hack')).rejects.toThrow();
+  it('throws on path traversal attempts', async () => {
+    await expect(writeProjectFile(tmpDir, projectId, '../../../etc/passwd', 'hack')).rejects.toThrow();
+    await expect(writeProjectFile(tmpDir, projectId, '../test-project-001-evil/file.txt', 'hack')).rejects.toThrow();
+    await expect(readProjectFile(tmpDir, projectId, '../test-project-001-evil/file.txt')).rejects.toThrow();
   });
 
   it('returns null for non-existent file', async () => {
@@ -179,7 +180,7 @@ describe('projects (file management)', () => {
 
 // ── Pipeline validation ──────────────────────────────────────────────
 
-import { validateStoryboard } from '../src/pipeline.js';
+import { listPipelineJobs, savePipelineJob, validateStoryboard } from '../src/pipeline.js';
 
 function makeScene(id: string, number: number, duration: number) {
   return { id, number, duration, goal: 'Test goal', visual: 'Test visual', text: 'Test text', motion: 'Test motion' };
@@ -329,5 +330,40 @@ describe('validateStoryboard', () => {
       },
     );
     expect(result.warnings.some(w => w.includes('differs from brief'))).toBe(true);
+  });
+});
+
+describe('pipeline persistence', () => {
+  it('lists project pipeline jobs newest first', async () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'c2m-pipeline-test-'));
+    try {
+      await savePipelineJob(tmp, {
+        id: 'job-old',
+        projectId: 'project-a',
+        brief: 'old',
+        status: 'scripting',
+        scenes: [],
+      });
+      await new Promise(resolve => setTimeout(resolve, 5));
+      await savePipelineJob(tmp, {
+        id: 'job-new',
+        projectId: 'project-a',
+        brief: 'new',
+        status: 'awaiting_approval',
+        scenes: [],
+      });
+      await savePipelineJob(tmp, {
+        id: 'job-other',
+        projectId: 'project-b',
+        brief: 'other',
+        status: 'scripting',
+        scenes: [],
+      });
+
+      const jobs = await listPipelineJobs(tmp, 'project-a');
+      expect(jobs.map(j => j.id)).toEqual(['job-new', 'job-old']);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

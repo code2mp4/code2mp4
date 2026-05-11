@@ -9,6 +9,15 @@ interface ProjectItem {
   id: string;
   name: string;
   config?: Record<string, unknown>;
+  pipeline?: ProjectPipelineSummary | null;
+}
+
+interface ProjectPipelineSummary {
+  id: string;
+  status: string;
+  scenesCompleted?: number;
+  totalScenes?: number;
+  render?: { status?: string };
 }
 
 export function App() {
@@ -32,10 +41,27 @@ export function App() {
     fetch('/api/projects')
       .then(r => r.json())
       .then((items: unknown) => {
-        if (Array.isArray(items)) setProjects(items.map(normalizeProject));
+        if (!Array.isArray(items)) return;
+        const normalized = items.map(normalizeProject);
+        setProjects(normalized);
+        hydrateProjectPipelines(normalized);
       })
       .catch(() => {});
   }, []);
+
+  async function hydrateProjectPipelines(items: ProjectItem[]) {
+    const enriched = await Promise.all(items.map(async (project) => {
+      try {
+        const res = await fetch(`/api/projects/${project.id}/pipeline/latest`);
+        if (!res.ok) return project;
+        const pipeline = await res.json();
+        return { ...project, pipeline };
+      } catch {
+        return project;
+      }
+    }));
+    setProjects(enriched);
+  }
 
   const createProject = useCallback(async (name: string, config: VideoProjectConfig, initialPrompt?: string) => {
     const res = await fetch('/api/projects', {

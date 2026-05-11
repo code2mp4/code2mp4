@@ -105,7 +105,7 @@ export function checkVideoQuality(
 ): QualityReport {
   const dimensions: Required<QualityReport>['dimensions'] = {
     hook: checkHook(storyboard),
-    script: checkScript(storyboard, brief),
+    script: checkScript(storyboard),
     readability: checkReadability(storyboard),
     motion: { passed: true, checks: [{ id: 'motion-deferred', label: 'Motion quality check requires HyperFrames inspect', passed: true, detail: 'Run npx hyperframes inspect --json to verify' }] },
     platform: checkPlatform(storyboard, brief),
@@ -175,7 +175,7 @@ function checkHook(storyboard: Storyboard): QualityDim {
 
 // ── Script dimension ──────────────────────────────────────────────
 
-function checkScript(storyboard: Storyboard, brief?: VideoBrief): QualityDim {
+function checkScript(storyboard: Storyboard): QualityDim {
   const checks: QualityCheckItem[] = [];
 
   const totalDuration = storyboard.scenes.reduce((s: number, sc: StoryboardScene) => s + sc.duration, 0);

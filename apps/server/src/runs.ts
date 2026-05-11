@@ -6,7 +6,7 @@
  * and handles cleanup.
  */
 import { randomUUID } from 'node:crypto';
-import { spawn, type ChildProcess } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import type { Response } from 'express';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -91,6 +91,8 @@ export function createSseClient(res: Response): SseClient {
 export interface RunManager {
   create(meta: RunMeta): ChatRun;
   get(id: string): ChatRun | null;
+  emit(run: ChatRun, event: string, data: unknown): void;
+  finish(run: ChatRun, status: RunStatus, exitCode: number | null): void;
   attachClient(runId: string, client: SseClient, afterEventId?: number): void;
   cancel(runId: string): boolean;
   list(): ChatRun[];
@@ -204,5 +206,5 @@ export function createRunManager(ttlMs = 30 * 60 * 1000): RunManager {
     }
   }
 
-  return { create, get, attachClient, cancel, list, cleanup };
+  return { create, get, emit, finish, attachClient, cancel, list, cleanup };
 }

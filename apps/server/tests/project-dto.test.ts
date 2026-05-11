@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { projectDto } from '../src/server.js';
+import { pipelineDto, projectDto } from '../src/server.js';
 import type { DbProject } from '../src/db.js';
 
 describe('project DTO', () => {
@@ -31,5 +31,36 @@ describe('project DTO', () => {
     } satisfies DbProject);
 
     expect(dto.config).toEqual({});
+  });
+});
+
+describe('pipeline DTO', () => {
+  it('exposes check and render state for frontend production workflow', () => {
+    const dto = pipelineDto({
+      id: 'job-1',
+      projectId: 'project-1',
+      brief: 'test brief',
+      status: 'checking',
+      scenes: [{ number: 1, html: '<div></div>', duration: 4, status: 'done' }],
+      script: {
+        title: 'Storyboard',
+        duration: 4,
+        aspectRatio: '16:9',
+        scenes: [{ id: 'hook', number: 1, duration: 4, goal: 'goal', visual: 'visual', text: 'text', motion: 'motion' }],
+      },
+      check: {
+        status: 'running',
+        lint: { passed: true, errors: [], warnings: [] },
+        updatedAt: 10,
+      },
+      render: { status: 'idle' },
+    });
+
+    expect(dto.status).toBe('checking');
+    expect(dto.scenesCompleted).toBe(1);
+    expect(dto.totalScenes).toBe(1);
+    expect(dto.check?.status).toBe('running');
+    expect(dto.check?.lint?.passed).toBe(true);
+    expect(dto.render?.status).toBe('idle');
   });
 });

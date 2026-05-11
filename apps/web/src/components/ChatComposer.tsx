@@ -6,10 +6,9 @@ interface Props {
   onSend: () => void;
   disabled?: boolean;
   working?: boolean;
-  projectId?: string;
 }
 
-export function ChatComposer({ value, onChange, onSend, disabled, working, projectId }: Props) {
+export function ChatComposer({ value, onChange, onSend, disabled, working }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [attachments, setAttachments] = useState<Array<{ name: string; path: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);

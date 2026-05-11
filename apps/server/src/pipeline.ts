@@ -15,7 +15,6 @@
  *
  * This survives server restarts — read pipeline.json to resume.
  */
-import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
@@ -25,12 +24,44 @@ export interface PipelineJob {
   id: string;
   projectId: string;
   brief: string;
-  status: 'scripting' | 'rendering_scenes' | 'assembling' | 'done' | 'failed';
+  status: 'scripting' | 'awaiting_approval' | 'rendering_scenes' | 'checking' | 'ready_to_render' | 'assembling' | 'done' | 'failed' | 'cancelled';
   script?: Storyboard;
   scenes: PipelineSceneFragment[];
   outputMp4?: string;
   error?: string;
   sceneRunIds?: string[];
+  render?: PipelineRenderState;
+  check?: PipelineCheckState;
+}
+
+export interface PipelineRenderState {
+  status: 'idle' | 'running' | 'done' | 'failed';
+  frame?: number;
+  totalFrames?: number;
+  outputPath?: string;
+  fileSize?: number;
+  error?: string;
+  updatedAt?: number;
+}
+
+export interface PipelineCheckState {
+  status: 'idle' | 'running' | 'passed' | 'failed';
+  lint?: PipelineCheckResult;
+  validate?: PipelineCheckResult;
+  inspect?: PipelineInspectResult;
+  error?: string;
+  updatedAt?: number;
+}
+
+export interface PipelineCheckResult {
+  passed: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface PipelineInspectResult {
+  passed: boolean;
+  findings: Array<{ severity: string; selector: string; message: string; timestamp: number }>;
 }
 
 export interface Storyboard {
@@ -145,6 +176,34 @@ export async function loadPipelineJob(projectsRoot: string, jobId: string): Prom
     const raw = await fs.readFile(pipelinePath(projectsRoot, jobId), 'utf8');
     return JSON.parse(raw);
   } catch { return null; }
+}
+
+export async function listPipelineJobs(projectsRoot: string, projectId?: string): Promise<PipelineJob[]> {
+  const dir = path.join(projectsRoot, '.pipelines');
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const jobs: Array<{ job: PipelineJob; mtime: number }> = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+    if (/-storyboard\.json$/.test(entry.name)) continue;
+    const full = path.join(dir, entry.name);
+    try {
+      const raw = await fs.readFile(full, 'utf8');
+      const job = JSON.parse(raw) as PipelineJob;
+      if (projectId && job.projectId !== projectId) continue;
+      const st = await fs.stat(full);
+      jobs.push({ job, mtime: st.mtimeMs });
+    } catch {
+      // Ignore corrupt or partial job files.
+    }
+  }
+
+  return jobs.sort((a, b) => b.mtime - a.mtime).map(x => x.job);
 }
 
 export async function savePipelineJob(projectsRoot: string, job: PipelineJob): Promise<void> {

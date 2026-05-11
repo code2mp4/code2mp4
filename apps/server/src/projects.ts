@@ -2,7 +2,9 @@
  * Video project file management.
  * Each project is a directory under <root>/projects/<id>/.
  * Files include agent-generated HTML, rendered MP4s, and user uploads.
- * Dot-prefixed directories (.hf-cache/) are hidden from listing.
+ * Most dot-prefixed directories are hidden from listing. `.hf-cache/` is
+ * exposed because it contains generated HyperFrames compositions users need
+ * to inspect and preview.
  */
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -18,7 +20,7 @@ export interface ProjectFile {
 
 export function projectDir(root: string, projectId: string): string {
   if (!/^[a-zA-Z0-9_-]+$/.test(projectId)) throw new Error('Invalid project id');
-  return path.join(root, projectId);
+  return path.resolve(root, projectId);
 }
 
 export async function ensureProjectDir(root: string, projectId: string): Promise<string> {
@@ -47,7 +49,7 @@ async function collectFiles(
     return;
   }
   for (const e of entries) {
-    if (e.name.startsWith('.')) continue;
+    if (e.name.startsWith('.') && e.name !== '.hf-cache') continue;
     const rel = relativeDir ? `${relativeDir}/${e.name}` : e.name;
     const full = path.join(baseDir, rel);
     if (e.isDirectory()) {
@@ -72,9 +74,7 @@ export async function readProjectFile(
   projectId: string,
   filePath: string,
 ): Promise<Buffer | null> {
-  const dir = projectDir(root, projectId);
-  const full = path.join(dir, filePath);
-  if (!full.startsWith(dir)) throw new Error('Path traversal'); // safety
+  const full = resolveProjectPath(root, projectId, filePath);
   try {
     return await readFile(full);
   } catch {
@@ -88,10 +88,8 @@ export async function writeProjectFile(
   filePath: string,
   content: string | Buffer,
 ): Promise<void> {
-  const dir = projectDir(root, projectId);
   await ensureProjectDir(root, projectId);
-  const full = path.join(dir, filePath);
-  if (!full.startsWith(dir)) throw new Error('Path traversal');
+  const full = resolveProjectPath(root, projectId, filePath);
   await mkdir(path.dirname(full), { recursive: true });
   await writeFile(full, content);
 }
@@ -101,9 +99,7 @@ export async function deleteProjectFile(
   projectId: string,
   filePath: string,
 ): Promise<boolean> {
-  const dir = projectDir(root, projectId);
-  const full = path.join(dir, filePath);
-  if (!full.startsWith(dir)) throw new Error('Path traversal');
+  const full = resolveProjectPath(root, projectId, filePath);
   try {
     await rm(full, { recursive: true });
     return true;
@@ -115,6 +111,17 @@ export async function deleteProjectFile(
 export async function removeProjectDir(root: string, projectId: string): Promise<void> {
   const dir = projectDir(root, projectId);
   await rm(dir, { recursive: true, force: true });
+}
+
+function resolveProjectPath(root: string, projectId: string, filePath: string): string {
+  if (!filePath || path.isAbsolute(filePath)) throw new Error('Invalid file path');
+  const dir = projectDir(root, projectId);
+  const full = path.resolve(dir, filePath);
+  const rel = path.relative(dir, full);
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+    throw new Error('Path traversal');
+  }
+  return full;
 }
 
 function kindFor(name: string): ProjectFile['kind'] {

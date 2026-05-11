@@ -69,11 +69,25 @@ export async function handleMediaGenerate(req: {
     res.status(400).json({ error: 'projectId is required' });
     return;
   }
+  if (!isSafeProjectId(projectId)) {
+    res.status(400).json({ error: 'Invalid projectId' });
+    return;
+  }
+  try {
+    const projectsRoot = path.resolve(process.cwd(), 'projects');
+    projectDir(projectsRoot, projectId);
+    if (output) resolveProjectPath(projectsRoot, projectId, output);
+    if (compositionDir) resolveMaybeProjectPath(projectsRoot, projectId, compositionDir);
+    if (mediaPath) resolveMaybeProjectPath(projectsRoot, projectId, mediaPath);
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+    return;
+  }
 
   // ── Audio surface (TTS, SFX, or transcribe) ───────────────────
   if (surface === 'audio') {
     if (audioKind === 'sfx') {
-      handleSfxGenerate(res, projectId, output, sfxKind, sfxDuration, sfxFrequency, sfxVolume);
+    handleSfxGenerate(res, projectId, output, sfxKind, sfxDuration, sfxFrequency, sfxVolume);
     } else if (audioKind === 'transcribe') {
       handleTranscribeGenerate(res, projectId, output, mediaPath, transcribeModel, transcribeLanguage);
     } else {
@@ -203,9 +217,9 @@ async function handleSfxGenerate(
   sfxVolume?: number,
 ): Promise<void> {
   const projectsRoot = path.resolve(process.cwd(), 'projects');
-  const outputPath = path.join(projectsRoot, projectId, output || 'sfx-output.wav');
 
   try {
+    const outputPath = resolveProjectPath(projectsRoot, projectId, output || 'sfx-output.wav');
     await generateSfx({
       kind: (sfxKind as SfxKind) || 'tone',
       outputPath,
@@ -242,10 +256,9 @@ async function handleTtsGenerate(
   const fsp = await import('node:fs/promises');
 
   const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
-  const outputPath = pathModule.join(projectsRoot, projectId, output || 'tts-output.wav');
-  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
-
   try {
+    const outputPath = resolveProjectPath(projectsRoot, projectId, output || 'tts-output.wav');
+    await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
     const result = await generateTts({ prompt, outputPath, voice, speed });
     res.json({
       file: { name: pathModule.basename(outputPath), size: result.fileSize, kind: 'audio', mime: 'audio/wav' },
@@ -274,11 +287,11 @@ async function handleTranscribeGenerate(
   const fsp = await import('node:fs/promises');
 
   const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
-  const outputPath = pathModule.join(projectsRoot, projectId, output || 'transcript.json');
-  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
-
   try {
-    const result = await generateTranscribe({ mediaPath, outputPath, model, language });
+    const outputPath = resolveProjectPath(projectsRoot, projectId, output || 'transcript.json');
+    await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
+    const safeMediaPath = resolveMaybeProjectPath(projectsRoot, projectId, mediaPath);
+    const result = await generateTranscribe({ mediaPath: safeMediaPath, outputPath, model, language });
     res.json({
       file: { name: pathModule.basename(outputPath), size: result.fileSize, kind: 'text', mime: 'application/json' },
     });
@@ -306,12 +319,12 @@ async function handleRemoveBackgroundGenerate(
   const fsp = await import('node:fs/promises');
 
   const projectsRoot = pathModule.resolve(process.cwd(), 'projects');
-  const outputPath = pathModule.join(projectsRoot, projectId, output || 'output.webm');
-  await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
-
   try {
+    const outputPath = resolveProjectPath(projectsRoot, projectId, output || 'output.webm');
+    await fsp.mkdir(pathModule.dirname(outputPath), { recursive: true });
+    const safeMediaPath = resolveMaybeProjectPath(projectsRoot, projectId, mediaPath);
     const result = await generateRemoveBackground({
-      mediaPath, outputPath,
+      mediaPath: safeMediaPath, outputPath,
       format: format as 'webm' | 'mov' | undefined,
       backgroundOutput,
     });
@@ -332,17 +345,15 @@ async function startRenderTask(task: RenderTask): Promise<void> {
 
   // Determine the composition dir — may be relative to project dir
   const projectsRoot = path.resolve(process.cwd(), 'projects');
+  const projectRoot = projectDir(projectsRoot, task.projectId);
   let compDir = task.compositionDir;
 
   // If relative, resolve against project dir
-  if (compDir && !path.isAbsolute(compDir)) {
-    compDir = path.join(projectsRoot, task.projectId, compDir);
-  }
+  if (compDir) compDir = resolveMaybeProjectPath(projectsRoot, task.projectId, compDir);
 
   // If the compDir doesn't exist but the project has a .hf-cache dir, use the latest one
   if (!fs.existsSync(compDir)) {
-    const projectDir = path.join(projectsRoot, task.projectId);
-    const cacheDir = path.join(projectDir, '.hf-cache');
+    const cacheDir = path.join(projectRoot, '.hf-cache');
     if (fs.existsSync(cacheDir)) {
       const entries = fs.readdirSync(cacheDir, { withFileTypes: true })
         .filter(e => e.isDirectory())
@@ -369,7 +380,7 @@ async function startRenderTask(task: RenderTask): Promise<void> {
     return;
   }
 
-  const outputPath = path.join(projectsRoot, task.projectId, task.outputPath);
+  const outputPath = resolveProjectPath(projectsRoot, task.projectId, task.outputPath);
   const args = [
     'hyperframes', 'render',
     '--format', 'mp4',
@@ -432,4 +443,33 @@ export function cleanupMediaTasks(): void {
   for (const [id, task] of tasks) {
     if (task.createdAt < cutoff) tasks.delete(id);
   }
+}
+
+function isSafeProjectId(projectId: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(projectId);
+}
+
+function projectDir(projectsRoot: string, projectId: string): string {
+  if (!isSafeProjectId(projectId)) throw new Error('Invalid projectId');
+  return path.resolve(projectsRoot, projectId);
+}
+
+function resolveProjectPath(projectsRoot: string, projectId: string, filePath: string): string {
+  if (!filePath || path.isAbsolute(filePath)) throw new Error('Invalid project file path');
+  return assertInsideProject(projectDir(projectsRoot, projectId), path.resolve(projectDir(projectsRoot, projectId), filePath));
+}
+
+function resolveMaybeProjectPath(projectsRoot: string, projectId: string, filePath: string): string {
+  if (!filePath) throw new Error('Invalid project file path');
+  const dir = projectDir(projectsRoot, projectId);
+  const full = path.isAbsolute(filePath) ? path.resolve(filePath) : path.resolve(dir, filePath);
+  return assertInsideProject(dir, full);
+}
+
+function assertInsideProject(projectRoot: string, fullPath: string): string {
+  const rel = path.relative(projectRoot, fullPath);
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+    throw new Error('Path traversal');
+  }
+  return fullPath;
 }

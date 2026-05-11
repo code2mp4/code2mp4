@@ -40,7 +40,7 @@ export async function startAgentRun({
   const fullPrompt = formatAgentPrompt(systemPrompt, userMessage);
   const args = agent.buildArgs(fullPrompt, cwd);
 
-  emitToRun(r, 'status', { status: 'starting', agent: agent.name });
+  manager.emit(r, 'status', { status: 'starting', agent: agent.name });
 
   // ── Environment variables the agent contract depends on ───────────
   // Strip API keys from the agent environment (security). The daemon
@@ -72,30 +72,35 @@ export async function startAgentRun({
 
   r.child = child;
   r.status = 'running';
-  emitToRun(r, 'status', { status: 'running' });
+  manager.emit(r, 'status', { status: 'running' });
 
   if (child.stdin) { child.stdin.write(fullPrompt); child.stdin.end(); }
 
   // stdout — accumulate text content for persistence (stripped stdout)
   let accumulatedText = '';
+  let stdoutBuffer = '';
   child.stdout?.on('data', (chunk: Buffer) => {
-    const text = chunk.toString();
+    const text = stdoutBuffer + chunk.toString();
     if (agent.streamFormat === 'claude-stream-json') {
-      parseClaudeStream(text, (event, data) => {
-        emitToRun(r, event, data);
+      stdoutBuffer = parseBufferedLines(text, (line) => parseClaudeStreamLine(line, (event, data) => {
+        manager.emit(r, event, data);
         // Only accumulate text/thinking content for persistence
         if (event === 'text' || event === 'text_delta') {
           accumulatedText += (data as { content: string }).content || '';
         }
-      });
+      }));
     } else if (agent.streamFormat === 'copilot-stream-json') {
-      parseCopilotStream(text, (event, data) => emitToRun(r, event, data));
+      stdoutBuffer = parseBufferedLines(text, (line) => parseCopilotStreamLine(line, (event, data) => {
+        manager.emit(r, event, data);
+        if (event === 'text') accumulatedText += (data as { content: string }).content || '';
+      }));
     } else {
+      stdoutBuffer = '';
       // Plain text — strip ANSI, emit + accumulate cleaned content
       const clean = stripAnsi(text);
       for (const line of clean.split('\n')) {
         if (line.trim()) {
-          emitToRun(r, 'text', { content: line });
+          manager.emit(r, 'text', { content: line });
           accumulatedText += line + '\n';
         }
       }
@@ -106,28 +111,52 @@ export async function startAgentRun({
   let stderr = '';
   child.stderr?.on('data', (chunk: Buffer) => {
     stderr += chunk.toString();
-    emitToRun(r, 'log', { stream: 'stderr', content: chunk.toString() });
+    manager.emit(r, 'log', { stream: 'stderr', content: chunk.toString() });
   });
 
   child.on('close', (code) => {
+    if (stdoutBuffer.trim()) {
+      if (agent.streamFormat === 'claude-stream-json') {
+        parseClaudeStreamLine(stdoutBuffer, (event, data) => {
+          manager.emit(r, event, data);
+          if (event === 'text' || event === 'text_delta') accumulatedText += (data as { content: string }).content || '';
+        });
+      } else if (agent.streamFormat === 'copilot-stream-json') {
+        parseCopilotStreamLine(stdoutBuffer, (event, data) => {
+          manager.emit(r, event, data);
+          if (event === 'text') accumulatedText += (data as { content: string }).content || '';
+        });
+      }
+      stdoutBuffer = '';
+    }
     const ok = code === 0;
-    emitToRun(r, 'status', { status: ok ? 'succeeded' : 'failed', exitCode: code });
-    if (!ok && stderr) emitToRun(r, 'log', { stream: 'stderr', content: stderr.slice(-2000) });
-    finishRun(r, ok ? 'succeeded' : 'failed', code);
-    if (onComplete) onComplete(accumulatedText, ok ? 'succeeded' : 'failed');
+    const wasTerminal = r.status === 'canceled' || r.status === 'failed' || r.status === 'succeeded';
+    manager.emit(r, 'status', { status: ok ? 'succeeded' : 'failed', exitCode: code });
+    if (!ok && stderr) manager.emit(r, 'log', { stream: 'stderr', content: stderr.slice(-2000) });
+    manager.finish(r, ok ? 'succeeded' : 'failed', code);
+    if (onComplete && !wasTerminal) onComplete(accumulatedText, ok ? 'succeeded' : 'failed');
   });
 
   child.on('error', (err) => {
-    emitToRun(r, 'log', { stream: 'stderr', content: `Agent spawn error: ${err.message}` });
-    finishRun(r, 'failed', 1);
-    if (onComplete) onComplete(accumulatedText, 'failed');
+    const wasTerminal = r.status === 'canceled' || r.status === 'failed' || r.status === 'succeeded';
+    manager.emit(r, 'log', { stream: 'stderr', content: `Agent spawn error: ${err.message}` });
+    manager.finish(r, 'failed', 1);
+    if (onComplete && !wasTerminal) onComplete(accumulatedText, 'failed');
   });
 }
 
 // ── Stream parsers ───────────────────────────────────────────────────
 
-function parseClaudeStream(chunk: string, emit: (e: string, d: unknown) => void) {
-  for (const line of chunk.split('\n').filter(Boolean)) {
+function parseBufferedLines(text: string, parseLine: (line: string) => void): string {
+  const lines = text.split('\n');
+  const rest = lines.pop() ?? '';
+  for (const line of lines) {
+    if (line.trim()) parseLine(line);
+  }
+  return rest;
+}
+
+function parseClaudeStreamLine(line: string, emit: (e: string, d: unknown) => void) {
     try {
       const obj = JSON.parse(line);
       if (obj?.type === 'assistant' && obj.message?.content) {
@@ -146,39 +175,27 @@ function parseClaudeStream(chunk: string, emit: (e: string, d: unknown) => void)
         emit('status', { label: obj.subtype ?? 'system', ...obj });
       }
     } catch { if (line.trim()) emit('text', { content: line }); }
-  }
 }
 
-function parseCopilotStream(chunk: string, emit: (e: string, d: unknown) => void) {
-  for (const line of chunk.split('\n').filter(Boolean)) {
+function parseCopilotStreamLine(line: string, emit: (e: string, d: unknown) => void) {
     try {
       const obj = JSON.parse(line);
       if (obj?.type === 'text' || obj?.content) emit('text', { content: obj.content ?? obj.text ?? '' });
       else if (obj?.type) emit('status', obj);
     } catch { if (line.trim()) emit('text', { content: line }); }
-  }
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────
-
-function emitToRun(run: ChatRun, event: string, data: unknown) {
-  const id = run.nextEventId++;
-  run.events.push({ id, event, data });
-  run.updatedAt = Date.now();
-  for (const client of run.clients) client.send(event, data, id);
-}
-
-function finishRun(run: ChatRun, status: 'succeeded' | 'failed', code: number | null, onComplete?: (text: string, s: 'succeeded' | 'failed') => void) {
-  for (const client of run.clients) { client.send('end', { status, exitCode: code }); client.end(); }
-  run.status = status;
-  run.exitCode = code;
-  run.clients.clear();
 }
 
 function stripAnsi(text: string): string {
-  return text
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\x1b\[\?[0-9;]*[hl]/g, '')
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
-    .replace(/⬝+/g, '');
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (code === 27 && text[i + 1] === '[') {
+      i += 2;
+      while (i < text.length && !/[a-zA-Z]/.test(text[i])) i++;
+      continue;
+    }
+    if ((code <= 8) || code === 11 || code === 12 || (code >= 14 && code <= 31)) continue;
+    out += text[i];
+  }
+  return out.replace(/⬝+/g, '');
 }

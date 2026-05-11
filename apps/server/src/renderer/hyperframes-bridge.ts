@@ -11,7 +11,6 @@
  * - Progress from render is forwarded to agent via stderr
  */
 import { spawn } from 'node:child_process';
-import path from 'node:path';
 import fs from 'node:fs/promises';
 
 export interface LintResult {

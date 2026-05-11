@@ -4,7 +4,6 @@
  * so users can preview the look-and-feel before choosing.
  */
 import type { MotionSystemSummary } from './motion-systems.js';
-import { readMotionSystem } from './motion-systems.js';
 
 export function generateMotionPreviewHtml(system: MotionSystemSummary): string {
   // Extract key design tokens from the body

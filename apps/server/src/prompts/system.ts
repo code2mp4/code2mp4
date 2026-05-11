@@ -166,20 +166,6 @@ function renderVideoMetadataBlock(
   return lines.join('\n');
 }
 
-function deriveVideoPreflight(skillBody: string): string {
-  const refs: string[] = [];
-  if (/assets\/template\.html/.test(skillBody))
-    refs.push('`assets/template.html`');
-  if (/references\/storyboard\.md/.test(skillBody))
-    refs.push('`references/storyboard.md`');
-  if (/references\/checklist\.md/.test(skillBody))
-    refs.push('`references/checklist.md`');
-  if (/references\/timing\.md/.test(skillBody))
-    refs.push('`references/timing.md`');
-  if (refs.length === 0) return '';
-  return ` **Pre-flight (do this before any other tool):** Read ${refs.join(', ')}. The template defines the composition skeleton; the storyboard is the only acceptable scene structure; the checklist is your pre-render gate.`;
-}
-
 function extractMotionTokens(body: string, title?: string): string {
   const lines: string[] = [];
   // Extract palette (Canvas + Accent + Accent 2)

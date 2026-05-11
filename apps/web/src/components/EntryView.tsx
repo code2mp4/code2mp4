@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { VideoProjectConfig } from '@code2mp4/contracts';
 import { useT } from '../i18n/context';
+import { useViewportWidth } from '../hooks/useViewportWidth';
 import { AgentPicker } from './AgentPicker';
 
 interface ProjectItem {
   id: string;
   name: string;
   config?: Record<string, unknown>;
+  pipeline?: {
+    id: string;
+    status: string;
+    scenesCompleted?: number;
+    totalScenes?: number;
+    render?: { status?: string };
+  } | null;
 }
 
 interface Props {
@@ -64,6 +72,9 @@ export function EntryView({
   projects, onCreateProject, onOpenProject, onDeleteProject,
   selectedAgentId, onSelectAgent,
 }: Props) {
+  const viewportWidth = useViewportWidth();
+  const isNarrow = viewportWidth < 1180;
+  const isMobile = viewportWidth < 760;
   const [loading, setLoading] = useState(true);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [agentCount, setAgentCount] = useState(0);
@@ -141,7 +152,8 @@ export function EntryView({
     const q = search.trim().toLowerCase();
     return projects.filter((p) => {
       if (libraryTab === 'templates') return false;
-      if (libraryTab === 'rendered') return false;
+      if (libraryTab === 'rendered' && p.pipeline?.status !== 'done') return false;
+      if (libraryTab === 'drafts' && p.pipeline?.status === 'done') return false;
       if (!q) return true;
       const haystack = [
         p.name,
@@ -171,8 +183,8 @@ export function EntryView({
   };
 
   return (
-    <div style={S.shell} role="application" aria-label="Code2MP4 Studio">
-      <aside style={S.leftRail}>
+    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label="Code2MP4 Studio">
+      <aside style={{ ...S.leftRail, ...(isNarrow ? S.leftRailNarrow : {}) }}>
         <div style={S.brandRow}>
           <div style={S.logoMark}>C2</div>
           <div>
@@ -188,7 +200,7 @@ export function EntryView({
           </div>
         </div>
 
-        <section style={S.createPanel}>
+        <section style={{ ...S.createPanel, ...(isNarrow ? S.createPanelNarrow : {}), ...(isMobile ? S.createPanelMobile : {}) }}>
           <div style={S.sectionKicker}>{t('entry.newProduction')}</div>
           <input
             value={projectName}
@@ -204,7 +216,7 @@ export function EntryView({
             style={S.briefInput}
           />
 
-          <div style={S.fieldGrid}>
+          <div style={{ ...S.fieldGrid, ...(isMobile ? S.fieldGridMobile : {}) }}>
             <label style={S.fieldLabel}>
               {t('entry.type')}
               <select value={videoType} onChange={e => setVideoType(e.target.value)} style={S.select}>
@@ -260,8 +272,8 @@ export function EntryView({
         </section>
       </aside>
 
-      <main style={S.main}>
-        <header style={S.topBar}>
+      <main style={{ ...S.main, ...(isNarrow ? S.mainNarrow : {}) }}>
+        <header style={{ ...S.topBar, ...(isMobile ? S.topBarMobile : {}) }}>
           <nav style={S.topTabs} aria-label="Studio sections">
             {(['all', 'drafts', 'rendered', 'templates'] as LibraryTab[]).map(tab => (
               <button key={tab} onClick={() => setLibraryTab(tab)} style={{ ...S.topTab, ...(libraryTab === tab ? S.topTabActive : {}) }}>
@@ -269,7 +281,7 @@ export function EntryView({
               </button>
             ))}
           </nav>
-          <div style={S.searchWrap}>
+          <div style={{ ...S.searchWrap, ...(isMobile ? S.searchWrapMobile : {}) }}>
             <span style={S.searchIcon}>⌕</span>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search videos, formats, motion systems..." style={S.searchInput} />
           </div>
@@ -279,19 +291,19 @@ export function EntryView({
           </div>
         </header>
 
-        <section style={S.heroBand}>
+        <section style={{ ...S.heroBand, ...(isMobile ? S.heroBandMobile : {}) }}>
           <div>
             <div style={S.heroKicker}>{tl.heroKicker}</div>
             <h1 style={S.heroTitle}>{tl.heroTitle}</h1>
           </div>
-          <div style={S.metrics}>
+          <div style={{ ...S.metrics, ...(isMobile ? S.metricsMobile : {}) }}>
             <Metric label="Projects" value={String(projects.length)} />
             <Metric label="Agents" value={String(agentCount)} />
             <Metric label="Runtime" value={system.hyperframes ? 'Ready' : 'Check'} />
           </div>
         </section>
 
-        <section style={S.libraryHeader}>
+        <section style={{ ...S.libraryHeader, ...(isMobile ? S.libraryHeaderMobile : {}) }}>
           <div>
             <h2 style={S.heading}>{libraryTab === 'templates' ? 'Templates' : 'Video library'}</h2>
             <p style={S.subtle}>{tl.libraryDesc}</p>
@@ -310,9 +322,13 @@ export function EntryView({
             <div style={S.emptyMark}>MP4</div>
             <h3 style={S.emptyTitle}>{tl.emptyTitle}</h3>
             <p style={S.emptyCopy}>{tl.emptyDesc}</p>
+            <div style={S.emptyActions}>
+              <button style={S.emptyPrimary} onClick={() => createVideo(TEMPLATES[0])}>Use launch template</button>
+              <button style={S.emptySecondary} onClick={() => setLibraryTab('templates')}>Browse templates</button>
+            </div>
           </div>
         ) : (
-          <div style={viewMode === 'grid' ? S.projectGrid : S.projectList}>
+          <div style={viewMode === 'grid' ? { ...S.projectGrid, ...(isMobile ? S.projectGridMobile : {}) } : S.projectList}>
             {filteredProjects.map((p) => (
               <ProjectCard
                 key={p.id}
@@ -326,7 +342,7 @@ export function EntryView({
         )}
       </main>
 
-      <aside style={S.rightRail}>
+      <aside style={{ ...S.rightRail, ...(isNarrow ? S.rightRailNarrow : {}) }}>
         <section style={S.railCard}>
           <div style={S.railTitle}>{tl.readiness}</div>
           <StatusRow label={tl.node} ok={system.node} />
@@ -389,6 +405,11 @@ function ProjectCard({
   const orientation = String(cfg.orientation ?? '16:9');
   const duration = typeof cfg.duration === 'number' ? `${cfg.duration}s` : 'duration open';
   const motion = String(cfg.motionSystemId ?? 'unbound');
+  const state = project.pipeline?.status ?? 'draft';
+  const rendered = state === 'done';
+  const sceneCount = project.pipeline?.totalScenes
+    ? `${project.pipeline.scenesCompleted ?? 0}/${project.pipeline.totalScenes} scenes`
+    : 'no pipeline';
 
   return (
     <article
@@ -405,14 +426,24 @@ function ProjectCard({
       <div style={S.projectBody}>
         <div style={S.projectTopLine}>
           <h3 style={S.projectTitle}>{project.name}</h3>
-          <span style={S.statePill}>Draft</span>
+          <span style={{ ...S.statePill, ...(rendered ? S.statePillDone : {}) }}>{pipelineStateLabel(state)}</span>
         </div>
         <p style={S.projectMeta}>{videoType} · {duration} · {motion}</p>
         <div style={S.cardSteps}>
-          {['brief', 'storyboard', 'source', 'render'].map((step, i) => (
-            <span key={step} style={{ ...S.stepChip, opacity: i === 0 ? 1 : 0.48 }}>{step}</span>
+          {['brief', 'storyboard', 'source', 'checks', 'render'].map((step, i) => (
+            <span key={step} style={{ ...S.stepChip, opacity: stepDone(state, i) ? 1 : 0.48 }}>{step}</span>
           ))}
         </div>
+        <div style={S.projectMeta}>{sceneCount}</div>
+        <button
+          style={S.openBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+        >
+          Open production
+        </button>
       </div>
       <button
         style={S.deleteBtn}
@@ -426,6 +457,38 @@ function ProjectCard({
       </button>
     </article>
   );
+}
+
+function pipelineStateLabel(status: string): string {
+  const labels: Record<string, string> = {
+    draft: 'Draft',
+    scripting: 'Drafting',
+    awaiting_approval: 'Needs approval',
+    rendering_scenes: 'Building scenes',
+    checking: 'Checking',
+    ready_to_render: 'Ready to render',
+    assembling: 'Rendering',
+    done: 'Rendered',
+    failed: 'Failed',
+    cancelled: 'Cancelled',
+  };
+  return labels[status] ?? status;
+}
+
+function stepDone(status: string, index: number): boolean {
+  const rank: Record<string, number> = {
+    draft: 0,
+    scripting: 1,
+    awaiting_approval: 2,
+    rendering_scenes: 3,
+    checking: 4,
+    ready_to_render: 4,
+    assembling: 5,
+    done: 5,
+    failed: 1,
+    cancelled: 1,
+  };
+  return (rank[status] ?? 0) > index;
 }
 
 function TemplateCard({ template, onUse }: { template: typeof TEMPLATES[number]; onUse: () => void }) {
@@ -443,7 +506,9 @@ function TemplateCard({ template, onUse }: { template: typeof TEMPLATES[number];
 
 const S: Record<string, React.CSSProperties> = {
   shell: { display: 'grid', gridTemplateColumns: '380px minmax(560px, 1fr) 300px', height: '100vh', background: 'var(--bg)', color: 'var(--fg)', overflow: 'hidden' },
+  shellNarrow: { display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'auto' },
   leftRail: { borderRight: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', overflow: 'auto' },
+  leftRailNarrow: { borderRight: 'none', borderBottom: '1px solid var(--border)', overflow: 'visible' },
   brandRow: { display: 'flex', alignItems: 'center', gap: 12, padding: '18px 22px', borderBottom: '1px solid var(--border)' },
   logoMark: { width: 36, height: 36, borderRadius: 10, background: 'var(--fg)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, letterSpacing: 0 },
   brandTitle: { fontSize: 18, fontWeight: 800, letterSpacing: 0 },
@@ -451,10 +516,13 @@ const S: Record<string, React.CSSProperties> = {
   agentBlock: { padding: '14px 22px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 },
   agentHint: { color: 'var(--muted)', fontSize: 12 },
   createPanel: { padding: 22, display: 'flex', flexDirection: 'column', gap: 12, borderBottom: '1px solid var(--border)' },
+  createPanelNarrow: { display: 'flex', flexDirection: 'column' },
+  createPanelMobile: { display: 'flex', flexDirection: 'column' },
   sectionKicker: { color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 11, fontWeight: 700 },
   input: { width: '100%', height: 42, border: '1px solid var(--border)', borderRadius: 9, background: 'var(--bg)', color: 'var(--fg)', padding: '0 12px', fontSize: 14 },
   briefInput: { width: '100%', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--bg)', color: 'var(--fg)', padding: 12, fontSize: 14, lineHeight: 1.55, resize: 'vertical', minHeight: 132 },
   fieldGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 },
+  fieldGridMobile: { gridTemplateColumns: '1fr' },
   fieldLabel: { display: 'flex', flexDirection: 'column', gap: 5, color: 'var(--muted)', fontSize: 11, fontWeight: 700 },
   select: { height: 36, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg)', color: 'var(--fg)', padding: '0 9px' },
   segmented: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 4, background: 'var(--surface-hover)', borderRadius: 10 },
@@ -466,29 +534,36 @@ const S: Record<string, React.CSSProperties> = {
   templateTitle: { color: 'var(--fg)', fontWeight: 700, fontSize: 13 },
   templateMeta: { color: 'var(--muted)', fontSize: 11 },
   main: { minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'auto', background: 'var(--bg)' },
+  mainNarrow: { overflow: 'visible' },
   topBar: { minHeight: 70, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 18, padding: '0 28px', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 5 },
+  topBarMobile: { alignItems: 'stretch', flexDirection: 'column', gap: 10, padding: '14px 22px' },
   topTabs: { display: 'flex', alignItems: 'center', gap: 22 },
   topTab: { border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: '24px 0 20px', borderBottom: '3px solid transparent' },
   topTabActive: { color: 'var(--fg)', borderBottomColor: 'var(--fg)' },
   searchWrap: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, width: 360, height: 42, border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: '0 12px' },
+  searchWrapMobile: { width: '100%', marginLeft: 0 },
   searchIcon: { color: 'var(--muted)', fontSize: 16 },
   searchInput: { flex: 1, border: 'none', background: 'transparent', outline: 'none', color: 'var(--fg)', fontSize: 14 },
   viewToggle: { display: 'flex', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 999, padding: 3 },
   iconBtn: { border: 'none', background: 'transparent', color: 'var(--muted)', borderRadius: 999, padding: '7px 11px', cursor: 'pointer', fontWeight: 700, fontSize: 12 },
   iconBtnActive: { background: 'var(--fg)', color: 'var(--bg)' },
   heroBand: { margin: 28, marginBottom: 18, padding: 24, border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, background: 'var(--surface)' },
+  heroBandMobile: { margin: 22, flexDirection: 'column', alignItems: 'stretch', padding: 20 },
   heroKicker: { color: 'var(--accent)', fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em' },
   heroTitle: { margin: '8px 0 0', maxWidth: 640, fontSize: 28, lineHeight: 1.12, letterSpacing: 0 },
   metrics: { display: 'grid', gridTemplateColumns: 'repeat(3, 96px)', gap: 10 },
+  metricsMobile: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
   metric: { border: '1px solid var(--border)', borderRadius: 12, padding: 12, background: 'var(--bg)' },
   metricValue: { fontSize: 20, fontWeight: 800 },
   metricLabel: { color: 'var(--muted)', fontSize: 11, marginTop: 2 },
   libraryHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, padding: '0 28px 18px' },
+  libraryHeaderMobile: { alignItems: 'flex-start', flexDirection: 'column', padding: '0 22px 18px' },
   heading: { margin: 0, fontSize: 20, fontWeight: 800 },
   subtle: { margin: '5px 0 0', color: 'var(--muted)', fontSize: 13 },
   pipelinePills: { display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' },
   pipelinePill: { border: '1px solid var(--border)', borderRadius: 999, padding: '5px 9px', color: 'var(--muted)', fontSize: 11, fontWeight: 700 },
   projectGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14, padding: '0 28px 32px' },
+  projectGridMobile: { gridTemplateColumns: '1fr', padding: '0 22px 28px' },
   projectList: { display: 'flex', flexDirection: 'column', gap: 10, padding: '0 28px 32px' },
   projectCard: { border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 14, padding: 12, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 12, position: 'relative' },
   projectRow: { border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 12, padding: 10, cursor: 'pointer', display: 'grid', gridTemplateColumns: '112px 1fr 32px', gap: 14, alignItems: 'center' },
@@ -500,14 +575,19 @@ const S: Record<string, React.CSSProperties> = {
   projectTopLine: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   projectTitle: { margin: 0, color: 'var(--fg)', fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   statePill: { border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: 999, padding: '3px 7px', fontSize: 10, fontWeight: 800 },
+  statePillDone: { borderColor: 'var(--success)', color: 'var(--success)', background: 'var(--success-dim)' },
   projectMeta: { color: 'var(--muted)', fontSize: 12, margin: '6px 0 10px' },
   cardSteps: { display: 'flex', gap: 5, flexWrap: 'wrap' },
   stepChip: { background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: 999, padding: '3px 7px', fontSize: 10, fontWeight: 700 },
+  openBtn: { marginTop: 12, width: '100%', border: '1px solid var(--fg)', background: 'var(--fg)', color: 'var(--bg)', borderRadius: 9, padding: '9px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 800 },
   deleteBtn: { position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', cursor: 'pointer', fontSize: 16 },
   emptyState: { margin: '60px auto', textAlign: 'center', maxWidth: 420, color: 'var(--muted)' },
   emptyMark: { margin: '0 auto 16px', width: 74, height: 74, borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontFamily: 'var(--font-mono)' },
   emptyTitle: { color: 'var(--fg)', margin: 0, fontSize: 18 },
   emptyCopy: { marginTop: 8, color: 'var(--muted)' },
+  emptyActions: { marginTop: 18, display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' },
+  emptyPrimary: { border: 'none', background: 'var(--fg)', color: 'var(--bg)', borderRadius: 9, padding: '10px 13px', cursor: 'pointer', fontWeight: 800, fontSize: 12 },
+  emptySecondary: { border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--fg)', borderRadius: 9, padding: '9px 13px', cursor: 'pointer', fontWeight: 800, fontSize: 12 },
   templateGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 14, padding: '0 28px 32px' },
   templateCard: { textAlign: 'left', border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface)', padding: 14, cursor: 'pointer' },
   templatePreview: { height: 112, borderRadius: 10, background: '#050505', color: '#fff', display: 'flex', alignItems: 'flex-end', padding: 12, fontFamily: 'var(--font-mono)', fontWeight: 800, marginBottom: 12 },
@@ -515,6 +595,7 @@ const S: Record<string, React.CSSProperties> = {
   templateCardMeta: { color: 'var(--accent)', fontSize: 12, marginTop: 3, fontWeight: 700 },
   templateCardCopy: { color: 'var(--muted)', fontSize: 12, lineHeight: 1.5, margin: '9px 0 0' },
   rightRail: { borderLeft: '1px solid var(--border)', background: 'var(--surface)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14, overflow: 'auto' },
+  rightRailNarrow: { borderLeft: 'none', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', overflow: 'visible' },
   railCard: { border: '1px solid var(--border)', borderRadius: 13, background: 'var(--bg)', padding: 14 },
   railTitle: { color: 'var(--fg)', fontWeight: 800, fontSize: 13, marginBottom: 12 },
   statusRow: { display: 'grid', gridTemplateColumns: '12px 1fr auto', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 12, padding: '7px 0', borderTop: '1px solid var(--border-soft)' },

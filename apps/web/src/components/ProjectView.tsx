@@ -4,7 +4,7 @@ import { FileWorkspace } from './FileWorkspace';
 import { AgentPicker } from './AgentPicker';
 import { AssistantMessage } from './AssistantMessage';
 import { ChatComposer } from './ChatComposer';
-import { useT } from '../i18n/context';
+import { useViewportWidth } from '../hooks/useViewportWidth';
 
 interface Message {
   id: string; role: 'user' | 'assistant' | 'system'; content: string;
@@ -29,6 +29,34 @@ interface ProjectFile {
   mime: string;
 }
 
+type PipelineStatus = 'scripting' | 'awaiting_approval' | 'rendering_scenes' | 'checking' | 'ready_to_render' | 'assembling' | 'done' | 'failed' | 'cancelled';
+
+interface PipelineJob {
+  id: string;
+  projectId: string;
+  brief: string;
+  status: PipelineStatus;
+  script?: {
+    title: string;
+    duration: number;
+    aspectRatio?: string;
+    scenes: Array<{ id: string; number: number; duration: number; goal: string; visual: string; text: string; motion: string }>;
+  };
+  scenesCompleted: number;
+  totalScenes: number;
+  scenes: Array<{ number: number; duration?: number; status: 'pending' | 'running' | 'done' | 'failed'; error?: string }>;
+  render?: { status: 'idle' | 'running' | 'done' | 'failed'; frame?: number; totalFrames?: number; outputPath?: string; fileSize?: number; error?: string };
+  check?: {
+    status: 'idle' | 'running' | 'passed' | 'failed';
+    lint?: { passed: boolean; errors: string[]; warnings: string[] };
+    validate?: { passed: boolean; errors: string[]; warnings: string[] };
+    inspect?: { passed: boolean; findings: Array<{ severity: string; selector: string; message: string; timestamp: number }> };
+    error?: string;
+  };
+  outputMp4?: string;
+  error?: string;
+}
+
 interface Props {
   projectId: string; onBack: () => void;
   selectedAgentId: string | null; onSelectAgent: (id: string) => void;
@@ -46,7 +74,9 @@ const HINT_PROMPTS = [
 export function ProjectView({
   projectId, onBack, selectedAgentId, onSelectAgent, initialPrompt, onInitialPromptConsumed,
 }: Props) {
-  const { t } = useT();
+  const viewportWidth = useViewportWidth();
+  const isNarrow = viewportWidth < 1180;
+  const isMobile = viewportWidth < 760;
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [working, setWorking] = useState(false);
@@ -64,15 +94,23 @@ export function ProjectView({
   const [elapsed, setElapsed] = useState(0);
   const [project, setProject] = useState<ProjectInfo | null>(null);
   const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [pipeline, setPipeline] = useState<PipelineJob | null>(null);
+  const [pipelineBusy, setPipelineBusy] = useState(false);
+  const [pipelineError, setPipelineError] = useState<string | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const esRef = useRef<EventSource | null>(null);
+  const pipelineEsRef = useRef<EventSource | null>(null);
   const runIdRef = useRef<string | null>(null);
   const startTimeRef = useRef(0);
   const initialPromptRef = useRef<string | null>(null);
 
   useEffect(() => { setError(null); loadConvs().catch(() => setError('Failed to load conversations')); }, [projectId]);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, toolCalls]);
+  useEffect(() => {
+    const box = messagesRef.current;
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [msgs, toolCalls]);
   useEffect(() => { return () => esRef.current?.close(); }, []);
   useEffect(() => {
     fetch(`/api/projects/${projectId}`)
@@ -85,6 +123,29 @@ export function ProjectView({
     const iv = setInterval(loadFiles, 4000);
     return () => clearInterval(iv);
   }, [projectId, filesVer]);
+  useEffect(() => {
+    loadPipeline();
+    const iv = setInterval(loadPipeline, 3000);
+    return () => clearInterval(iv);
+  }, [projectId]);
+  useEffect(() => {
+    pipelineEsRef.current?.close();
+    if (!pipeline?.id || ['done', 'failed', 'cancelled'].includes(pipeline.status)) return;
+    const es = new EventSource(`/api/pipeline/${pipeline.id}/events`);
+    pipelineEsRef.current = es;
+    es.addEventListener('job', e => {
+      const job = JSON.parse(e.data);
+      setPipeline(job);
+      if (job.status === 'done') {
+        setMp4(`/api/projects/${projectId}/files/${encodeURIComponent('output.mp4')}`);
+        setFilesVer(v => v + 1);
+      }
+    });
+    es.addEventListener('end', () => es.close());
+    es.addEventListener('error', () => {});
+    return () => es.close();
+  }, [pipeline?.id, pipeline?.status, projectId]);
+  useEffect(() => () => pipelineEsRef.current?.close(), []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -199,20 +260,19 @@ export function ProjectView({
 
   useEffect(() => {
     const prompt = initialPrompt?.trim();
-    if (!prompt || working) return;
+    if (!prompt || working || !project) return;
     const key = `${projectId}:${prompt}`;
     if (initialPromptRef.current === key) return;
     initialPromptRef.current = key;
     onInitialPromptConsumed?.();
-    sendText(prompt);
-  }, [initialPrompt, projectId, working, onInitialPromptConsumed, sendText]);
+    startPipeline(prompt);
+  }, [initialPrompt, projectId, working, project, onInitialPromptConsumed]);
 
   function connect(runId: string, aid: string) {
     closeStream();
     const es = new EventSource(`/api/runs/${runId}/events`);
     esRef.current = es;
     let acc = '';
-    let thinking = '';
 
     es.addEventListener('text', e => {
       const d = JSON.parse(e.data);
@@ -279,27 +339,100 @@ export function ProjectView({
   }
 
   const cfg = project?.config ?? {};
+  async function loadPipeline() {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/pipeline/latest`);
+      if (res.status === 404) { setPipeline(null); return; }
+      if (res.ok) {
+        const job = await res.json();
+        setPipeline(job);
+        if (job.status === 'done') {
+          setMp4(`/api/projects/${projectId}/files/${encodeURIComponent('output.mp4')}`);
+          setFilesVer(v => v + 1);
+        }
+      }
+    } catch {
+      // Keep the last known job visible during transient polling failures.
+    }
+  }
+
+  async function pipelineRequest(path: string, body?: Record<string, unknown>) {
+    setPipelineBusy(true);
+    setPipelineError(null);
+    try {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : '{}',
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+      await loadPipeline();
+      setFilesVer(v => v + 1);
+      return json;
+    } catch (err) {
+      setPipelineError(err instanceof Error ? err.message : 'Pipeline request failed');
+      return null;
+    } finally {
+      setPipelineBusy(false);
+    }
+  }
+
+  async function startPipeline(overrideBrief?: string) {
+    const brief = String(overrideBrief || cfg.copy || input || project?.name || '').trim();
+    if (!brief) {
+      setPipelineError('Add a brief in the composer or project config before starting the pipeline.');
+      return;
+    }
+    await pipelineRequest('/api/pipeline/storyboard', {
+      brief,
+      projectId,
+      motionSystemId: cfg.motionSystemId,
+      agentId: selectedAgentId,
+    });
+  }
+
+  async function approveStoryboard() {
+    if (!pipeline) return;
+    await pipelineRequest(`/api/pipeline/${pipeline.id}/scenes`, { agentId: selectedAgentId });
+  }
+
+  async function renderPipeline() {
+    if (!pipeline) return;
+    await pipelineRequest(`/api/pipeline/${pipeline.id}/assemble`);
+  }
+
+  async function cancelPipeline() {
+    if (!pipeline) return;
+    await pipelineRequest(`/api/pipeline/${pipeline.id}/cancel`);
+  }
+
+  async function retryScene(sceneNumber: number) {
+    if (!pipeline) return;
+    await pipelineRequest(`/api/pipeline/${pipeline.id}/scene/${sceneNumber}/retry`, { agentId: selectedAgentId });
+  }
+
   const videoFiles = files.filter(f => f.kind === 'video');
   const htmlFiles = files.filter(f => f.kind === 'html');
   const storyboardFiles = files.filter(f => f.name.toLowerCase().includes('storyboard'));
-  const activeOutput = mp4 ? 'Rendered MP4' : html ? 'Motion source' : working ? 'Agent running' : 'Awaiting source';
+  const activeOutput = mp4 || pipeline?.status === 'done' ? 'Rendered MP4' : html || pipeline?.status === 'ready_to_render' ? 'Motion source' : working || pipeline?.status === 'rendering_scenes' || pipeline?.status === 'scripting' ? 'Agent running' : pipeline?.status === 'checking' ? 'Checking source' : 'Awaiting source';
   const pipelineSteps = [
-    { label: 'Brief', done: msgs.some(m => m.role === 'user') || Boolean(cfg.copy) },
-    { label: 'Storyboard', done: storyboardFiles.length > 0 || /storyboard/i.test(msgs.map(m => m.content).join(' ')) },
-    { label: 'Source', done: htmlFiles.length > 0 || Boolean(html) },
-    { label: 'Checks', done: /lint|inspect|validate/i.test(msgs.map(m => m.content).join(' ')) },
-    { label: 'Render', done: videoFiles.length > 0 || Boolean(mp4) },
+    { label: 'Brief', done: Boolean(pipeline) || msgs.some(m => m.role === 'user') || Boolean(cfg.copy) },
+    { label: 'Storyboard', done: Boolean(pipeline?.script) || storyboardFiles.length > 0 || /storyboard/i.test(msgs.map(m => m.content).join(' ')) },
+    { label: 'Source', done: (pipeline?.scenesCompleted ?? 0) > 0 || htmlFiles.length > 0 || Boolean(html) },
+    { label: 'Checks', done: pipeline?.check?.status === 'passed' || pipeline?.status === 'ready_to_render' || pipeline?.status === 'assembling' || pipeline?.status === 'done' || /lint|inspect|validate/i.test(msgs.map(m => m.content).join(' ')) },
+    { label: 'Render', done: pipeline?.status === 'done' || videoFiles.length > 0 || Boolean(mp4) },
   ];
 
   return (
-    <div style={S.shell} role="application" aria-label="Video production cockpit">
-      <header style={S.header} role="banner">
+    <div style={{ ...S.shell, ...(isNarrow ? S.shellNarrow : {}) }} role="application" aria-label="Video production cockpit">
+      <header style={{ ...S.header, ...(isNarrow ? S.headerNarrow : {}) }} role="banner">
         <button onClick={onBack} style={S.backBtn} aria-label="Back to studio">← Studio</button>
         <div style={S.projectIdentity}>
           <div style={S.projectEyebrow}>Production cockpit</div>
           <div style={S.projectTitle}>{project?.name || projectId.slice(0, 8)}</div>
         </div>
-        <div style={S.headerMeta}>
+        <div style={{ ...S.headerMeta, ...(isMobile ? S.headerMetaMobile : {}) }}>
           <span style={S.metaPill}>{String(cfg.videoType ?? 'custom')}</span>
           <span style={S.metaPill}>{String(cfg.orientation ?? '16:9')}</span>
           <span style={S.metaPill}>{typeof cfg.duration === 'number' ? `${cfg.duration}s` : 'duration open'}</span>
@@ -332,8 +465,8 @@ export function ProjectView({
       {error && <div style={S.errorBanner} role="alert"><span>{error}</span><button onClick={() => setError(null)} style={S.errDismiss}>Dismiss</button></div>}
       {statusLine && <div style={S.statusLine} aria-live="polite"><span className="spinner" style={S.statusSpinner} />{statusLine}</div>}
 
-      <div style={S.body}>
-        <aside style={S.directorPanel}>
+      <div style={{ ...S.body, ...(isNarrow ? S.bodyNarrow : {}) }}>
+        <aside style={{ ...S.directorPanel, ...(isNarrow ? S.directorPanelNarrow : {}) }}>
           <div style={S.panelHeader}>
             <div>
               <div style={S.panelKicker}>Director</div>
@@ -342,7 +475,7 @@ export function ProjectView({
             <span style={S.runState}>{working ? 'Running' : 'Ready'}</span>
           </div>
 
-          <div style={S.messages} role="log">
+          <div style={S.messages} role="log" ref={messagesRef}>
             {msgs.length === 0 && !working && (
               <div style={S.emptyDirector}>
                 <div style={S.emptyMark}>D</div>
@@ -377,10 +510,10 @@ export function ProjectView({
             ))}
             <div ref={endRef} />
           </div>
-          <ChatComposer value={input} onChange={setInput} onSend={send} disabled={false} working={working} projectId={projectId} />
+          <ChatComposer value={input} onChange={setInput} onSend={send} disabled={false} working={working} />
         </aside>
 
-        <main style={S.stageColumn}>
+        <main style={{ ...S.stageColumn, ...(isNarrow ? S.stageColumnNarrow : {}) }}>
           <section style={S.stageHeader}>
             <div>
               <div style={S.panelKicker}>Stage</div>
@@ -393,7 +526,7 @@ export function ProjectView({
             </div>
           </section>
 
-          <section style={S.previewShell}>
+          <section style={{ ...S.previewShell, ...(isNarrow ? S.previewShellNarrow : {}), ...(isMobile ? S.previewShellMobile : {}) }}>
             <VideoPreview html={html} mp4Url={mp4} mode={mp4 ? 'rendered' : 'design'} duration={Number(cfg.duration ?? 10)} />
           </section>
 
@@ -405,7 +538,7 @@ export function ProjectView({
               </div>
               <span style={S.timelineMeta}>{files.length} files · {convs.length} chats</span>
             </div>
-            <div style={S.stepRail}>
+            <div style={{ ...S.stepRail, ...(isMobile ? S.stepRailMobile : {}) }}>
               {pipelineSteps.map((step, i) => (
                 <div key={step.label} style={S.stepBlock}>
                   <span style={{ ...S.stepNumber, ...(step.done ? S.stepNumberDone : {}) }}>{i + 1}</span>
@@ -416,7 +549,18 @@ export function ProjectView({
           </section>
         </main>
 
-        <aside style={S.inspector}>
+        <aside style={{ ...S.inspector, ...(isNarrow ? S.inspectorNarrow : {}) }}>
+          <PipelinePanel
+            job={pipeline}
+            busy={pipelineBusy}
+            error={pipelineError}
+            onStart={startPipeline}
+            onApprove={approveStoryboard}
+            onRender={renderPipeline}
+            onRetryScene={retryScene}
+            onCancel={cancelPipeline}
+          />
+
           <section style={S.inspectorCard}>
             <div style={S.railTitle}>Production brief</div>
             <InfoRow label="Project" value={project?.name || projectId.slice(0, 8)} />
@@ -478,6 +622,178 @@ function UserMessage({ content }: { content: string }) {
   );
 }
 
+function PipelinePanel({
+  job, busy, error, onStart, onApprove, onRender, onRetryScene, onCancel,
+}: {
+  job: PipelineJob | null;
+  busy: boolean;
+  error: string | null;
+  onStart: () => void;
+  onApprove: () => void;
+  onRender: () => void;
+  onRetryScene: (sceneNumber: number) => void;
+  onCancel: () => void;
+}) {
+  const statusLabel = job ? pipelineStatusLabel(job.status) : 'Not started';
+  const renderPct = job?.render?.frame && job.render.totalFrames
+    ? Math.min(100, Math.round((job.render.frame / job.render.totalFrames) * 100))
+    : job?.status === 'done'
+      ? 100
+      : 0;
+
+  return (
+    <section style={S.inspectorCard}>
+      <div style={S.pipelinePanelTop}>
+        <div>
+          <div style={S.panelKicker}>Pipeline</div>
+          <div style={S.railTitle}>Storyboard to MP4</div>
+        </div>
+        <span style={S.pipelineStatus}>{statusLabel}</span>
+      </div>
+
+      {error && <div style={S.pipelineError}>{error}</div>}
+
+      {!job ? (
+        <div style={S.pipelineEmpty}>
+          <p style={S.pipelineCopy}>Start a durable production job with an explicit storyboard approval gate.</p>
+          <button disabled={busy} onClick={onStart} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
+            Start storyboard
+          </button>
+        </div>
+      ) : (
+        <>
+          <div style={S.pipelineProgressGrid}>
+            <PipelineStat label="Scenes" value={`${job.scenesCompleted}/${job.totalScenes || '-'}`} />
+            <PipelineStat label="Duration" value={job.script ? `${job.script.duration}s` : '-'} />
+            <PipelineStat label="Checks" value={job.check?.status ?? '-'} />
+          </div>
+
+          {job.script && (
+            <div style={S.storyboardBox}>
+              <div style={S.storyboardTitle}>{job.script.title}</div>
+              <div style={S.storyboardMeta}>{job.script.aspectRatio || '16:9'} · {job.script.duration}s · {job.script.scenes.length} scenes</div>
+              <div style={S.sceneList}>
+                {job.script.scenes.map(scene => {
+                  const sceneState = job.scenes.find(s => s.number === scene.number);
+                  return (
+                    <div key={scene.id || scene.number} style={S.sceneItem}>
+                      <span style={S.sceneNum}>{scene.number}</span>
+                      <div style={S.sceneBody}>
+                        <div style={S.sceneTitle}>{scene.text || scene.goal}</div>
+                        <div style={S.sceneMeta}>{scene.duration}s · {sceneState?.status ?? 'planned'}</div>
+                        {sceneState?.error && <div style={S.sceneError}>{sceneState.error}</div>}
+                      </div>
+                      {sceneState?.status === 'failed' && (
+                        <button disabled={busy} onClick={() => onRetryScene(scene.number)} style={S.sceneRetry}>Retry</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {job.status === 'scripting' && <div style={S.pipelineCopy}>Director agent is drafting the storyboard.</div>}
+          {job.status === 'awaiting_approval' && (
+            <button disabled={busy} onClick={onApprove} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
+              Approve storyboard and build scenes
+            </button>
+          )}
+          {job.status === 'rendering_scenes' && (
+            <div style={S.pipelineCopy}>Scene agents are generating editable HTML fragments. Failed scenes can be retried individually.</div>
+          )}
+          {(job.status === 'checking' || job.check) && (
+            <div style={S.checkBox}>
+              <CheckRow label="Lint" status={job.check?.lint?.passed} detail={checkDetail(job.check?.lint)} />
+              <CheckRow label="Validate" status={job.check?.validate?.passed} detail={checkDetail(job.check?.validate)} />
+              <CheckRow label="Inspect" status={job.check?.inspect?.passed} detail={inspectDetail(job.check?.inspect)} />
+            </div>
+          )}
+          {job.status === 'ready_to_render' && (
+            <button disabled={busy} onClick={onRender} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
+              Run checks and render MP4
+            </button>
+          )}
+          {job.status === 'assembling' && (
+            <div style={S.renderProgress}>
+              <div style={S.renderBar}><span style={{ ...S.renderBarFill, width: `${renderPct}%` }} /></div>
+              <span>{renderPct ? `${renderPct}%` : 'Preparing render...'}</span>
+            </div>
+          )}
+          {job.status === 'done' && <div style={S.pipelineDone}>Rendered MP4 is ready in artifacts.</div>}
+          {job.status === 'failed' && (
+            <>
+              <div style={S.pipelineError}>{job.error || job.check?.error || job.render?.error || 'Pipeline failed'}</div>
+              {job.totalScenes > 0 && job.scenesCompleted === job.totalScenes && (
+                <button disabled={busy} onClick={onRender} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
+                  Retry checks and render
+                </button>
+              )}
+              {job.scenesCompleted === 0 && (
+                <button disabled={busy} onClick={onStart} style={{ ...S.pipelinePrimary, opacity: busy ? 0.5 : 1 }}>
+                  Start a new storyboard
+                </button>
+              )}
+            </>
+          )}
+          {job.status === 'cancelled' && <div style={S.pipelineError}>Pipeline was cancelled.</div>}
+          {!['done', 'failed', 'cancelled'].includes(job.status) && (
+            <button disabled={busy} onClick={onCancel} style={{ ...S.pipelineSecondary, opacity: busy ? 0.5 : 1 }}>
+              Cancel pipeline
+            </button>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function CheckRow({ label, status, detail }: { label: string; status?: boolean; detail: string }) {
+  const state = status === undefined ? 'pending' : status ? 'passed' : 'failed';
+  return (
+    <div style={S.checkRow}>
+      <span style={{ ...S.checkDotSmall, background: status === undefined ? 'var(--muted)' : status ? 'var(--success)' : 'var(--danger)' }} />
+      <span style={S.checkName}>{label}</span>
+      <span style={S.checkState}>{state}</span>
+      <span style={S.checkDetail}>{detail}</span>
+    </div>
+  );
+}
+
+function checkDetail(result?: { errors: string[]; warnings: string[] }): string {
+  if (!result) return 'waiting';
+  return `${result.errors.length} errors · ${result.warnings.length} warnings`;
+}
+
+function inspectDetail(result?: { findings: unknown[] }): string {
+  if (!result) return 'waiting';
+  return `${result.findings.length} findings`;
+}
+
+function PipelineStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={S.pipelineStat}>
+      <span style={S.pipelineStatValue}>{value}</span>
+      <span style={S.pipelineStatLabel}>{label}</span>
+    </div>
+  );
+}
+
+function pipelineStatusLabel(status: PipelineStatus): string {
+  const labels: Record<PipelineStatus, string> = {
+    scripting: 'Drafting',
+    awaiting_approval: 'Needs approval',
+    rendering_scenes: 'Building scenes',
+    checking: 'Checking',
+    ready_to_render: 'Ready to render',
+    assembling: 'Rendering',
+    done: 'Done',
+    failed: 'Failed',
+    cancelled: 'Cancelled',
+  };
+  return labels[status];
+}
+
 function isMachineBrief(content: string): boolean {
   return /NARRATIVE STRUCTURE|Return ONLY|VISUAL DIRECTION|VIDEO REQUEST|Production|video director|structured storyboard|BRIEF:/i.test(content);
 }
@@ -523,12 +839,15 @@ function ArtifactStat({ label, value }: { label: string; value: number }) {
 
 const S: Record<string, React.CSSProperties> = {
   shell: { display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', color: 'var(--fg)', overflow: 'hidden' },
+  shellNarrow: { overflow: 'auto' },
   header: { minHeight: 68, display: 'flex', alignItems: 'center', gap: 12, padding: '0 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0, zIndex: 10 },
+  headerNarrow: { height: 'auto', minHeight: 68, alignItems: 'flex-start', flexWrap: 'wrap', padding: '12px 16px' },
   backBtn: { border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--fg)', borderRadius: 9, padding: '8px 11px', cursor: 'pointer', fontWeight: 800, fontSize: 12 },
   projectIdentity: { minWidth: 220 },
   projectEyebrow: { color: 'var(--muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 },
   projectTitle: { color: 'var(--fg)', fontSize: 16, fontWeight: 900, letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 300 },
   headerMeta: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  headerMetaMobile: { width: '100%' },
   metaPill: { border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', borderRadius: 999, padding: '5px 8px', fontSize: 11, fontWeight: 800 },
   convBtn: { padding: '8px 11px', fontSize: 12, color: 'var(--muted)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, cursor: 'pointer', fontWeight: 700 },
   backdrop: { position: 'fixed', inset: 0, zIndex: 99 },
@@ -542,7 +861,9 @@ const S: Record<string, React.CSSProperties> = {
   statusLine: { padding: '6px 18px', background: 'var(--surface-hover)', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', flexShrink: 0 },
   statusSpinner: { width: 10, height: 10, borderWidth: 1.5, display: 'inline-block', marginRight: 8 },
   body: { flex: 1, display: 'grid', gridTemplateColumns: '420px minmax(520px, 1fr) 340px', overflow: 'hidden' },
+  bodyNarrow: { display: 'flex', flexDirection: 'column', overflow: 'visible' },
   directorPanel: { minWidth: 0, borderRight: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column' },
+  directorPanelNarrow: { minHeight: 420, borderRight: 'none', borderBottom: '1px solid var(--border)' },
   panelHeader: { padding: '18px 18px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   panelKicker: { color: 'var(--muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 900 },
   panelTitle: { margin: '3px 0 0', color: 'var(--fg)', fontSize: 16, fontWeight: 900 },
@@ -563,24 +884,61 @@ const S: Record<string, React.CSSProperties> = {
   systemMessage: { alignSelf: 'center', color: 'var(--muted)', fontSize: 11 },
   pre: { whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 'inherit', margin: 0, wordBreak: 'break-word' },
   stageColumn: { minWidth: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' },
+  stageColumnNarrow: { minHeight: 560, overflow: 'visible' },
   stageHeader: { minHeight: 72, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '0 20px', background: 'var(--bg)' },
   stageTitle: { margin: '3px 0 0', color: 'var(--fg)', fontSize: 18, fontWeight: 900 },
   stageActions: { display: 'flex', alignItems: 'center', gap: 8 },
   softBtn: { border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--muted)', borderRadius: 9, padding: '8px 11px', cursor: 'pointer', fontWeight: 800, fontSize: 12 },
   softBtnActive: { color: 'var(--fg)', borderColor: 'var(--accent)' },
   previewShell: { flex: 1, minHeight: 0, padding: 18, display: 'flex' },
+  previewShellNarrow: { minHeight: 420 },
+  previewShellMobile: { minHeight: 260, padding: 12 },
   timeline: { borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '14px 18px 18px' },
   timelineHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 12 },
   timelineTitle: { margin: '2px 0 0', color: 'var(--fg)', fontSize: 15, fontWeight: 900 },
   timelineMeta: { color: 'var(--muted)', fontSize: 11, fontWeight: 700 },
   stepRail: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 },
+  stepRailMobile: { gridTemplateColumns: '1fr' },
   stepBlock: { border: '1px solid var(--border)', borderRadius: 11, background: 'var(--bg)', padding: 10, display: 'flex', alignItems: 'center', gap: 8 },
   stepNumber: { width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900 },
   stepNumberDone: { background: 'var(--fg)', color: 'var(--bg)', borderColor: 'var(--fg)' },
   stepLabel: { fontSize: 12, fontWeight: 800 },
   inspector: { minWidth: 0, borderLeft: '1px solid var(--border)', background: 'var(--surface)', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 14, padding: 14 },
+  inspectorNarrow: { borderLeft: 'none', borderTop: '1px solid var(--border)', overflow: 'visible' },
   inspectorCard: { border: '1px solid var(--border)', borderRadius: 13, background: 'var(--bg)', padding: 14 },
   railTitle: { color: 'var(--fg)', fontSize: 13, fontWeight: 900, marginBottom: 12 },
+  pipelinePanelTop: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  pipelineStatus: { border: '1px solid var(--border)', borderRadius: 999, padding: '4px 8px', color: 'var(--muted)', fontSize: 10, fontWeight: 900, whiteSpace: 'nowrap' },
+  pipelineEmpty: { display: 'flex', flexDirection: 'column', gap: 12 },
+  pipelineCopy: { color: 'var(--muted)', fontSize: 12, lineHeight: 1.5, margin: 0 },
+  pipelinePrimary: { width: '100%', border: 'none', background: 'var(--fg)', color: 'var(--bg)', borderRadius: 9, padding: '10px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 900 },
+  pipelineSecondary: { width: '100%', border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', borderRadius: 9, padding: '9px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 800, marginTop: 10 },
+  pipelineError: { border: '1px solid var(--danger)', background: 'var(--danger-dim)', color: 'var(--danger)', borderRadius: 9, padding: 10, fontSize: 12, lineHeight: 1.45, marginBottom: 10 },
+  pipelineDone: { border: '1px solid var(--success)', background: 'var(--success-dim)', color: 'var(--success)', borderRadius: 9, padding: 10, fontSize: 12, fontWeight: 800 },
+  pipelineProgressGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 },
+  pipelineStat: { border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: 9 },
+  pipelineStatValue: { display: 'block', color: 'var(--fg)', fontSize: 15, fontWeight: 900 },
+  pipelineStatLabel: { display: 'block', color: 'var(--muted)', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', marginTop: 2 },
+  storyboardBox: { border: '1px solid var(--border)', borderRadius: 11, background: 'var(--surface)', padding: 10, marginBottom: 12 },
+  storyboardTitle: { color: 'var(--fg)', fontSize: 13, fontWeight: 900 },
+  storyboardMeta: { color: 'var(--muted)', fontSize: 11, marginTop: 3, marginBottom: 9 },
+  sceneList: { display: 'flex', flexDirection: 'column', gap: 7 },
+  sceneItem: { display: 'grid', gridTemplateColumns: '24px 1fr auto', gap: 8, alignItems: 'start', borderTop: '1px solid var(--border-soft)', paddingTop: 7 },
+  sceneNum: { width: 22, height: 22, borderRadius: '50%', background: 'var(--fg)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900 },
+  sceneBody: { minWidth: 0 },
+  sceneTitle: { color: 'var(--fg)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  sceneMeta: { color: 'var(--muted)', fontSize: 10, marginTop: 2 },
+  sceneError: { color: 'var(--danger)', fontSize: 10, marginTop: 3 },
+  sceneRetry: { border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--fg)', borderRadius: 7, padding: '5px 7px', cursor: 'pointer', fontSize: 10, fontWeight: 800 },
+  checkBox: { border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', padding: 9, display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 10 },
+  checkRow: { display: 'grid', gridTemplateColumns: '8px 64px 54px 1fr', alignItems: 'center', gap: 7, fontSize: 11 },
+  checkDotSmall: { width: 7, height: 7, borderRadius: 999 },
+  checkName: { color: 'var(--fg)', fontWeight: 800 },
+  checkState: { color: 'var(--muted)', fontWeight: 800 },
+  checkDetail: { color: 'var(--muted)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  renderProgress: { display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 11, fontWeight: 800 },
+  renderBar: { flex: 1, height: 8, borderRadius: 999, background: 'var(--surface-hover)', overflow: 'hidden' },
+  renderBarFill: { display: 'block', height: '100%', background: 'var(--accent)' },
   infoRow: { display: 'grid', gridTemplateColumns: '86px 1fr', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border-soft)', alignItems: 'baseline' },
   infoLabel: { color: 'var(--muted)', fontSize: 11, fontWeight: 800 },
   infoValue: { color: 'var(--fg)', fontSize: 12, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },

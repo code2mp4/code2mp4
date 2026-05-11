@@ -38,14 +38,12 @@ export function VideoPreview({
 }: VideoPreviewProps) {
   const playerRef = useRef<HyperframesPlayerElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [ready, setReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(duration);
   const [playing, setPlaying] = useState(false);
 
   // Handle player ready
   const handleReady = useCallback(() => {
-    setReady(true);
     if (playerRef.current) {
       setTotalDuration(playerRef.current.duration || duration);
     }
