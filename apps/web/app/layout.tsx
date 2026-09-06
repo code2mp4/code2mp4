@@ -3,16 +3,14 @@ import { ClientLayout } from './ClientLayout';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Code2MP4 — Agent-native video pipeline',
+  title: 'Code2MP4 — From a thought to a finished frame',
   description: 'Prompt in, editable motion source out, deterministic MP4 rendered.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <ClientLayout>{children}</ClientLayout>
-      </body>
+    <html lang='en'>
+      <body>{<ClientLayout>{children}</ClientLayout>}</body>
     </html>
   );
 }
