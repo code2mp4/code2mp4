@@ -1,0 +1,15 @@
+{
+  "role": "product-documentation-and-releases",
+  "product": "Code2MP4",
+  "desktop_source": "closed-source",
+  "current_desktop_release": null,
+  "downloads": "https://github.com/code2mp4/code2mp4/releases",
+  "legacy": {
+    "branch": "legacy-open-source",
+    "snapshot_tag": "legacy-open-source-20260511",
+    "source_commit": "91d7ba4501d8c6e48b4889a647b21af847f8185c",
+    "prerelease_tag": "v0.1.0-alpha",
+    "license": "Apache-2.0",
+    "maintenance": "historical-archive"
+  }
+}

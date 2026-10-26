@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Downloads and release status / 下载与发布状态
+    url: https://github.com/code2mp4/code2mp4/blob/main/docs/downloads.md
+    about: Find actual desktop installers and distinguish the historical prototype.
+  - name: Security reporting / 安全问题
+    url: https://github.com/code2mp4/code2mp4/blob/main/SECURITY.md
+    about: Request a private reporting route; keep vulnerability details out of public issues.
+  - name: Historical source / 历史源码
+    url: https://github.com/code2mp4/code2mp4/tree/legacy-open-source
+    about: Browse the preserved early open-source experiment.

@@ -1,22 +1,13 @@
-Open Video — AI-driven video production
-Copyright 2026 Open Video contributors
+Code2MP4 public documentation and release repository
 
-This product includes software developed by:
+The default branch contains public documentation and repository tooling.
+These public materials use the Apache License, Version 2.0 in LICENSE.
 
-- Open Design (https://github.com/nexu-io/open-design)
-  Copyright 2026 Open Design contributors
-  Licensed under the Apache License, Version 2.0
+The early open-source implementation and its original attribution are
+preserved in the legacy-open-source branch. A copy of that original
+NOTICE is retained at legacy/NOTICE for historical attribution.
 
-- HyperFrames (https://github.com/heygen-com/hyperframes)
-  Copyright HeyGen, Inc.
-  Used as an external dependency via npm (@hyperframes/player, @hyperframes/core)
-
-This product depends on the following third-party libraries,
-each available under its own license:
-
-- Next.js (MIT) — https://github.com/vercel/next.js
-- React (MIT) — https://github.com/facebook/react
-- Express (MIT) — https://github.com/expressjs/express
-- better-sqlite3 (MIT) — https://github.com/WiseLibs/better-sqlite3
-- GSAP (Standard License) — https://gsap.com
-- Vitest (MIT) — https://github.com/vitest-dev/vitest
+The independently developed closed-source desktop application is
+distributed separately. Its actual release packages supply the applicable
+application terms and third-party notices. This documentation repository
+does not represent a component inventory for those application builds.

@@ -1,110 +1,27 @@
-# Contributing to Code2MP4
+# Contributing
 
-Thank you for your interest in contributing! Code2MP4 is an open-source project that welcomes contributions of all kinds — code, docs, motion systems, video skills, templates, and bug reports.
+This is the public documentation, release, and feedback repository for Code2MP4.
 
-## Getting started
+Documentation corrections, translations, broken-link fixes, and improvements to public repository tooling are welcome. Product bugs and creative-workflow requests belong in the [issue forms](https://github.com/code2mp4/code2mp4/issues/new/choose); see [Feedback](docs/feedback.md).
 
-```bash
-git clone https://github.com/code2mp4/code2mp4.git
-cd code2mp4
-pnpm install
-pnpm dev       # start the server
-pnpm test      # run tests
-```
+The current desktop product is developed independently in a closed-source codebase. Its application source is not maintained on this branch. The [historical implementation](docs/history.md) remains preserved, without a commitment to new features or compatibility updates.
 
-## Development workflow
+## Documentation changes
 
-1. **Fork** the repository
-2. **Create a branch** for your change (`feat/new-skill`, `fix/render-timeout`, etc.)
-3. **Make your change** — follow the existing code style
-4. **Run checks** before submitting:
-   ```bash
-   pnpm typecheck   # TypeScript check
-   pnpm build       # Build all packages
-   pnpm test        # Run 49 tests
-   ```
-5. **Submit a PR** with a clear description of what you changed and why
+1. Start from the current main branch.
+2. Make a focused change to the public material.
+3. Run the public documentation check:
 
-## What to contribute
+       python3 scripts/check-public-docs.py
 
-### Motion design systems
-Add a new `MOTION.md` under `motion-systems/`. Each system is a markdown file with 8 sections:
-- Visual Atmosphere
-- Color Palette
-- Typography
-- Easing Signatures
-- Transition Matrix
-- Typography Animation Rules
-- Timing & Rhythm
-- Layout Principles
-- Do's and Don'ts
-- Anti-Slop Checklist
+4. Open a pull request explaining the user-visible correction.
 
-See existing systems in `motion-systems/` for the exact format.
+Keep descriptions consistent with actual published builds. Public submissions should contain only material you have permission to share and must leave out credentials, private projects, and unpublished application code.
 
-### Video skills
-Add a new `SKILL.md` under `video-skills/`. Each skill is a markdown file with YAML frontmatter:
+Contributions intentionally submitted to these public materials follow the repository's [Apache License 2.0](LICENSE), unless separately agreed. See [License scope](LICENSES.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-```yaml
----
-name: my-skill-name
-description: Short description
-triggers:
-  - "keyword"
-  - "触发词"
-od:
-  mode: video
-  surface: video
-  scenario: marketing
----
-```
+## 简体中文
 
-See existing skills in `video-skills/` for the exact format.
+本仓受理文档修订、翻译、链接修复和公开仓工具改进。产品问题与功能建议请使用[反馈表单](https://github.com/code2mp4/code2mp4/issues/new/choose)。
 
-### Agent adapters
-Add support for new coding-agent CLIs in `apps/server/src/agents.ts`. Each agent needs:
-- `binCandidates` — names/paths to find the CLI on PATH
-- `streamFormat` — one of `claude-stream-json`, `copilot-stream-json`, or `plain`
-- `buildArgs` — function that returns spawn args for the given prompt
-- `models` — list of supported model IDs
-
-### HyperFrames templates
-Add new `.html` files under `templates/`. Templates should be valid HyperFrames compositions with:
-- `data-composition-id`, `data-duration`, `data-resolution` on `<html>`
-- A `#stage` div with `data-*` attributes
-- GSAP CDN and `window.__timelines` registration
-- A `{ paused: true }` timeline with entrance animations
-
-### Bug fixes and improvements
-- Check the issues tab for open bugs
-- Improvements to error handling, performance, a11y are always welcome
-- Test your changes: `pnpm test`
-
-## Code conventions
-
-- **TypeScript** throughout — no plain `.js` files except build output
-- **ESM** (`"type": "module"`)
-- **No framework state management** — plain React `useState`/`useCallback`
-- **CSS custom properties** for theming — use the design tokens in `globals.css`
-- **Component files** are one component per file, co-located with their styles
-- **Tests** use Vitest with `describe`/`it`/`expect`
-
-## Project structure
-
-```
-apps/server/src/    — Backend (Express + SQLite)
-apps/web/src/       — Frontend (Next.js 16 + React 18)
-packages/contracts/ — Shared types
-motion-systems/     — MOTION.md design systems
-video-skills/       — SKILL.md video skills
-templates/          — HF blank templates
-tools/dev/          — ov-dev CLI
-```
-
-## Questions?
-
-Open an issue or start a discussion. We're happy to help.
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the Apache 2.0 License.
+当前桌面产品独立闭源开发；历史源码按原许可保留，不承诺继续新增功能。提交文档时请基于 main，运行上述检查，并使用可公开分享的材料。

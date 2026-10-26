@@ -1,24 +1,12 @@
-## Summary
-<!-- Briefly describe what this PR does and why. -->
+## What changed?
 
-## Type of change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation
-- [ ] Refactor
-- [ ] Performance improvement
-- [ ] Test coverage
+Describe the documentation or public repository tooling correction.
 
-## Checklist
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm build` passes
-- [ ] `pnpm test` passes (existing + new tests)
-- [ ] New code follows existing style conventions
-- [ ] Documentation updated (README, CONTRIBUTING, etc.)
-- [ ] New motion systems / skills include required sections (see CONTRIBUTING.md)
+## Checks
 
-## Screenshots / video
-<!-- If your change affects the UI, include a screenshot or short video. -->
+- [ ] The change concerns public documentation or repository tooling.
+- [ ] Product claims match actual published builds.
+- [ ] Local links pass: python3 scripts/check-public-docs.py
+- [ ] The change contains no credentials, private projects, or unpublished application code.
 
-## Related issues
-<!-- Link to any related issues: Closes #123, Ref #456 -->
+The early prototype is preserved in legacy-open-source. Current desktop source changes are developed separately.

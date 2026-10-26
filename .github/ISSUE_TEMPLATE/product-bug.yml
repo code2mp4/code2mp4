@@ -1,0 +1,45 @@
+name: Product problem / 产品问题
+description: Report a reproducible product or documentation problem.
+title: "[Bug] "
+body:
+  - type: dropdown
+    id: product
+    attributes:
+      label: Affected product / 所用产品
+      options:
+        - Current Code2MP4 desktop product / 当前桌面产品
+        - Public documentation or downloads / 文档或下载
+        - Historical open-source prototype / 历史开源原型
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Exact version or page / 具体版本或页面
+      description: Include the desktop version, legacy tag, or documentation URL.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / 使用环境
+      description: Operating system, processor architecture, and Agent if relevant.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction / 复现步骤
+      description: Use a minimal example you have permission to share. Leave out credentials and private project data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / 实际结果
+    validations:
+      required: true

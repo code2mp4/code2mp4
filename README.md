@@ -1,296 +1,45 @@
 # Code2MP4
 
-> **AI agents can write code. Now they can write videos.**
+**Turn your materials into videos, with your preferred Agent.**
 
-Code2MP4 is an open-source agent-native video production pipeline. It helps Claude Code, OpenCode, Codex, Gemini CLI and other coding agents **plan, script, storyboard, generate, review, and render** videos from editable source files.
+Code2MP4 is a desktop video creation product focused on clear explanations, editable projects, and continued revision. It brings source materials, visual composition, narration, subtitles, and MP4 delivery into one creative workflow.
 
-**Prompt in. Editable motion source out. Deterministic MP4 rendered.**
+[简体中文](README.zh-CN.md) · [Downloads](docs/downloads.md) · [Getting started](docs/getting-started.md) · [Feedback](docs/feedback.md)
 
-```mermaid
-flowchart LR
-    A[Brief] --> B[Script]
-    B --> C[Storyboard]
-    C --> D[Scene Agent]
-    D --> E[Motion Source]
-    E --> F[Render Engine]
-    F --> G[Quality Check]
-    G --> H[MP4]
-```
+## Official product repository
 
-<p align="center">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" /></a>
-  <a href="https://code2mp4.com"><img alt="Website" src="https://img.shields.io/badge/website-code2mp4.com-blue?style=flat-square" /></a>
-</p>
+This is the public home for Code2MP4 documentation, release announcements, downloadable desktop builds, and product feedback. The current desktop product is developed independently in a separate, closed-source codebase.
 
-<p align="center"><b>English</b> · <a href="README.zh-CN.md">简体中文</a></p>
+**Download status:** No installer for the current desktop product has been published in this repository yet. See [Downloads](docs/downloads.md) for the current status and release instructions.
 
----
+## What Code2MP4 is built for
 
-## Not just HyperFrames + Open Design
+- Explain knowledge, data, processes, and product ideas through video.
+- Work with your own materials and a compatible external Agent.
+- Keep an editable project for preview, revision, and later continuation.
+- Bring picture, narration, subtitles, and timing together for MP4 delivery.
 
-Code2MP4 is not a wrapper. It's the workflow layer for agent-generated video production.
+Available features, compatible Agents, operating systems, and known limitations are specified for each published build. This page does not announce an unreleased capability as a finished release.
 
-```
-HyperFrames     = render engine       (solves: HTML → MP4)
-Open Design     = agent orchestration (inspired prompt stacking, agent detection)
-Code2MP4        = video workflow layer (solves: brief → script → storyboard → source → review → render)
-```
-
-HyperFrames gets stronger every month. So does Open Design. That's good for everyone. Code2MP4 exists because neither project solves the *workflow* problem: how does a coding agent go from "make a product launch video" to a finished, reviewed, platform-ready MP4 — repeatably, at scale?
-
-That's the layer Code2MP4 defines.
-
----
-
-## What Code2MP4 is
-
-Code2MP4 is a **production pipeline for agent-generated videos**, not a black-box text-to-video model.
-
-```
-Black-box AI video:   Prompt ──────────────────────► MP4 (opaque, uneditable)
-
-Code2MP4:             Prompt → Storyboard → Motion Source → Render → MP4
-                                       ↑ editable, version-controlled
-```
-
-Every video produced by Code2MP4 has a **storyboard** (structured JSON), **motion source** (editable HTML/CSS/GSAP), and **deterministic MP4** (same input = same output). You can inspect, edit, version, and repeat.
-
-## What Code2MP4 is not
-
-- ❌ Not a photoreal text-to-video model (Sora, Veo, Kling, Runway)
-- ❌ Not a manual timeline editor (Premiere, DaVinci, CapCut)
-- ❌ Not a hosted SaaS — runs locally on your machine
-- ❌ Not a simple code-to-MP4 format converter
-
-## The comparison that matters
-
-| Capability | Black-box text-to-video | Traditional editors | HyperFrames | **Code2MP4** |
-|---|---|---|---|---|
-| Editable source | No | Partial | Yes | **Yes** |
-| Deterministic output | No | Yes | Yes | **Yes** |
-| Agent-native workflow | No | No | Partial | **Yes** |
-| Git-friendly | No | No | Yes | **Yes** |
-| CI/CD ready | No | No | Partial | **Yes** |
-| Storyboard-driven | No | No | No | **Yes** |
-| Multi-agent pipeline | No | No | No | **Yes** |
-| Best for | cinematic generation | human editing | rendering engine | **agent-driven production** |
-
----
-
-## Quickstart
-
-```bash
-git clone https://github.com/code2mp4/code2mp4.git
-cd code2mp4
-corepack enable
-pnpm install
-pnpm dev
-```
-
-Open `http://localhost:7456`. Pick a video type, describe what you want, press send.
-
-### Prerequisites
-
-- **Node.js** ≥ 22
-- **pnpm** ≥ 10
-- **An AI agent CLI** (pick one):
-  ```bash
-  npm i -g @anthropic-ai/claude-code   # Claude Code (recommended)
-  npm i -g opencode                     # OpenCode
-  ```
-- **HyperFrames** (for rendering): `npm i -g hyperframes`
-- **FFmpeg** (for video encoding): `brew install ffmpeg`
-
----
-
-## How it works
-
-### The pipeline
-
-Code2MP4 orchestrates a multi-stage pipeline driven by coding agents:
-
-1. **Discovery** — Interactive question forms gather video type, duration, energy, audio needs
-2. **Director Agent** — Generates a structured storyboard (JSON with scenes, visuals, text, motion)
-3. **Scene Agent** — Each scene becomes an editable motion source fragment (HTML + CSS + GSAP)
-4. **Assembly** — Scenes are combined into a complete HyperFrames composition
-5. **Render** — Puppeteer + FFmpeg produce a deterministic MP4
-
-```mermaid
-flowchart TB
-    subgraph Prompt["Prompt Layer"]
-        D[Discovery Form]
-        I[Identity Charter]
-        M[MOTION.md]
-        S[SKILL.md]
-    end
-    
-    subgraph Pipeline["Agent Pipeline"]
-        DA[Director Agent]
-        SB[Storyboard JSON]
-        SA[Scene Agent ×N]
-        AS[Assembly]
-    end
-    
-    subgraph Render["Render Engine"]
-        HF[HyperFrames]
-        PP[Puppeteer]
-        FF[FFmpeg]
-    end
-    
-    D --> DA
-    I --> DA
-    M --> DA
-    S --> DA
-    DA --> SB
-    SB --> SA
-    SA --> AS
-    AS --> HF
-    HF --> PP --> FF --> MP4[MP4]
-```
-
-### Prompt stack (7 layers)
-
-The system prompt that drives the agent is carefully composed from seven layers:
-
-| Layer | Purpose |
-|---|---|
-| 1. Discovery | Hard rules for interactive turn-1 question forms |
-| 2. Identity | Compact producer identity charter |
-| 3. Motion system | Palette, fonts, easing signatures, transition rules |
-| 4. Script system | Narrative arc, pacing, hook patterns |
-| 5. Video skill | Scene counts, animation patterns, output checklist |
-| 6. Project metadata | User-selected type, duration, aspect ratio, energy |
-| 7. HyperFrames contract | Load-bearing composition rules (pinned last) |
-
----
-
-## Features
-
-| | |
-|---|---|
-| **Agents** | Claude Code · OpenCode · Codex CLI · Gemini CLI · Cursor Agent · Qwen Code — auto-detected on PATH |
-| **Motion systems** | 8 curated directions (Editorial · Tech · Warm & Soft · Cinematic · Brutalist · Neon · Orbital · Organic) — each a deterministic palette, font stack, easing signature, and transition matrix |
-| **Script systems** | 3 narrative structures (Tech Demo · Product Launch · Brand Story) with hook patterns and pacing maps |
-| **Video skills** | 6 composable workflows — SKILL.md bundles with scene templates, animation rules, and output checklists |
-| **Multi-stage pipeline** | Director Agent → Storyboard → Scene Agents → Assembly — per-scene retry, filesystem persistence |
-| **Deterministic rendering** | Same motion source = same MP4 output. HyperFrames engine (Puppeteer + FFmpeg) |
-| **Dual preview** | `<hyperframes-player>` for design review + `<video>` tag for playback |
-| **SQLite persistence** | Projects, conversations, messages with CASCADE delete |
-| **SSE streaming** | Real-time agent output — text, tool calls, render progress |
-| **License** | Apache 2.0 |
-
----
-
-## Live Demos
-
-Rendered from the example storyboards using Code2MP4 + HyperFrames (1920×1080, 30fps):
-
-| Demo | Duration | Size | Motion System |
-|---|---|---|---|
-| **[Product Launch](docs/demos/demo-product-launch.mp4)** ← click to play | 30s | 1.3 MB | Tech |
-| **[OSS Intro](docs/demos/demo-oss-intro.mp4)** ← click to play | 30s | 956 KB | Editorial |
-| **[Release Notes](docs/demos/demo-release-notes.mp4)** ← click to play | 25s | 698 KB | Tech |
-
-> **Source → MP4**: Each demo has a [storyboard](examples/product-launch/storyboard.json) + editable HTML composition + [render config](docs/render-config.md). Same source = deterministic MP4 every time.
-
----
-
-## Examples
-
-Three examples illustrate what Code2MP4 is built for:
-
-| Example | Description | Storyboard |
-|---|---|---|
-| [Product Launch](examples/product-launch/) | 30s SaaS product launch video — problem → promise → features → CTA | [storyboard.json](examples/product-launch/storyboard.json) |
-| [OSS Intro](examples/oss-intro/) | Code2MP4 self-intro video — what → why → how → get started | [storyboard.json](examples/oss-intro/storyboard.json) |
-| [Release Notes](examples/release-notes/) | Changelog-to-video — version → new features → improvements → upgrade | [storyboard.json](examples/release-notes/storyboard.json) |
-
-## Templates
-
-Each example is also available as a reusable template with discovery questions and CI/CD integration guides:
-
-| Template | Archetype | Motion | Questions |
-|---|---|---|---|
-| [Product Launch](templates/product-launch/) | problem-solution-cta | tech | 7 (name, description, pain, features, CTA, duration, voiceover) |
-| [OSS Intro](templates/oss-intro/) | what-why-how-start | editorial | 6 (name, one-liner, problem, concepts, install, duration) |
-| [Release Notes](templates/release-notes/) | version-features-improvements-upgrade | tech | 7 (version, date, features, improvements, upgrade, changelog URL, CI mode) |
-
----
-
-## Use cases
-
-- Product launch videos for SaaS
-- Open-source project intro videos
-- Release note / changelog videos
-- Developer documentation explainers
-- Social media motion cards
-- Automated CI/CD video generation
-
----
-
-## Docs
-
-| Document | Purpose |
-|---|---|
-| [Vision](docs/vision.md) | Why agents need video as an output format |
-| [Comparison](docs/comparison.md) | How Code2MP4 differs from black-box tools, Remotion, HyperFrames, and Open Design |
-| [Architecture](docs/architecture.md) | Full pipeline architecture — prompt stack, agent orchestration, render engine |
-| [Motion Source](docs/motion-source.md) | The source code of a video — editable, reviewable, version-controllable |
-| **Production schemas** | |
-| [Brief Schema](docs/brief-schema.md) | Video intent model — goal, audience, format, constraints (`brief.json`) |
-| [Script Schema](docs/script-schema.md) | Narrative structure — hook, segments, pacing, CTA (`script.json`) |
-| [Storyboard Schema](docs/storyboard-schema.md) | Structured scene plan — visuals, text, motion (`storyboard.json`) |
-| [Scene Schema](docs/scene-schema.md) | Per-scene agent spec — layout, elements, motion grammar (`scene.json`) |
-| [Render Config](docs/render-config.md) | Execution config — quality, fps, resolution, variants (`render.config.json`) |
-| **Quality & campaigns** | |
-| [Quality System](docs/quality-system.md) | Video Review Theater — AI-template detection, platform-aware review |
-| [Quality Checklist](docs/quality-checklist.md) | 7 dimensions, 40+ checks (`quality-report.json`) |
-| [Campaign Workflow](docs/campaign-workflow.md) | Single motion source → multi-platform campaign package |
-| **Guides** | |
-| [Agent Workflow](docs/agent-workflow.md) | Step-by-step guide for coding agents using Code2MP4 |
-| [Templates](docs/templates.md) | Template system documentation |
-| [Template Schema](templates/template.schema.json) | Formal JSON schema for template manifests |
-| [Roadmap](ROADMAP.md) | Development phases and milestones |
-
----
-
-## Relationship to HyperFrames and Open Design
-
-Code2MP4 is built on the shoulders of two foundational projects:
-
-- **[HyperFrames](https://github.com/heygen-com/hyperframes)** is the **render engine**. It solves HTML-to-MP4: capturing frames via Puppeteer, encoding via FFmpeg, muxing to deterministic MP4. Code2MP4 does not reimplement rendering — it delegates to HyperFrames.
-
-- **[Open Design](https://github.com/nexu-io/open-design)** pioneered the **agent orchestration patterns** that Code2MP4 adapts for video: multi-layer prompt stacking, agent auto-detection, interactive discovery forms, SSE run streaming, and filesystem-backed projects.
-
-```
-HyperFrames = render engine
-Open Design  = agent orchestration (design)
-Code2MP4     = agent-native video production pipeline
-```
-
----
-
-## Roadmap
-
-- [x] v0.1 — Stable local prompt-to-MP4 workflow
-- [x] v0.2 — Agent adapters (6 CLIs), SSE streaming, run lifecycle
-- [x] v0.3 — Compact prompt stack, motion systems, script systems
-- [x] v0.4 — Multi-stage pipeline (Director → Scene → Assembly)
-- [ ] v0.5 — Template gallery, transcribe pipeline, remove-background, composition variables
-- [ ] v0.6 — CLI-first workflow, 4K rendering, `code2mp4` npm package
-- [ ] v0.7 — Hosted rendering experiments
-- [ ] v1.0 — Stable release with comprehensive documentation
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Before submitting a PR:
-
-```bash
-pnpm typecheck && pnpm build && pnpm test
-```
-
-## License
-
-Apache 2.0 © Code2MP4 contributors. See [LICENSE](LICENSE).
+## Start here
+
+| I want to… | Go to |
+| --- | --- |
+| Find an official installer | [Downloads and release status](docs/downloads.md) |
+| Understand installation and the creation workflow | [Getting started](docs/getting-started.md) |
+| Report a product problem or suggest an improvement | [Feedback guide](docs/feedback.md) |
+| Read all public documentation | [Documentation index](docs/README.md) |
+| Understand the project's history | [Project history](docs/history.md) |
+| Check the scope of the public license | [Licensing](LICENSES.md) |
+
+## From an experiment to a desktop product
+
+Code2MP4 began as a small open-source experiment. A subsequent desktop product was independently developed in a separate codebase and has continued to evolve.
+
+The early source is preserved in the [legacy-open-source branch](https://github.com/code2mp4/code2mp4/tree/legacy-open-source) under its original Apache License 2.0. It is a historical prototype, rather than a second maintained edition of the current product. Its old setup instructions and demos describe that prototype.
+
+The default branch contains public documentation and release metadata. GitHub's source-code archives of this branch contain those public materials. Desktop installers are separate assets on the [Releases page](https://github.com/code2mp4/code2mp4/releases).
+
+## Licensing
+
+The public documentation uses [Apache License 2.0](LICENSE). Historical source and notices remain available with the archived prototype. The independently developed desktop application is closed-source; its distributed license terms and third-party notices accompany each published build. See [Licensing](LICENSES.md).

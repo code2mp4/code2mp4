@@ -1,0 +1,22 @@
+Open Video — AI-driven video production
+Copyright 2026 Open Video contributors
+
+This product includes software developed by:
+
+- Open Design (https://github.com/nexu-io/open-design)
+  Copyright 2026 Open Design contributors
+  Licensed under the Apache License, Version 2.0
+
+- HyperFrames (https://github.com/heygen-com/hyperframes)
+  Copyright HeyGen, Inc.
+  Used as an external dependency via npm (@hyperframes/player, @hyperframes/core)
+
+This product depends on the following third-party libraries,
+each available under its own license:
+
+- Next.js (MIT) — https://github.com/vercel/next.js
+- React (MIT) — https://github.com/facebook/react
+- Express (MIT) — https://github.com/expressjs/express
+- better-sqlite3 (MIT) — https://github.com/WiseLibs/better-sqlite3
+- GSAP (Standard License) — https://gsap.com
+- Vitest (MIT) — https://github.com/vitest-dev/vitest

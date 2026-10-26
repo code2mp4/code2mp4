@@ -1,0 +1,23 @@
+name: Creative workflow request / 创作需求
+description: Describe the work you want to complete with Code2MP4.
+title: "[Request] "
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Creative task / 创作任务
+      description: What are you trying to explain, produce, or revise?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome / 希望达到的结果
+      description: Explain the result and how you would judge success.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Current difficulty / 当前困难
+      description: Include the relevant version and a public or synthetic example if useful.

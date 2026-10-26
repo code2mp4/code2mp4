@@ -1,40 +1,23 @@
-# Security Policy
+# Security reporting
 
-## Reporting a Vulnerability
+## Report privately
 
-If you discover a security vulnerability in Code2MP4, please report it privately.
+Use the repository's private vulnerability reporting option under [Security](https://github.com/code2mp4/code2mp4/security) when available.
 
-**Do not open a public issue.**
+If that option is unavailable, open a public issue requesting a private reporting contact, without including vulnerability details, credentials, personal information, or private project data.
 
-Email security@code2mp4.com with details. We will respond within 48 hours with:
-- Confirmation of receipt
-- An estimated timeline for a fix
-- Whether you'll be credited in the release notes
+Include the affected product and exact version, operating system, and a minimal reproduction in the private report. Distinguish the current desktop application from the historical open-source prototype.
 
-## Supported Versions
+## Supported scope
 
-| Version | Supported |
-|---------|-----------|
-| latest (main branch) | ✅ |
-| < 1.0.0 | ❌ (pre-release) |
+This default branch contains documentation and repository tooling. Current desktop support is defined by each published release; no current desktop installer is published here yet.
 
-## Scope
+The early prototype in legacy-open-source is a historical archive with no commitment to new feature, security, or compatibility maintenance. Reports about it will be identified as historical-source reports.
 
-Security issues in scope include:
-- Remote code execution via user input
-- Authentication bypass
-- Exposure of user project data
-- Prompt injection leading to unintended agent behavior
+This policy makes no fixed response-time or fix-time commitment.
 
-Issues NOT in scope:
-- Vulnerabilities in third-party agent CLIs (Claude Code, OpenCode, etc.)
-- Vulnerabilities in HyperFrames or its dependencies
-- DoS via resource exhaustion (the tool runs locally)
+## 简体中文
 
-## Disclosure
+安全问题请通过仓库 Security 页面提供的私密漏洞报告入口提交。若入口不可用，可先公开请求私密联系方式，不要公开漏洞细节、凭据、私人项目或个人信息。
 
-We follow responsible disclosure. After a fix is released, we will publish a security advisory with:
-- Description of the vulnerability
-- Affected versions
-- How to upgrade
-- Credit to the reporter (if desired)
+报告应说明具体产品、版本、系统和最小复现，并区分当前桌面应用与历史原型。当前产品支持范围按实际发布版本说明；历史原型不承诺持续维护。本政策不承诺固定响应或修复时限。
